@@ -128,7 +128,6 @@ namespace HorrorUtez.World.Editor
             go.transform.localPosition = center;
             go.transform.localScale = size;
             go.GetComponent<MeshRenderer>().sharedMaterial = material;
-            GameObjectUtility.SetStaticEditorFlags(go, StaticEditorFlags.NothingStatic);
         }
 
         private static Material MakeMaterial(string name, Color color)

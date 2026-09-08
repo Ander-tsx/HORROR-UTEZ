@@ -2,8 +2,7 @@
     "name": "HorrorUtez.Player",
     "rootNamespace": "HorrorUtez.Player",
     "references": [
-        "HorrorUtez.Core",
-        "Unity.InputSystem"
+        "HorrorUtez.Core"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
