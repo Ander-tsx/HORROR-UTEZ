@@ -60,20 +60,13 @@ namespace HorrorUtez.Player
                 head = transform.GetChild(0);
         }
 
-        private void OnEnable()
-        {
-            Cursor.lockState = CursorLockMode.Locked;
-            Cursor.visible = false;
-        }
-
-        private void OnDisable()
-        {
-            Cursor.lockState = CursorLockMode.None;
-            Cursor.visible = true;
-        }
-
         private void Update()
         {
+            // Mouse delta is not affected by timeScale, so a paused player would still be
+            // able to spin the camera. Cursor ownership lives in PauseController.
+            if (PauseController.IsPaused)
+                return;
+
             ApplyLook();
             ApplyMovement();
         }

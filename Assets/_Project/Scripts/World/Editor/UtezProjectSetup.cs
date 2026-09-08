@@ -122,6 +122,7 @@ namespace HorrorUtez.World.Editor
             UtezTerrainBuilder.Build();
             UtezBuildingBuilder.Build();
             UtezForestBuilder.Build();
+            UtezPropBuilder.Build();
             var sun = ConfigureLighting();
             var player = SpawnPlayer();
             var volume = PsxRenderingSetup.SpawnGlobalVolume();
@@ -201,6 +202,7 @@ namespace HorrorUtez.World.Editor
             stepSource.playOnAwake = false;
             stepSource.spatialBlend = 0f;
             player.AddComponent<HorrorUtez.Player.FootstepAudio>();
+            player.AddComponent<HorrorUtez.Player.PauseController>();
 
             var head = new GameObject("Head");
             head.transform.SetParent(player.transform, false);

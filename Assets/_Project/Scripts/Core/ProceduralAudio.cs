@@ -86,6 +86,44 @@ namespace HorrorUtez.Core
             return ToClip($"Footstep{seed}", data, loop: false);
         }
 
+        /// <summary>
+        /// Thunder: a bright crack folded into a long, dark rumble.
+        ///
+        /// The crack alone sounds like a snapped branch and the rumble alone sounds like
+        /// traffic; it is the pairing, plus a decay measured in seconds rather than
+        /// milliseconds, that reads as a storm.
+        /// </summary>
+        public static AudioClip CreateThunder(int seed, float seconds = 4.5f)
+        {
+            int count = Mathf.RoundToInt(seconds * SampleRate);
+            var rumble = Noise(count, seed);
+
+            LowPass(rumble, 0.008f);
+            LowPass(rumble, 0.008f);
+            Normalise(rumble, 1f);
+
+            var crack = Noise(count, seed + 91);
+            LowPass(crack, 0.12f);
+            HighPass(crack, 0.02f);
+
+            for (int i = 0; i < count; i++)
+            {
+                float t = i / (float)SampleRate;
+
+                // Rumble swells rather than starting at full tilt, then dies away slowly.
+                float swell = Mathf.Clamp01(t / 0.35f);
+                float rumbleEnvelope = swell * Mathf.Exp(-0.8f * t);
+
+                // The initial crack is short and only present at the very start.
+                float crackEnvelope = Mathf.Exp(-9f * t) * Mathf.Clamp01(t / 0.01f);
+
+                rumble[i] = rumble[i] * rumbleEnvelope + crack[i] * crackEnvelope * 0.55f;
+            }
+
+            Normalise(rumble, 0.95f);
+            return ToClip($"Thunder{seed}", rumble, loop: false);
+        }
+
         /// <summary>Flashlight switch: a tiny double transient, like a real toggle.</summary>
         public static AudioClip CreateClick(int seed = 11)
         {

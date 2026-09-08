@@ -44,7 +44,35 @@ namespace HorrorUtez.World.Editor
             so.FindProperty("player").objectReferenceValue = player.transform;
             so.ApplyModifiedPropertiesWithoutUndo();
 
+            BuildLightning(weatherGo, weather);
+
             Debug.Log("[WEATHER] Weather rig built.");
+        }
+
+        /// <summary>
+        /// Lightning gets its own directional light, kept at zero intensity between
+        /// strikes. Reusing the sun would mean fighting WeatherSystem for the same value.
+        /// </summary>
+        private static void BuildLightning(GameObject weatherGo, WeatherSystem weather)
+        {
+            var flashGo = new GameObject("LightningFlash");
+            flashGo.transform.SetParent(weatherGo.transform, false);
+            var flash = flashGo.AddComponent<Light>();
+            flash.type = LightType.Directional;
+            flash.intensity = 0f;
+            flash.shadows = LightShadows.None;
+
+            var thunderSource = weatherGo.AddComponent<AudioSource>();
+            thunderSource.playOnAwake = false;
+            thunderSource.loop = false;
+            thunderSource.spatialBlend = 0f;
+
+            var lightning = weatherGo.AddComponent<LightningSystem>();
+            var so = new SerializedObject(lightning);
+            so.FindProperty("weather").objectReferenceValue = weather;
+            so.FindProperty("flash").objectReferenceValue = flash;
+            so.FindProperty("thunder").objectReferenceValue = thunderSource;
+            so.ApplyModifiedPropertiesWithoutUndo();
         }
 
         /// <summary>2D ambience: rain and wind are everywhere, not at a point in space.</summary>
