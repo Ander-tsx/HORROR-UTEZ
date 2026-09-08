@@ -38,6 +38,8 @@ namespace HorrorUtez.Player
         [SerializeField] private float gravity = -18f;
         [Tooltip("Small downward push so the controller stays glued to slopes and steps.")]
         [SerializeField] private float groundedStick = -2f;
+        [Tooltip("How far below the feet the ground probe reaches.")]
+        [SerializeField] private float groundProbeDistance = 0.2f;
 
         [SerializeField] private Transform head;
 
@@ -114,6 +116,21 @@ namespace HorrorUtez.Player
             }
         }
 
+        /// <summary>
+        /// Downward ray from inside the capsule. Rays started inside a collider do not
+        /// report it (they exit through a backface), so this never hits the player.
+        /// </summary>
+        private bool ProbeGround()
+        {
+            const float originHeight = 0.4f;
+            return Physics.Raycast(
+                transform.position + Vector3.up * originHeight,
+                Vector3.down,
+                originHeight + groundProbeDistance,
+                ~0,
+                QueryTriggerInteraction.Ignore);
+        }
+
         private bool Blocked()
         {
             float radius = _controller.radius * 0.9f;
@@ -147,7 +164,11 @@ namespace HorrorUtez.Player
             _horizontalVelocity = Vector3.MoveTowards(
                 _horizontalVelocity, targetVelocity, acceleration * Time.deltaTime);
 
-            IsGrounded = _controller.isGrounded;
+            // CharacterController.isGrounded only reports what the LAST Move collided with,
+            // so at high frame rates the downward stick shrinks below skin width and it
+            // starts reporting airborne while the player is plainly standing still. An
+            // explicit probe is frame-rate independent; the flag is kept as a cheap OR.
+            IsGrounded = _controller.isGrounded || ProbeGround();
             if (IsGrounded)
                 _lastGroundedTime = Time.time;
 

@@ -128,7 +128,24 @@ namespace HorrorUtez.World.Editor
             var volume = PsxRenderingSetup.SpawnGlobalVolume();
             UtezWeatherSetup.Build(player, volume, sun);
             EditorSceneManager.SaveScene(scene, ScenePath);
+            RegisterInBuildSettings();
             Debug.Log($"[UTEZ] Scene saved to {ScenePath}");
+        }
+
+        /// <summary>
+        /// Adds the scene to Build Settings. Without this it cannot be loaded by path at
+        /// runtime, so the play-mode smoke tests have nothing to load.
+        /// </summary>
+        private static void RegisterInBuildSettings()
+        {
+            foreach (var existing in EditorBuildSettings.scenes)
+                if (existing.path == ScenePath)
+                    return;
+
+            var scenes = new System.Collections.Generic.List<EditorBuildSettingsScene>(
+                EditorBuildSettings.scenes) { new(ScenePath, true) };
+            EditorBuildSettings.scenes = scenes.ToArray();
+            Debug.Log($"[UTEZ] Registered {ScenePath} in Build Settings.");
         }
 
         /// <summary>

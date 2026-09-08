@@ -1,0 +1,27 @@
+{
+    "name": "HorrorUtez.Tests.PlayMode",
+    "rootNamespace": "HorrorUtez.Tests",
+    "references": [
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner",
+        "HorrorUtez.Core",
+        "HorrorUtez.World",
+        "HorrorUtez.Player",
+        "HorrorUtez.Rendering",
+        "Unity.RenderPipelines.Universal.Runtime",
+        "Unity.RenderPipelines.Core.Runtime"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
