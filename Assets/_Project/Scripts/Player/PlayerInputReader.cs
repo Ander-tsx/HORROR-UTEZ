@@ -43,6 +43,9 @@ namespace HorrorUtez.Player
         /// <summary>True on the frame jump was pressed.</summary>
         public bool Jump { get; private set; }
 
+        /// <summary>Held, not toggled: releasing should stand you back up.</summary>
+        public bool Crouch { get; private set; }
+
         [Tooltip("Right-side touches shorter than this, with no drag, count as a jump.")]
         [SerializeField] private float touchTapSeconds = 0.2f;
         [Tooltip("Pixels of drag allowed before a tap stops counting as a jump.")]
@@ -72,6 +75,11 @@ namespace HorrorUtez.Player
             Run = run;
             ToggleLight = toggleLight;
             Jump = jump;
+
+            var keyboard = Keyboard.current;
+            var pad = Gamepad.current;
+            Crouch = (keyboard != null && (keyboard.leftCtrlKey.isPressed || keyboard.cKey.isPressed))
+                     || (pad != null && pad.buttonEast.isPressed);
         }
 
         private void ReadKeyboardMouse(ref Vector2 move, ref Vector2 look, ref bool run, ref bool toggleLight, ref bool jump)

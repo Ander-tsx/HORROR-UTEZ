@@ -23,6 +23,11 @@ namespace HorrorUtez.Player
         [SerializeField] private float pitchMin = -80f;
         [SerializeField] private float pitchMax = 80f;
 
+        [Header("Crouch")]
+        [SerializeField] private float crouchHeightFactor = 0.55f;
+        [SerializeField] private float crouchSpeedFactor = 0.45f;
+        [SerializeField] private float crouchLerpSpeed = 9f;
+
         [Header("Jump")]
         [Tooltip("Peak height in world units. Scaled world, so this is not real metres.")]
         [SerializeField] private float jumpHeight = 1.6f;
@@ -42,6 +47,9 @@ namespace HorrorUtez.Player
         private float _verticalVelocity;
         private float _pitch;
         private float _lastGroundedTime;
+        private float _standHeight;
+        private Vector3 _standHeadLocal;
+        private float _crouchBlend;
 
         /// <summary>Ground speed in m/s. Head bob and, later, footstep audio read this.</summary>
         public float CurrentSpeed => _horizontalVelocity.magnitude;
@@ -51,6 +59,9 @@ namespace HorrorUtez.Player
         /// <summary>True while the controller is on the ground. Footstep audio reads this.</summary>
         public bool IsGrounded { get; private set; }
 
+        /// <summary>0 = standing, 1 = fully crouched. Head bob scales with this too.</summary>
+        public float CrouchBlend => _crouchBlend;
+
         private void Awake()
         {
             _controller = GetComponent<CharacterController>();
@@ -58,6 +69,10 @@ namespace HorrorUtez.Player
 
             if (head == null && transform.childCount > 0)
                 head = transform.GetChild(0);
+
+            _standHeight = _controller.height;
+            if (head != null)
+                _standHeadLocal = head.localPosition;
         }
 
         private void Update()
@@ -68,7 +83,43 @@ namespace HorrorUtez.Player
                 return;
 
             ApplyLook();
+            ApplyCrouch();
             ApplyMovement();
+        }
+
+        /// <summary>
+        /// Shrinks the capsule and drops the head. Standing back up is refused while
+        /// something is directly overhead, otherwise the player pops through ceilings and
+        /// through the underside of the stairs.
+        /// </summary>
+        private void ApplyCrouch()
+        {
+            bool wantsCrouch = _input.Crouch;
+
+            if (!wantsCrouch && _crouchBlend > 0.01f && Blocked())
+                wantsCrouch = true;
+
+            _crouchBlend = Mathf.MoveTowards(_crouchBlend, wantsCrouch ? 1f : 0f,
+                crouchLerpSpeed * Time.deltaTime);
+
+            float height = Mathf.Lerp(_standHeight, _standHeight * crouchHeightFactor, _crouchBlend);
+            _controller.height = height;
+            _controller.center = new Vector3(0f, height * 0.5f, 0f);
+
+            if (head != null)
+            {
+                var target = _standHeadLocal;
+                target.y = Mathf.Lerp(_standHeadLocal.y, _standHeadLocal.y * crouchHeightFactor, _crouchBlend);
+                head.localPosition = target;
+            }
+        }
+
+        private bool Blocked()
+        {
+            float radius = _controller.radius * 0.9f;
+            Vector3 origin = transform.position + Vector3.up * (_controller.height - radius);
+            float distance = _standHeight - _controller.height + 0.05f;
+            return Physics.SphereCast(origin, radius, Vector3.up, out _, distance);
         }
 
         private void ApplyLook()
@@ -86,10 +137,11 @@ namespace HorrorUtez.Player
         private void ApplyMovement()
         {
             Vector2 move = _input.Move;
-            IsRunning = _input.Run && move.sqrMagnitude > 0.01f;
+            IsRunning = _input.Run && move.sqrMagnitude > 0.01f && _crouchBlend < 0.5f;
 
             Vector3 wish = transform.right * move.x + transform.forward * move.y;
             float targetSpeed = IsRunning ? runSpeed : walkSpeed;
+            targetSpeed *= Mathf.Lerp(1f, crouchSpeedFactor, _crouchBlend);
             Vector3 targetVelocity = wish * targetSpeed;
 
             _horizontalVelocity = Vector3.MoveTowards(

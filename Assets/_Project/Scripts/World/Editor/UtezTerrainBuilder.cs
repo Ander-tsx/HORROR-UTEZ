@@ -138,6 +138,12 @@ namespace HorrorUtez.World.Editor
             go.transform.localPosition = center;
             go.transform.localScale = size;
             go.GetComponent<MeshRenderer>().sharedMaterial = material;
+
+            // Terrain and structures never move; static batching is free performance and
+            // occlusion flags let Unity cull whole buildings at once.
+            GameObjectUtility.SetStaticEditorFlags(go,
+                StaticEditorFlags.BatchingStatic | StaticEditorFlags.OccluderStatic |
+                StaticEditorFlags.OccludeeStatic);
         }
 
         /// <summary>

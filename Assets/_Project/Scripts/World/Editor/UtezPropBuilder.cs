@@ -41,6 +41,12 @@ namespace HorrorUtez.World.Editor
 
             BuildFlagpoles(root.transform, metal);
 
+            // Lamp posts never move either; only their light values change at runtime.
+            foreach (var renderer in root.GetComponentsInChildren<MeshRenderer>())
+                GameObjectUtility.SetStaticEditorFlags(renderer.gameObject,
+                    StaticEditorFlags.BatchingStatic | StaticEditorFlags.OccluderStatic |
+                    StaticEditorFlags.OccludeeStatic);
+
             var scene = SceneManager.GetActiveScene();
             EditorSceneManager.MarkSceneDirty(scene);
             Debug.Log($"[PROPS] Placed {lamps} lamp posts and 2 flagpoles.");

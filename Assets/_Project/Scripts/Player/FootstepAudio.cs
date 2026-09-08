@@ -74,10 +74,12 @@ namespace HorrorUtez.Player
                 return;
 
             _distance += _controller.CurrentSpeed * Time.deltaTime;
-            if (_distance < strideLength)
+            // Shorter stride when crouched, so the cadence stays believable at low speed.
+            float stride = strideLength * Mathf.Lerp(1f, 0.65f, _controller.CrouchBlend);
+            if (_distance < stride)
                 return;
 
-            _distance -= strideLength;
+            _distance -= stride;
             PlayStep();
         }
 
@@ -87,8 +89,9 @@ namespace HorrorUtez.Player
             var clip = bank[Random.Range(0, bank.Length)];
 
             source.pitch = Random.Range(pitchRange.x, pitchRange.y);
-            // Running lands harder than strolling.
+            // Running lands harder than strolling; crouching is the point of crouching.
             float gain = volume * (_controller.IsRunning ? 1.3f : 1f);
+            gain *= Mathf.Lerp(1f, 0.25f, _controller.CrouchBlend);
             source.PlayOneShot(clip, gain);
         }
 

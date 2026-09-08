@@ -65,6 +65,7 @@ namespace HorrorUtez.Rendering.Editor
             new("UTEZ_Bark", new Color(0.24f, 0.17f, 0.12f), new Color(0.16f, 0.11f, 0.08f), Pattern.Panels, new Vector2(1f, 3f)),
             new("UTEZ_Leaves", new Color(0.15f, 0.26f, 0.12f), new Color(0.07f, 0.13f, 0.06f), Pattern.Foliage, new Vector2(2f, 2f)),
             new("UTEZ_LeavesDry", new Color(0.24f, 0.23f, 0.13f), new Color(0.13f, 0.13f, 0.07f), Pattern.Foliage, new Vector2(2f, 2f)),
+            new("UTEZ_Glass", new Color(0.04f, 0.05f, 0.07f), new Color(0.16f, 0.18f, 0.22f), Pattern.Grid, new Vector2(10f, 1f)),
             new("UTEZ_RockGrey", new Color(0.34f, 0.33f, 0.31f), new Color(0.22f, 0.21f, 0.20f), Pattern.Blocks, new Vector2(2f, 2f)),
         };
 
