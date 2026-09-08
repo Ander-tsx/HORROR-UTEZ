@@ -89,17 +89,17 @@ namespace HorrorUtez.Rendering.Editor
             // Night-time campus: thin enough to see across the 20 m gap between buildings,
             // thick enough that the tree line and the map edge dissolve.
             fog.density.overrideState = true;
-            fog.density.value = 0.018f;
+            fog.density.value = 0.012f;
             fog.startDistance.overrideState = true;
-            fog.startDistance.value = 3f;
+            fog.startDistance.value = 5f;
             fog.fogColor.overrideState = true;
             fog.fogColor.value = new Color(0.42f, 0.46f, 0.52f);
             fog.ambientColor.overrideState = true;
             fog.ambientColor.value = new Color(0.30f, 0.32f, 0.38f);
             fog.noiseScale.overrideState = true;
-            fog.noiseScale.value = 90f;
+            fog.noiseScale.value = 45f;
             fog.noiseStrength.overrideState = true;
-            fog.noiseStrength.value = 0.06f;
+            fog.noiseStrength.value = 0.12f;
             fog.noiseSpeed.overrideState = true;
             fog.noiseSpeed.value = 0.02f;
 

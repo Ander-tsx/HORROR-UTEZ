@@ -5,16 +5,17 @@ namespace HorrorUtez.Player
     /// <summary>
     /// First-person movement and look, driven by <see cref="PlayerInputReader"/>.
     ///
-    /// Speeds are deliberately slow. Horror pacing depends on the player not being able
-    /// to outrun tension; a sprint that crosses the explanada in seconds throws it away.
+    /// The player is NOT slowed down to create tension — that job belongs to the enemies,
+    /// which are meant to be much faster. Exploration should feel unrestricted.
+    /// Speeds are also sized for a world built at UtezDimensions.WorldScale.
     /// </summary>
     [RequireComponent(typeof(CharacterController))]
     [RequireComponent(typeof(PlayerInputReader))]
     public sealed class FirstPersonController : MonoBehaviour
     {
-        [Header("Movement (m/s)")]
-        [SerializeField] private float walkSpeed = 2.2f;
-        [SerializeField] private float runSpeed = 4.5f;
+        [Header("Movement (units/s)")]
+        [SerializeField] private float walkSpeed = 3.8f;
+        [SerializeField] private float runSpeed = 7.5f;
         [Tooltip("How quickly the current speed chases the target speed.")]
         [SerializeField] private float acceleration = 12f;
 

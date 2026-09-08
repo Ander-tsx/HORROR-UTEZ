@@ -17,10 +17,12 @@ namespace HorrorUtez.World.Editor
     public static class UtezTerrainBuilder
     {
         private const string RootName = "UTEZ_Terrain";
-        private const float SlabThickness = 0.2f;
-        private const float PadLift = 0.05f;   // pad sits just above the slab
-        private const float GrassLift = 0.03f; // grass just above the slab
-        private const float DirtDrop = 0.1f;   // dirt just below the slab
+
+        // Real metres; scaled with the rest of the world so the layering never inverts.
+        private static float SlabThickness => 0.2f * UtezDimensions.WorldScale;
+        private static float PadLift => 0.05f * UtezDimensions.WorldScale;   // pad just above the slab
+        private static float GrassLift => 0.03f * UtezDimensions.WorldScale; // grass just above the slab
+        private static float DirtDrop => 0.1f * UtezDimensions.WorldScale;   // dirt just below the slab
 
         [MenuItem("HORROR-UTEZ/Build UTEZ Terrain")]
         public static void Build()
@@ -69,12 +71,12 @@ namespace HorrorUtez.World.Editor
         {
             var group = new GameObject($"{name}_Group").transform;
             group.SetParent(parent, false);
-            group.localPosition = new Vector3(fp.Center.x, 0f, fp.Center.y);
+            group.localPosition = new Vector3(fp.ScaledCenter.x, 0f, fp.ScaledCenter.y);
             group.localRotation = Quaternion.Euler(0f, fp.YawDeg, 0f);
 
             if (fp.HasGrass)
             {
-                var grassSize = fp.Size + 2f * UtezDimensions.GrassMargin * Vector2.one;
+                var grassSize = fp.ScaledSize + 2f * UtezDimensions.GrassMargin * Vector2.one;
                 Slab(group, "Grass",
                     center: new Vector3(0f, GrassLift * 0.5f, 0f),
                     size: new Vector3(grassSize.x, GrassLift, grassSize.y), material: grass);
@@ -83,7 +85,7 @@ namespace HorrorUtez.World.Editor
 
             Slab(group, "Pad",
                 center: new Vector3(0f, PadLift * 0.5f, 0f),
-                size: new Vector3(fp.Size.x, PadLift, fp.Size.y), material: pad);
+                size: new Vector3(fp.ScaledSize.x, PadLift, fp.ScaledSize.y), material: pad);
         }
 
         /// <summary>Four thin boxes forming a rectangle at the outer edge of the grass band.</summary>
@@ -109,7 +111,7 @@ namespace HorrorUtez.World.Editor
 
             var d = UtezDimensions.DirtSize;
             float t = UtezDimensions.ForestRingWidth;
-            float h = 8f; // tree-line height, blocks the view outward
+            float h = 8f * UtezDimensions.WorldScale; // tree line height, blocks the view outward
             float hx = d.x * 0.5f;
             float hz = d.y * 0.5f;
 

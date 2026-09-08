@@ -87,7 +87,12 @@ Shader "HorrorUtez/PSX/Fog"
                 noiseUv += _Time.y * _NoiseSpeed;
                 float noise = (ValueNoise(noiseUv) - 0.5) * 2.0;
 
-                fog = saturate(fog + noise * _NoiseStrength);
+                // Perturb only the fog's transition band. Adding noise everywhere paints
+                // blotches over clear air and over solid fog alike, which reads as a dirty
+                // lens rather than as atmosphere. This peaks at half-fog and vanishes at
+                // both extremes, so near ground stays clean and the far wall stays solid.
+                float band = fog * (1.0 - fog) * 4.0;
+                fog = saturate(fog + noise * _NoiseStrength * band);
 
                 half3 fogged = _FogColor.rgb * _AmbientColor.rgb;
                 return half4(lerp(sceneColor.rgb, fogged, fog), sceneColor.a);

@@ -21,7 +21,7 @@ namespace HorrorUtez.Rendering.Editor
         public const string TextureFolder = "Assets/_Project/Art/Textures";
         private const int TexSize = 128;
 
-        private enum Pattern { Grid, Noise, Blocks }
+        private enum Pattern { Grid, Noise, Blocks, Panels }
 
         private readonly struct Def
         {
@@ -52,6 +52,12 @@ namespace HorrorUtez.Rendering.Editor
             // Irregular stacked stone, as in the kerbs around the grass.
             new("UTEZ_Stone", new Color(0.45f, 0.43f, 0.40f), new Color(0.30f, 0.29f, 0.27f), Pattern.Blocks, new Vector2(5f, 2f)),
             new("UTEZ_ForestMarker", new Color(0.10f, 0.16f, 0.10f), new Color(0.05f, 0.09f, 0.05f), Pattern.Noise, new Vector2(10f, 4f)),
+
+            // CECADEC's oxblood facade, with the horizontal panel joints from the entrance photo.
+            new("UTEZ_WallRed", new Color(0.42f, 0.10f, 0.09f), new Color(0.32f, 0.07f, 0.06f), Pattern.Panels, new Vector2(6f, 3f)),
+            // The pale pilasters flanking the entrance, reused for CDS and the auditorium.
+            new("UTEZ_WallBeige", new Color(0.72f, 0.66f, 0.55f), new Color(0.60f, 0.55f, 0.45f), Pattern.Panels, new Vector2(6f, 3f)),
+            new("UTEZ_Roof", new Color(0.30f, 0.29f, 0.28f), new Color(0.23f, 0.22f, 0.21f), Pattern.Noise, new Vector2(8f, 8f)),
         };
 
         [MenuItem("HORROR-UTEZ/Rebuild PSX Terrain Materials")]
@@ -148,6 +154,7 @@ namespace HorrorUtez.Rendering.Editor
                 {
                     Pattern.Grid => GridPixel(def, x, y),
                     Pattern.Blocks => BlocksPixel(def, x, y, rng),
+                    Pattern.Panels => PanelsPixel(def, y),
                     _ => NoisePixel(def, rng),
                 };
                 pixels[y * TexSize + x] = c;
@@ -169,6 +176,14 @@ namespace HorrorUtez.Rendering.Editor
         private static Color NoisePixel(Def def, System.Random rng)
         {
             return Color.Lerp(def.Base, def.Accent, (float)rng.NextDouble());
+        }
+
+        /// <summary>Flat facade broken only by horizontal panel joints, as on CECADEC.</summary>
+        private static Color PanelsPixel(Def def, int y)
+        {
+            const int panelHeight = 42;
+            bool joint = (y % panelHeight) < 2;
+            return joint ? def.Accent : def.Base;
         }
 
         /// <summary>Irregular stacked stone: offset rows of blocks with dark mortar.</summary>

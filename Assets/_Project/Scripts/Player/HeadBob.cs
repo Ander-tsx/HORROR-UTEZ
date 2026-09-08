@@ -47,7 +47,7 @@ namespace HorrorUtez.Player
 
             // Normalised against walk speed so a slow drift bobs less than a full stride.
             float speed = controller.CurrentSpeed;
-            float target = Mathf.Clamp01(speed / 2.2f);
+            float target = Mathf.Clamp01(speed / 3.8f);
             _weight = Mathf.MoveTowards(_weight, target, blendSpeed * Time.deltaTime);
 
             if (_weight <= 0.001f)

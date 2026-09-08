@@ -110,6 +110,7 @@ namespace HorrorUtez.World.Editor
         {
             var scene = EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects, NewSceneMode.Single);
             UtezTerrainBuilder.Build();
+            UtezBuildingBuilder.Build();
             SpawnPlayer();
             PsxRenderingSetup.SpawnGlobalVolume();
             EditorSceneManager.SaveScene(scene, ScenePath);
@@ -127,8 +128,10 @@ namespace HorrorUtez.World.Editor
                     UnityEngine.Object.DestroyImmediate(cam.gameObject);
 
             var player = new GameObject("Player");
+            // World units, already scaled. The plaza gap runs roughly Z -14 .. +16 at
+            // WorldScale 1.5, so this stands in open ground facing the CECADEC entrance.
             player.transform.SetPositionAndRotation(
-                new Vector3(0f, 1.2f, 12f), Quaternion.Euler(0f, 180f, 0f));
+                new Vector3(0f, 2f, 8f), Quaternion.Euler(0f, 180f, 0f));
 
             var controller = player.AddComponent<CharacterController>();
             controller.height = 1.8f;
