@@ -1,11 +1,12 @@
 {
-    "name": "HorrorUtez.Player",
-    "rootNamespace": "HorrorUtez.Player",
+    "name": "HorrorUtez.Core.Editor",
+    "rootNamespace": "HorrorUtez.Core.Editor",
     "references": [
-        "HorrorUtez.Core",
-        "Unity.InputSystem"
+        "HorrorUtez.Core"
     ],
-    "includePlatforms": [],
+    "includePlatforms": [
+        "Editor"
+    ],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,

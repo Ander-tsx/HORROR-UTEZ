@@ -108,8 +108,54 @@ namespace HorrorUtez.World.Editor
         {
             var scene = EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects, NewSceneMode.Single);
             UtezTerrainBuilder.Build();
+            SpawnPlayer();
             EditorSceneManager.SaveScene(scene, ScenePath);
             Debug.Log($"[UTEZ] Scene saved to {ScenePath}");
+        }
+
+        /// <summary>
+        /// Drops a playable first-person rig into the plaza, facing south toward the
+        /// CECADEC entrance. Replaces the default scene camera so pressing Play just works.
+        /// </summary>
+        private static void SpawnPlayer()
+        {
+            foreach (var cam in UnityEngine.Object.FindObjectsByType<Camera>(FindObjectsSortMode.None))
+                if (cam.CompareTag("MainCamera"))
+                    UnityEngine.Object.DestroyImmediate(cam.gameObject);
+
+            var player = new GameObject("Player");
+            player.transform.SetPositionAndRotation(
+                new Vector3(0f, 1.2f, 12f), Quaternion.Euler(0f, 180f, 0f));
+
+            var controller = player.AddComponent<CharacterController>();
+            controller.height = 1.8f;
+            controller.radius = 0.3f;
+            controller.center = new Vector3(0f, 0.9f, 0f);
+            controller.slopeLimit = 50f;
+            controller.stepOffset = 0.35f;
+            controller.skinWidth = 0.02f;
+
+            player.AddComponent<HorrorUtez.Player.PlayerInputReader>();
+            var fpc = player.AddComponent<HorrorUtez.Player.FirstPersonController>();
+
+            var head = new GameObject("Head");
+            head.transform.SetParent(player.transform, false);
+            head.transform.localPosition = new Vector3(0f, 1.65f, 0f);
+
+            var camera = head.AddComponent<Camera>();
+            camera.tag = "MainCamera";
+            camera.nearClipPlane = 0.05f;
+            camera.farClipPlane = 400f;
+            camera.fieldOfView = 65f;
+            head.AddComponent<AudioListener>();
+            head.AddComponent<HorrorUtez.Player.HeadBob>();
+
+            // Wire the serialized head reference without exposing a public setter.
+            var so = new SerializedObject(fpc);
+            so.FindProperty("head").objectReferenceValue = head.transform;
+            so.ApplyModifiedPropertiesWithoutUndo();
+
+            Debug.Log("[UTEZ] Player rig spawned in the plaza.");
         }
     }
 }

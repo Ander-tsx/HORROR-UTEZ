@@ -50,9 +50,13 @@ namespace HorrorUtez.World
         public static readonly Footprint Cecadec =
             new(size: new Vector2(20f, 45f), center: new Vector2(0f, -32f), yawDeg: -13f, floors: 2);
 
-        /// <summary>MEASURED: 30.78 x 22.23 m. North wall drops ~4.5 deg toward the east.</summary>
+        /// <summary>
+        /// MEASURED: 30.78 x 22.23 m. North wall drops ~4.5 deg toward the east.
+        /// No grass band — unlike CECADEC, CDS meets the concrete directly.
+        /// </summary>
         public static readonly Footprint Cds =
-            new(size: new Vector2(31f, 22f), center: new Vector2(0f, 21f), yawDeg: -4.5f, floors: 2);
+            new(size: new Vector2(31f, 22f), center: new Vector2(0f, 21f), yawDeg: -4.5f, floors: 2,
+                hasGrass: false);
 
         /// <summary>
         /// Covered walkway joining CDS to the auditorium. Roof on pillars, NO walls —

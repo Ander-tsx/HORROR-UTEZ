@@ -4,6 +4,7 @@
     "references": [
         "HorrorUtez.Core",
         "HorrorUtez.World",
+        "HorrorUtez.Player",
         "HorrorUtez.Rendering",
         "HorrorUtez.Rendering.Editor",
         "Unity.RenderPipelines.Universal.Runtime"
