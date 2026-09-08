@@ -22,7 +22,10 @@ namespace HorrorUtez.Rendering.Editor
         [MenuItem("HORROR-UTEZ/Setup PSX Rendering")]
         public static void Setup()
         {
+            // Order matters: fog first, then the screen crunch, so the fog gets pixelated
+            // and scanned along with the scene instead of sitting cleanly on top of it.
             RegisterFeature<PsxFogRenderFeature>("PSX Fog");
+            RegisterFeature<PsxScreenRenderFeature>("PSX Screen");
             EnsureVolumeProfile();
         }
 
@@ -104,6 +107,33 @@ namespace HorrorUtez.Rendering.Editor
             fog.noiseSpeed.value = 0.02f;
 
             EditorUtility.SetDirty(fog);
+
+            if (!profile.TryGet<PsxScreenVolume>(out var screen))
+            {
+                screen = profile.Add<PsxScreenVolume>(overrides: true);
+                AssetDatabase.AddObjectToAsset(screen, profile);
+            }
+
+            // PS1 framebuffer: 240p internal, 5 bits per channel. The CRT settings stay
+            // restrained — heavy warp and scanlines are exhausting over a whole session.
+            screen.pixelHeight.overrideState = true;
+            screen.pixelHeight.value = 240f;
+            screen.colorLevels.overrideState = true;
+            screen.colorLevels.value = 32f;
+            screen.ditherStrength.overrideState = true;
+            screen.ditherStrength.value = 1f;
+            screen.warp.overrideState = true;
+            screen.warp.value = 0.025f;
+            screen.aberration.overrideState = true;
+            screen.aberration.value = 0.0015f;
+            screen.scanlineStrength.overrideState = true;
+            screen.scanlineStrength.value = 0.12f;
+            screen.vignetteStrength.overrideState = true;
+            screen.vignetteStrength.value = 0.35f;
+            screen.grainStrength.overrideState = true;
+            screen.grainStrength.value = 0.04f;
+
+            EditorUtility.SetDirty(screen);
             EditorUtility.SetDirty(profile);
             AssetDatabase.SaveAssets();
         }
