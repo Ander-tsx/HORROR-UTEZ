@@ -28,7 +28,8 @@ namespace HorrorUtez.World
         }
 
         // ---- Concrete explanada ---------------------------------------------
-        public static readonly Vector2 SlabSize = new(50f, 110f);
+        // Width covers the CDS east wing plus its grass band; nothing may hang off the slab.
+        public static readonly Vector2 SlabSize = new(70f, 110f);
         public static readonly Vector2 SlabCenter = new(0f, -12f);
 
         // ---- Buildings (footprints only, not the buildings themselves) ------
@@ -38,8 +39,9 @@ namespace HorrorUtez.World
         public static readonly Footprint CdsBody =
             new(size: new Vector2(32f, 20f), center: new Vector2(0f, 20f), yawDeg: 0f);
 
+        // East wing: sits alongside the body (body spans X -16..+16), protruding south.
         public static readonly Footprint CdsExtension =
-            new(size: new Vector2(12f, 12f), center: new Vector2(16f, 10f), yawDeg: 0f);
+            new(size: new Vector2(12f, 12f), center: new Vector2(22f, 10f), yawDeg: 0f);
 
         // ---- Ground detail -------------------------------------------------
         public const float GrassMargin = 4f;   // grass band width around each building

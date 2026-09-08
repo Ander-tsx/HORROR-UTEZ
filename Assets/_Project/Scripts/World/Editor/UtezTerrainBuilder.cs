@@ -39,10 +39,11 @@ namespace HorrorUtez.World.Editor
             var pad = MakeMaterial("UTEZ_Pad", new Color(0.70f, 0.70f, 0.70f));
             var forest = MakeMaterial("UTEZ_ForestMarker", new Color(0.10f, 0.16f, 0.10f));
 
-            // Exterior dirt, well below the slab so it reads as the base ground.
+            // Exterior dirt. Its top face sits DirtDrop below the slab's; sharing a Y with
+            // the slab would z-fight and the two would flicker over each other.
             var d = UtezDimensions.DirtSize;
             Slab(root.transform, "Dirt_Ground",
-                center: new Vector3(UtezDimensions.SlabCenter.x, -DirtDrop, UtezDimensions.SlabCenter.y),
+                center: new Vector3(UtezDimensions.SlabCenter.x, -(DirtDrop + SlabThickness * 0.5f), UtezDimensions.SlabCenter.y),
                 size: new Vector3(d.x, SlabThickness, d.y), material: dirt);
 
             // Concrete explanada.
