@@ -52,9 +52,8 @@ namespace HorrorUtez.World.Editor
                 size: new Vector3(UtezDimensions.SlabSize.x, SlabThickness, UtezDimensions.SlabSize.y),
                 material: concrete);
 
-            BuildBuilding(root.transform, "CECADEC", UtezDimensions.Cecadec, grass, stone, pad);
-            BuildBuilding(root.transform, "CDS_Body", UtezDimensions.CdsBody, grass, stone, pad);
-            BuildBuilding(root.transform, "CDS_Extension", UtezDimensions.CdsExtension, grass, stone, pad);
+            foreach (var (name, fp) in UtezDimensions.All)
+                BuildBuilding(root.transform, name, fp, grass, stone, pad);
 
             BuildBoundaryRing(root.transform, forest);
 
@@ -64,7 +63,7 @@ namespace HorrorUtez.World.Editor
             Debug.Log($"[UTEZ] Terrain built into scene '{scene.name}'. Root: {RootName}");
         }
 
-        /// <summary>Grass band + stone kerb loop + footprint pad, grouped and yawed.</summary>
+        /// <summary>Footprint pad, plus a grass band and stone kerb loop when the building has one.</summary>
         private static void BuildBuilding(Transform parent, string name, UtezDimensions.Footprint fp,
             Material grass, Material stone, Material pad)
         {
@@ -73,18 +72,18 @@ namespace HorrorUtez.World.Editor
             group.localPosition = new Vector3(fp.Center.x, 0f, fp.Center.y);
             group.localRotation = Quaternion.Euler(0f, fp.YawDeg, 0f);
 
-            float m = UtezDimensions.GrassMargin;
-            var grassSize = fp.Size + 2f * m * Vector2.one;
-
-            Slab(group, "Grass",
-                center: new Vector3(0f, GrassLift * 0.5f, 0f),
-                size: new Vector3(grassSize.x, GrassLift, grassSize.y), material: grass);
+            if (fp.HasGrass)
+            {
+                var grassSize = fp.Size + 2f * UtezDimensions.GrassMargin * Vector2.one;
+                Slab(group, "Grass",
+                    center: new Vector3(0f, GrassLift * 0.5f, 0f),
+                    size: new Vector3(grassSize.x, GrassLift, grassSize.y), material: grass);
+                BuildKerbLoop(group, grassSize, stone);
+            }
 
             Slab(group, "Pad",
                 center: new Vector3(0f, PadLift * 0.5f, 0f),
                 size: new Vector3(fp.Size.x, PadLift, fp.Size.y), material: pad);
-
-            BuildKerbLoop(group, grassSize, stone);
         }
 
         /// <summary>Four thin boxes forming a rectangle at the outer edge of the grass band.</summary>
