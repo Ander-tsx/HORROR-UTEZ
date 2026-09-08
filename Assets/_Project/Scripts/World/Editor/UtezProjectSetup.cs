@@ -69,6 +69,16 @@ namespace HorrorUtez.World.Editor
             // The PSX fog and post-process render features sample both of these.
             urp.supportsCameraDepthTexture = true;
             urp.supportsCameraOpaqueTexture = true;
+
+            // Additional-light shadows are off in a freshly created URP asset. The flashlight
+            // is an additional light, and a torch that casts no shadow is just an ambient
+            // boost — what it fails to reach is where the horror lives.
+            var urpSo = new SerializedObject(urp);
+            var shadowProp = urpSo.FindProperty("m_AdditionalLightShadowsSupported");
+            if (shadowProp != null)
+                shadowProp.boolValue = true;
+            urpSo.ApplyModifiedPropertiesWithoutUndo();
+
             EditorUtility.SetDirty(urp);
 
             GraphicsSettings.defaultRenderPipeline = urp;
@@ -195,6 +205,26 @@ namespace HorrorUtez.World.Editor
             camera.fieldOfView = 65f;
             head.AddComponent<AudioListener>();
             head.AddComponent<HorrorUtez.Player.HeadBob>();
+
+            // Flashlight on its own transform so it can lag the camera instead of being
+            // welded to it. Range and angle are in world units, so they follow WorldScale.
+            var torch = new GameObject("Flashlight");
+            torch.transform.SetParent(head.transform, false);
+            var beam = torch.AddComponent<Light>();
+            beam.type = LightType.Spot;
+            beam.color = new Color(1f, 0.96f, 0.88f);
+            // URP punctual lights fall off with inverse square. The far wall of CECADEC is
+            // ~34 units away, so reaching it at all needs intensity in the hundreds:
+            // 34^2 is roughly 1150, and anything under that arrives as black.
+            // Compromise: inverse-square means whatever reaches the far wall blows out the
+            // floor two metres ahead. 900 lit the wall but burned the near pool to white;
+            // this trades some reach for a beam that reads as a torch rather than a flare.
+            beam.intensity = 350f;
+            beam.range = 40f * UtezDimensions.WorldScale;
+            beam.spotAngle = 46f;
+            beam.innerSpotAngle = 18f;
+            beam.shadows = LightShadows.Soft;
+            torch.AddComponent<HorrorUtez.Player.Flashlight>();
 
             // Wire the serialized head reference without exposing a public setter.
             var so = new SerializedObject(fpc);

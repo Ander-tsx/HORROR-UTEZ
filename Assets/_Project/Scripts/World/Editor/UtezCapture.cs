@@ -33,6 +33,14 @@ namespace HorrorUtez.World.Editor
             // on pressing Play. Affine warping and pixelation only read in perspective.
             CaptureFromPlayer(Path.Combine(dir, "utez_eye_plaza.png"));
 
+            // Inside CECADEC: the shot that shows whether the interior volume is usable at
+            // the current WorldScale. Must go through the player rig, not a free camera —
+            // the flashlight hangs off the rig, and without it the interior is pure black.
+            var cecadec = UtezDimensions.Cecadec;
+            CaptureFromPlayer(Path.Combine(dir, "utez_interior_cecadec.png"),
+                new Vector3(cecadec.ScaledCenter.x, 0f, cecadec.ScaledCenter.y),
+                cecadec.YawDeg);
+
             Debug.Log($"[UTEZ] Captures written to {dir}");
         }
 
@@ -50,12 +58,29 @@ namespace HorrorUtez.World.Editor
             }
         }
 
+        /// <summary>Free-standing perspective shot at a given position and heading.</summary>
+        private static void CapturePerspective(string path, Vector3 position, float yaw)
+        {
+            var go = new GameObject("UtezCaptureCamera");
+            var cam = go.AddComponent<Camera>();
+            cam.orthographic = false;
+            cam.fieldOfView = 65f;
+            cam.nearClipPlane = 0.05f;
+            cam.farClipPlane = 500f;
+            cam.clearFlags = CameraClearFlags.SolidColor;
+            cam.backgroundColor = new Color(0.05f, 0.05f, 0.07f);
+            go.transform.SetPositionAndRotation(position, Quaternion.Euler(0f, yaw, 0f));
+
+            RenderToFile(cam, path);
+            Object.DestroyImmediate(go);
+        }
+
         /// <summary>
         /// Renders through the player rig's own camera. The rig has not fallen to the
         /// ground yet (no physics step in edit mode), so drop it onto the terrain first
         /// to get a real eye-level view instead of one floating above the slab.
         /// </summary>
-        private static void CaptureFromPlayer(string path)
+        private static void CaptureFromPlayer(string path, Vector3? moveTo = null, float? yaw = null)
         {
             var player = GameObject.Find("Player");
             var cam = player != null ? player.GetComponentInChildren<Camera>() : null;
@@ -66,7 +91,15 @@ namespace HorrorUtez.World.Editor
             }
 
             Vector3 original = player.transform.position;
-            if (Physics.Raycast(original + Vector3.up * 5f, Vector3.down, out var hit, 50f))
+            Quaternion originalRotation = player.transform.rotation;
+
+            if (moveTo.HasValue)
+                player.transform.position = moveTo.Value;
+            if (yaw.HasValue)
+                player.transform.rotation = Quaternion.Euler(0f, yaw.Value, 0f);
+
+            // No physics step runs in edit mode, so drop the rig onto the ground manually.
+            if (Physics.Raycast(player.transform.position + Vector3.up * 5f, Vector3.down, out var hit, 50f))
                 player.transform.position = hit.point;
 
             var previousClear = cam.clearFlags;
@@ -79,6 +112,7 @@ namespace HorrorUtez.World.Editor
             cam.clearFlags = previousClear;
             cam.backgroundColor = previousColor;
             player.transform.position = original;
+            player.transform.rotation = originalRotation;
         }
 
         private static void Capture(string path, float orthoSize)
