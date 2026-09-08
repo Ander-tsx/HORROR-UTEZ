@@ -1,16 +1,12 @@
 {
-    "name": "HorrorUtez.World.Editor",
-    "rootNamespace": "HorrorUtez.World.Editor",
+    "name": "HorrorUtez.Rendering",
+    "rootNamespace": "HorrorUtez.Rendering",
     "references": [
         "HorrorUtez.Core",
-        "HorrorUtez.World",
-        "HorrorUtez.Rendering",
-        "HorrorUtez.Rendering.Editor",
-        "Unity.RenderPipelines.Universal.Runtime"
+        "Unity.RenderPipelines.Universal.Runtime",
+        "Unity.RenderPipelines.Core.Runtime"
     ],
-    "includePlatforms": [
-        "Editor"
-    ],
+    "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
     "overrideReferences": false,

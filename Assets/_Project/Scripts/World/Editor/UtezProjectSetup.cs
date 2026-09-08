@@ -4,6 +4,7 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
+using PsxTerrainMaterials = HorrorUtez.Rendering.Editor.PsxTerrainMaterials;
 
 namespace HorrorUtez.World.Editor
 {
@@ -27,6 +28,7 @@ namespace HorrorUtez.World.Editor
         {
             SetupUrp();
             TidyGeneratedSettings();
+            PsxTerrainMaterials.EnsureAll();
             BuildUtezScene();
 
             AssetDatabase.SaveAssets();

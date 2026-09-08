@@ -1,0 +1,187 @@
+using System.IO;
+using UnityEditor;
+using UnityEngine;
+
+namespace HorrorUtez.Rendering.Editor
+{
+    /// <summary>
+    /// Generates the placeholder PSX materials the terrain uses, plus the small
+    /// procedural textures they sample.
+    ///
+    /// The PSX master graphs expose no base colour — albedo comes only from MainTex —
+    /// so flat-coloured terrain needs real textures. These are 128px, point filtered
+    /// and mip-free on purpose: that IS the PS1 look, and it gives the affine warping
+    /// and pixelation something to act on.
+    ///
+    /// Placeholder quality. Replaced when real art lands.
+    /// </summary>
+    public static class PsxTerrainMaterials
+    {
+        public const string MaterialFolder = "Assets/_Project/Art/Materials";
+        public const string TextureFolder = "Assets/_Project/Art/Textures";
+        private const int TexSize = 128;
+
+        private enum Pattern { Grid, Noise, Blocks }
+
+        private readonly struct Def
+        {
+            public readonly string Name;
+            public readonly Color Base;
+            public readonly Color Accent;
+            public readonly Pattern Pattern;
+            /// <summary>Baked per material: these slabs are scaled cubes, so UVs do not follow world size.</summary>
+            public readonly Vector2 Tiling;
+
+            public Def(string name, Color baseColor, Color accent, Pattern pattern, Vector2 tiling)
+            {
+                Name = name;
+                Base = baseColor;
+                Accent = accent;
+                Pattern = pattern;
+                Tiling = tiling;
+            }
+        }
+
+        private static readonly Def[] Defs =
+        {
+            // Scored concrete slabs, as in the CECADEC entrance photo.
+            new("UTEZ_Concrete", new Color(0.62f, 0.62f, 0.60f), new Color(0.50f, 0.50f, 0.49f), Pattern.Grid, new Vector2(19f, 27f)),
+            new("UTEZ_Pad", new Color(0.70f, 0.70f, 0.70f), new Color(0.60f, 0.60f, 0.60f), Pattern.Grid, new Vector2(5f, 5f)),
+            new("UTEZ_Grass", new Color(0.20f, 0.28f, 0.13f), new Color(0.14f, 0.21f, 0.09f), Pattern.Noise, new Vector2(7f, 13f)),
+            new("UTEZ_Dirt", new Color(0.36f, 0.28f, 0.19f), new Color(0.28f, 0.21f, 0.14f), Pattern.Noise, new Vector2(49f, 57f)),
+            // Irregular stacked stone, as in the kerbs around the grass.
+            new("UTEZ_Stone", new Color(0.45f, 0.43f, 0.40f), new Color(0.30f, 0.29f, 0.27f), Pattern.Blocks, new Vector2(5f, 2f)),
+            new("UTEZ_ForestMarker", new Color(0.10f, 0.16f, 0.10f), new Color(0.05f, 0.09f, 0.05f), Pattern.Noise, new Vector2(10f, 4f)),
+        };
+
+        [MenuItem("HORROR-UTEZ/Rebuild PSX Terrain Materials")]
+        public static void EnsureAll()
+        {
+            Directory.CreateDirectory(MaterialFolder);
+            Directory.CreateDirectory(TextureFolder);
+
+            var shader = Shader.Find(PsxShaderProperties.UnlitMaster);
+            if (shader == null)
+            {
+                Debug.LogError($"[PSX] Shader not found: {PsxShaderProperties.UnlitMaster}. Is Assets/ThirdParty/URP-PSX vendored?");
+                return;
+            }
+
+            foreach (var def in Defs)
+            {
+                var tex = BuildTexture(def);
+                string texPath = $"{TextureFolder}/{def.Name}.asset";
+                var existingTex = AssetDatabase.LoadAssetAtPath<Texture2D>(texPath);
+                if (existingTex == null)
+                    AssetDatabase.CreateAsset(tex, texPath);
+                else
+                {
+                    EditorUtility.CopySerialized(tex, existingTex);
+                    Object.DestroyImmediate(tex);
+                }
+
+                tex = AssetDatabase.LoadAssetAtPath<Texture2D>(texPath);
+                WriteMaterial(def, shader, tex);
+            }
+
+            AssetDatabase.SaveAssets();
+            AssetDatabase.Refresh();
+            Debug.Log($"[PSX] {Defs.Length} terrain materials written to {MaterialFolder}");
+        }
+
+        private static void WriteMaterial(Def def, Shader shader, Texture2D tex)
+        {
+            string path = $"{MaterialFolder}/{def.Name}.mat";
+            var mat = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (mat == null)
+            {
+                mat = new Material(shader);
+                AssetDatabase.CreateAsset(mat, path);
+            }
+            mat.shader = shader;
+
+            mat.SetTexture(PsxShaderProperties.MainTex, tex);
+            mat.SetVector(PsxShaderProperties.Tiling, def.Tiling);
+            mat.SetFloat(PsxShaderProperties.IsLit, 1f);
+            mat.SetFloat(PsxShaderProperties.IsSpecular, 0f);
+            mat.SetFloat(PsxShaderProperties.Smoothness, 0f);
+
+            // Ground is huge and always under the camera: heavy vertex jitter here reads as
+            // nausea, not nostalgia. Keep the resolution high so the snapping stays subtle.
+            mat.SetFloat(PsxShaderProperties.UseVertexJitter, 1f);
+            mat.SetFloat(PsxShaderProperties.VertexResolution, 320f);
+
+            // Affine warping is the signature look on large flat floors.
+            mat.SetFloat(PsxShaderProperties.UseAffine, 1f);
+            mat.SetFloat(PsxShaderProperties.AffineThreshold, 0.25f);
+
+            mat.SetFloat(PsxShaderProperties.UsePixelation, 1f);
+            mat.SetFloat(PsxShaderProperties.TextureResolution, 128f);
+
+            mat.SetFloat(PsxShaderProperties.UseColorPrecision, 1f);
+            mat.SetFloat(PsxShaderProperties.ColorPrecision, 5f);
+
+            // Clipping the ground away at distance looks broken; the fog handles depth.
+            mat.SetFloat(PsxShaderProperties.UseCameraClipping, 0f);
+
+            EditorUtility.SetDirty(mat);
+        }
+
+        private static Texture2D BuildTexture(Def def)
+        {
+            var tex = new Texture2D(TexSize, TexSize, TextureFormat.RGBA32, mipChain: false)
+            {
+                name = def.Name,
+                filterMode = FilterMode.Point,
+                wrapMode = TextureWrapMode.Repeat,
+                anisoLevel = 0,
+            };
+
+            // Seeded per material so repeated runs produce identical assets.
+            var rng = new System.Random(def.Name.GetHashCode());
+            var pixels = new Color32[TexSize * TexSize];
+
+            for (int y = 0; y < TexSize; y++)
+            for (int x = 0; x < TexSize; x++)
+            {
+                Color c = def.Pattern switch
+                {
+                    Pattern.Grid => GridPixel(def, x, y),
+                    Pattern.Blocks => BlocksPixel(def, x, y, rng),
+                    _ => NoisePixel(def, rng),
+                };
+                pixels[y * TexSize + x] = c;
+            }
+
+            tex.SetPixels32(pixels);
+            tex.Apply(updateMipmaps: false);
+            return tex;
+        }
+
+        /// <summary>Scored slabs: a darker joint line on a fixed grid.</summary>
+        private static Color GridPixel(Def def, int x, int y)
+        {
+            const int cell = 32;
+            bool joint = x % cell == 0 || y % cell == 0 || x % cell == 1 || y % cell == 1;
+            return joint ? def.Accent : def.Base;
+        }
+
+        private static Color NoisePixel(Def def, System.Random rng)
+        {
+            return Color.Lerp(def.Base, def.Accent, (float)rng.NextDouble());
+        }
+
+        /// <summary>Irregular stacked stone: offset rows of blocks with dark mortar.</summary>
+        private static Color BlocksPixel(Def def, int x, int y, System.Random rng)
+        {
+            const int rowH = 24;
+            int row = y / rowH;
+            int offset = (row % 2) * 16;
+            int blockW = 30;
+            bool mortar = (y % rowH) < 2 || ((x + offset) % blockW) < 2;
+            if (mortar)
+                return def.Accent;
+            return Color.Lerp(def.Base, def.Accent, (float)rng.NextDouble() * 0.35f);
+        }
+    }
+}

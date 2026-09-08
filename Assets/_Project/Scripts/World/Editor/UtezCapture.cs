@@ -29,6 +29,11 @@ namespace HorrorUtez.World.Editor
             // Close: the explanada and the two building footprints.
             Capture(Path.Combine(dir, "utez_top_close.png"), orthoSize: 60f);
 
+            // Eye level, standing in the plaza looking south at where the CECADEC
+            // entrance will be. Affine warping and pixelation only read in perspective.
+            CapturePerspective(Path.Combine(dir, "utez_eye_plaza.png"),
+                position: new Vector3(0f, 1.7f, 8f), yaw: 180f);
+
             Debug.Log($"[UTEZ] Captures written to {dir}");
         }
 
@@ -46,6 +51,23 @@ namespace HorrorUtez.World.Editor
             }
         }
 
+        /// <summary>Eye-level perspective shot; this is where the PSX shader work shows.</summary>
+        private static void CapturePerspective(string path, Vector3 position, float yaw)
+        {
+            var go = new GameObject("UtezCaptureCamera");
+            var cam = go.AddComponent<Camera>();
+            cam.orthographic = false;
+            cam.fieldOfView = 60f;
+            cam.nearClipPlane = 0.05f;
+            cam.farClipPlane = 500f;
+            cam.clearFlags = CameraClearFlags.SolidColor;
+            cam.backgroundColor = new Color(0.05f, 0.05f, 0.07f);
+            go.transform.SetPositionAndRotation(position, Quaternion.Euler(0f, yaw, 0f));
+
+            RenderToFile(cam, path);
+            Object.DestroyImmediate(go);
+        }
+
         private static void Capture(string path, float orthoSize)
         {
             var go = new GameObject("UtezCaptureCamera");
@@ -61,6 +83,12 @@ namespace HorrorUtez.World.Editor
             go.transform.position = new Vector3(UtezDimensions.SlabCenter.x, 300f, UtezDimensions.SlabCenter.y);
             go.transform.rotation = Quaternion.Euler(90f, 0f, 0f);
 
+            RenderToFile(cam, path);
+            Object.DestroyImmediate(go);
+        }
+
+        private static void RenderToFile(Camera cam, string path)
+        {
             var rt = new RenderTexture(Resolution, Resolution, 24, RenderTextureFormat.ARGB32);
             cam.targetTexture = rt;
 
@@ -79,7 +107,6 @@ namespace HorrorUtez.World.Editor
 
             cam.targetTexture = null;
             Object.DestroyImmediate(tex);
-            Object.DestroyImmediate(go);
             rt.Release();
             Object.DestroyImmediate(rt);
         }
