@@ -3,7 +3,8 @@
     "rootNamespace": "HorrorUtez.World.Editor",
     "references": [
         "HorrorUtez.Core",
-        "HorrorUtez.World"
+        "HorrorUtez.World",
+        "Unity.RenderPipelines.Universal.Runtime"
     ],
     "includePlatforms": [
         "Editor"
