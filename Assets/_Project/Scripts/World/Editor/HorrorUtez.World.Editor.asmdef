@@ -1,0 +1,19 @@
+{
+    "name": "HorrorUtez.World.Editor",
+    "rootNamespace": "HorrorUtez.World.Editor",
+    "references": [
+        "HorrorUtez.Core",
+        "HorrorUtez.World"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

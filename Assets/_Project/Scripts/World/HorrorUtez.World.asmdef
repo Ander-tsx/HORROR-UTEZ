@@ -1,0 +1,16 @@
+{
+    "name": "HorrorUtez.World",
+    "rootNamespace": "HorrorUtez.World",
+    "references": [
+        "HorrorUtez.Core"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
