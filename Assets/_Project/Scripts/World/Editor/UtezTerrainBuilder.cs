@@ -102,7 +102,12 @@ namespace HorrorUtez.World.Editor
             Slab(group, "Kerb_West", new Vector3(-hx, h * 0.5f, 0f), new Vector3(w, h, outer.y - w), stone);
         }
 
-        /// <summary>Coarse tree-line ring at the dirt edge: a visible + collidable map boundary.</summary>
+        /// <summary>
+        /// Invisible wall at the dirt edge. The real tree line is scattered geometry from
+        /// UtezForestBuilder; these boxes only stop the player walking out of the world.
+        /// Renderers are disabled rather than deleted so the boundary stays selectable and
+        /// obvious in the editor.
+        /// </summary>
         private static void BuildBoundaryRing(Transform parent, Material forest)
         {
             var group = new GameObject("Boundary").transform;
@@ -115,10 +120,13 @@ namespace HorrorUtez.World.Editor
             float hx = d.x * 0.5f;
             float hz = d.y * 0.5f;
 
-            Slab(group, "Treeline_North", new Vector3(0f, h * 0.5f, hz), new Vector3(d.x + t, h, t), forest);
-            Slab(group, "Treeline_South", new Vector3(0f, h * 0.5f, -hz), new Vector3(d.x + t, h, t), forest);
-            Slab(group, "Treeline_East", new Vector3(hx, h * 0.5f, 0f), new Vector3(t, h, d.y + t), forest);
-            Slab(group, "Treeline_West", new Vector3(-hx, h * 0.5f, 0f), new Vector3(t, h, d.y + t), forest);
+            Slab(group, "Boundary_North", new Vector3(0f, h * 0.5f, hz), new Vector3(d.x + t, h, t), forest);
+            Slab(group, "Boundary_South", new Vector3(0f, h * 0.5f, -hz), new Vector3(d.x + t, h, t), forest);
+            Slab(group, "Boundary_East", new Vector3(hx, h * 0.5f, 0f), new Vector3(t, h, d.y + t), forest);
+            Slab(group, "Boundary_West", new Vector3(-hx, h * 0.5f, 0f), new Vector3(t, h, d.y + t), forest);
+
+            foreach (var renderer in group.GetComponentsInChildren<MeshRenderer>())
+                renderer.enabled = false;
         }
 
         /// <summary>A scaled cube (BoxCollider included) parented in local space.</summary>

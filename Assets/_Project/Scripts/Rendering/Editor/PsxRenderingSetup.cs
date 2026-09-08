@@ -139,13 +139,13 @@ namespace HorrorUtez.Rendering.Editor
         }
 
         /// <summary>Adds the scene-side global Volume that applies the profile.</summary>
-        public static void SpawnGlobalVolume()
+        public static Volume SpawnGlobalVolume()
         {
             var profile = AssetDatabase.LoadAssetAtPath<VolumeProfile>(ProfilePath);
             if (profile == null)
             {
                 Debug.LogWarning("[PSX] No volume profile; run Setup PSX Rendering first.");
-                return;
+                return null;
             }
 
             var go = new GameObject("Global Volume");
@@ -154,6 +154,7 @@ namespace HorrorUtez.Rendering.Editor
             volume.priority = 0f;
             volume.sharedProfile = profile;
             Debug.Log("[PSX] Global Volume added to the scene.");
+            return volume;
         }
     }
 }

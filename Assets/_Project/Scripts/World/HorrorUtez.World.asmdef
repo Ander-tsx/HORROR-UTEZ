@@ -2,7 +2,10 @@
     "name": "HorrorUtez.World",
     "rootNamespace": "HorrorUtez.World",
     "references": [
-        "HorrorUtez.Core"
+        "HorrorUtez.Core",
+        "HorrorUtez.Rendering",
+        "Unity.RenderPipelines.Universal.Runtime",
+        "Unity.RenderPipelines.Core.Runtime"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

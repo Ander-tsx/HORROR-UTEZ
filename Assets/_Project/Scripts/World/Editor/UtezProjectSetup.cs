@@ -121,9 +121,11 @@ namespace HorrorUtez.World.Editor
             var scene = EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects, NewSceneMode.Single);
             UtezTerrainBuilder.Build();
             UtezBuildingBuilder.Build();
-            ConfigureLighting();
-            SpawnPlayer();
-            PsxRenderingSetup.SpawnGlobalVolume();
+            UtezForestBuilder.Build();
+            var sun = ConfigureLighting();
+            var player = SpawnPlayer();
+            var volume = PsxRenderingSetup.SpawnGlobalVolume();
+            UtezWeatherSetup.Build(player, volume, sun);
             EditorSceneManager.SaveScene(scene, ScenePath);
             Debug.Log($"[UTEZ] Scene saved to {ScenePath}");
         }
@@ -136,7 +138,7 @@ namespace HorrorUtez.World.Editor
         /// facade we have a photo of, was a silhouette. This rakes the light from the north
         /// and lifts ambient just enough that shadowed surfaces keep their colour.
         /// </summary>
-        private static void ConfigureLighting()
+        private static Light ConfigureLighting()
         {
             Light sun = null;
             foreach (var light in UnityEngine.Object.FindObjectsByType<Light>(FindObjectsSortMode.None))
@@ -165,13 +167,14 @@ namespace HorrorUtez.World.Editor
             RenderSettings.ambientLight = new Color(0.20f, 0.22f, 0.28f);
 
             Debug.Log("[UTEZ] Dusk lighting configured.");
+            return sun;
         }
 
         /// <summary>
         /// Drops a playable first-person rig into the plaza, facing south toward the
         /// CECADEC entrance. Replaces the default scene camera so pressing Play just works.
         /// </summary>
-        private static void SpawnPlayer()
+        private static GameObject SpawnPlayer()
         {
             foreach (var cam in UnityEngine.Object.FindObjectsByType<Camera>(FindObjectsSortMode.None))
                 if (cam.CompareTag("MainCamera"))
@@ -193,6 +196,11 @@ namespace HorrorUtez.World.Editor
 
             player.AddComponent<HorrorUtez.Player.PlayerInputReader>();
             var fpc = player.AddComponent<HorrorUtez.Player.FirstPersonController>();
+
+            var stepSource = player.AddComponent<AudioSource>();
+            stepSource.playOnAwake = false;
+            stepSource.spatialBlend = 0f;
+            player.AddComponent<HorrorUtez.Player.FootstepAudio>();
 
             var head = new GameObject("Head");
             head.transform.SetParent(player.transform, false);
@@ -224,6 +232,9 @@ namespace HorrorUtez.World.Editor
             beam.spotAngle = 46f;
             beam.innerSpotAngle = 18f;
             beam.shadows = LightShadows.Soft;
+            var torchSource = torch.AddComponent<AudioSource>();
+            torchSource.playOnAwake = false;
+            torchSource.spatialBlend = 0f;
             torch.AddComponent<HorrorUtez.Player.Flashlight>();
 
             // Wire the serialized head reference without exposing a public setter.
@@ -232,6 +243,7 @@ namespace HorrorUtez.World.Editor
             so.ApplyModifiedPropertiesWithoutUndo();
 
             Debug.Log("[UTEZ] Player rig spawned in the plaza.");
+            return player;
         }
     }
 }

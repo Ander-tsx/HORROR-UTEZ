@@ -40,6 +40,16 @@ namespace HorrorUtez.Player
         /// <summary>True on the frame the light toggle was pressed.</summary>
         public bool ToggleLight { get; private set; }
 
+        /// <summary>True on the frame jump was pressed.</summary>
+        public bool Jump { get; private set; }
+
+        [Tooltip("Right-side touches shorter than this, with no drag, count as a jump.")]
+        [SerializeField] private float touchTapSeconds = 0.2f;
+        [Tooltip("Pixels of drag allowed before a tap stops counting as a jump.")]
+        [SerializeField] private float touchTapSlop = 20f;
+
+        private float _lookStartTime;
+        private float _lookDrag;
         private int _lastTouchCount;
         private int _moveTouchId = -1;
         private int _lookTouchId = -1;
@@ -51,18 +61,20 @@ namespace HorrorUtez.Player
             Vector2 look = Vector2.zero;
             bool run = false;
             bool toggleLight = false;
+            bool jump = false;
 
-            ReadKeyboardMouse(ref move, ref look, ref run, ref toggleLight);
-            ReadGamepad(ref move, ref look, ref run, ref toggleLight);
-            ReadTouch(ref move, ref look, ref run, ref toggleLight);
+            ReadKeyboardMouse(ref move, ref look, ref run, ref toggleLight, ref jump);
+            ReadGamepad(ref move, ref look, ref run, ref toggleLight, ref jump);
+            ReadTouch(ref move, ref look, ref run, ref toggleLight, ref jump);
 
             Move = Vector2.ClampMagnitude(move, 1f);
             Look = look;
             Run = run;
             ToggleLight = toggleLight;
+            Jump = jump;
         }
 
-        private void ReadKeyboardMouse(ref Vector2 move, ref Vector2 look, ref bool run, ref bool toggleLight)
+        private void ReadKeyboardMouse(ref Vector2 move, ref Vector2 look, ref bool run, ref bool toggleLight, ref bool jump)
         {
             var keyboard = Keyboard.current;
             if (keyboard != null)
@@ -73,6 +85,7 @@ namespace HorrorUtez.Player
                 if (keyboard.aKey.isPressed || keyboard.leftArrowKey.isPressed) move.x -= 1f;
                 if (keyboard.leftShiftKey.isPressed || keyboard.rightShiftKey.isPressed) run = true;
                 if (keyboard.fKey.wasPressedThisFrame) toggleLight = true;
+                if (keyboard.spaceKey.wasPressedThisFrame) jump = true;
             }
 
             var mouse = Mouse.current;
@@ -80,7 +93,7 @@ namespace HorrorUtez.Player
                 look += mouse.delta.ReadValue() * mouseSensitivity;
         }
 
-        private void ReadGamepad(ref Vector2 move, ref Vector2 look, ref bool run, ref bool toggleLight)
+        private void ReadGamepad(ref Vector2 move, ref Vector2 look, ref bool run, ref bool toggleLight, ref bool jump)
         {
             var pad = Gamepad.current;
             if (pad == null)
@@ -92,9 +105,11 @@ namespace HorrorUtez.Player
                 run = true;
             if (pad.buttonNorth.wasPressedThisFrame)
                 toggleLight = true;
+            if (pad.buttonSouth.wasPressedThisFrame)
+                jump = true;
         }
 
-        private void ReadTouch(ref Vector2 move, ref Vector2 look, ref bool run, ref bool toggleLight)
+        private void ReadTouch(ref Vector2 move, ref Vector2 look, ref bool run, ref bool toggleLight, ref bool jump)
         {
             var screen = Touchscreen.current;
             if (screen == null)
@@ -128,13 +143,22 @@ namespace HorrorUtez.Player
                     else if (position.x >= midpoint && _lookTouchId < 0)
                     {
                         _lookTouchId = id;
+                        _lookStartTime = Time.unscaledTime;
+                        _lookDrag = 0f;
                     }
                 }
                 else if (phase == UnityEngine.InputSystem.TouchPhase.Ended ||
                          phase == UnityEngine.InputSystem.TouchPhase.Canceled)
                 {
                     if (id == _moveTouchId) _moveTouchId = -1;
-                    if (id == _lookTouchId) _lookTouchId = -1;
+                    if (id == _lookTouchId)
+                    {
+                        // A quick stab that never turned into a drag is a jump, not a look.
+                        bool quick = Time.unscaledTime - _lookStartTime < touchTapSeconds;
+                        if (quick && _lookDrag < touchTapSlop)
+                            jump = true;
+                        _lookTouchId = -1;
+                    }
                     continue;
                 }
 
@@ -147,7 +171,9 @@ namespace HorrorUtez.Player
                 }
                 else if (id == _lookTouchId)
                 {
-                    look += touch.delta.ReadValue() * touchLookSensitivity;
+                    Vector2 delta = touch.delta.ReadValue();
+                    look += delta * touchLookSensitivity;
+                    _lookDrag += delta.magnitude;
                 }
             }
         }

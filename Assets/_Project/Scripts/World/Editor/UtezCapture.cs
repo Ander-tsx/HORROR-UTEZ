@@ -41,6 +41,15 @@ namespace HorrorUtez.World.Editor
                 new Vector3(cecadec.ScaledCenter.x, 0f, cecadec.ScaledCenter.y),
                 cecadec.YawDeg);
 
+            // Looking out from the campus edge: the shot that shows the tree line.
+            Vector2 slabHalf = UtezDimensions.SlabSize * 0.5f;
+            CaptureFromPlayer(Path.Combine(dir, "utez_treeline.png"),
+                new Vector3(-slabHalf.x + 6f, 0f, UtezDimensions.SlabCenter.y), 270f);
+
+            // Rain never starts on its own here: WeatherSystem.Awake does not run in edit
+            // mode, so the emitter sits idle. Force it, simulate, shoot, restore.
+            CaptureRain(Path.Combine(dir, "utez_rain.png"));
+
             Debug.Log($"[UTEZ] Captures written to {dir}");
         }
 
@@ -56,6 +65,36 @@ namespace HorrorUtez.World.Editor
                 Debug.LogError($"[UTEZ] Capture failed: {e}");
                 EditorApplication.Exit(1);
             }
+        }
+
+        /// <summary>
+        /// Drives the rain emitter by hand so the weather can be verified without entering
+        /// play mode, then puts it back exactly as it was.
+        /// </summary>
+        private static void CaptureRain(string path)
+        {
+            var emitterGo = GameObject.Find("RainEmitter");
+            if (emitterGo == null)
+            {
+                Debug.LogWarning("[UTEZ] No RainEmitter in the scene; skipping rain capture.");
+                return;
+            }
+
+            var system = emitterGo.GetComponent<ParticleSystem>();
+            if (system == null)
+                return;
+
+            var emission = system.emission;
+            float previousRate = emission.rateOverTime.constant;
+            emission.rateOverTime = 2600f;
+
+            // Simulate forward so the volume is full of drops rather than a thin first frame.
+            system.Simulate(3f, withChildren: true, restart: true);
+
+            CaptureFromPlayer(path);
+
+            system.Clear();
+            emission.rateOverTime = previousRate;
         }
 
         /// <summary>Free-standing perspective shot at a given position and heading.</summary>

@@ -21,7 +21,7 @@ namespace HorrorUtez.Rendering.Editor
         public const string TextureFolder = "Assets/_Project/Art/Textures";
         private const int TexSize = 128;
 
-        private enum Pattern { Grid, Noise, Blocks, Panels }
+        private enum Pattern { Grid, Noise, Blocks, Panels, Foliage }
 
         private readonly struct Def
         {
@@ -58,6 +58,14 @@ namespace HorrorUtez.Rendering.Editor
             // The pale pilasters flanking the entrance, reused for CDS and the auditorium.
             new("UTEZ_WallBeige", new Color(0.72f, 0.66f, 0.55f), new Color(0.60f, 0.55f, 0.45f), Pattern.Panels, new Vector2(6f, 3f)),
             new("UTEZ_Roof", new Color(0.30f, 0.29f, 0.28f), new Color(0.23f, 0.22f, 0.21f), Pattern.Noise, new Vector2(8f, 8f)),
+
+            // Foliage. The vendored forest pack ships no tree textures, so its materials
+            // render pure white; these replace them and, being PSX materials, also give the
+            // trees the vertex jitter the pack's plain URP/Lit materials could not.
+            new("UTEZ_Bark", new Color(0.24f, 0.17f, 0.12f), new Color(0.16f, 0.11f, 0.08f), Pattern.Panels, new Vector2(1f, 3f)),
+            new("UTEZ_Leaves", new Color(0.15f, 0.26f, 0.12f), new Color(0.07f, 0.13f, 0.06f), Pattern.Foliage, new Vector2(2f, 2f)),
+            new("UTEZ_LeavesDry", new Color(0.24f, 0.23f, 0.13f), new Color(0.13f, 0.13f, 0.07f), Pattern.Foliage, new Vector2(2f, 2f)),
+            new("UTEZ_RockGrey", new Color(0.34f, 0.33f, 0.31f), new Color(0.22f, 0.21f, 0.20f), Pattern.Blocks, new Vector2(2f, 2f)),
         };
 
         [MenuItem("HORROR-UTEZ/Rebuild PSX Terrain Materials")]
@@ -155,6 +163,7 @@ namespace HorrorUtez.Rendering.Editor
                     Pattern.Grid => GridPixel(def, x, y),
                     Pattern.Blocks => BlocksPixel(def, x, y, rng),
                     Pattern.Panels => PanelsPixel(def, y),
+                    Pattern.Foliage => FoliagePixel(def, x, y),
                     _ => NoisePixel(def, rng),
                 };
                 pixels[y * TexSize + x] = c;
@@ -176,6 +185,24 @@ namespace HorrorUtez.Rendering.Editor
         private static Color NoisePixel(Def def, System.Random rng)
         {
             return Color.Lerp(def.Base, def.Accent, (float)rng.NextDouble());
+        }
+
+        /// <summary>
+        /// Leaf clumps, not per-pixel noise.
+        ///
+        /// Random noise at 128px reads as television static once it is stretched over a
+        /// canopy. Quantising to blocks gives the eye something the size of a leaf cluster
+        /// to latch onto, which is what actually looks like foliage at PS1 resolution.
+        /// </summary>
+        private static Color FoliagePixel(Def def, int x, int y)
+        {
+            const int block = 8;
+            int bx = x / block;
+            int by = y / block;
+            // Cheap deterministic hash per block.
+            int h = bx * 73856093 ^ by * 19349663;
+            float t = ((h & 0x7fffffff) % 1000) / 1000f;
+            return Color.Lerp(def.Base, def.Accent, t);
         }
 
         /// <summary>Flat facade broken only by horizontal panel joints, as on CECADEC.</summary>

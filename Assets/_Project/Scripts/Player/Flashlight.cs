@@ -1,3 +1,4 @@
+using HorrorUtez.Core;
 using UnityEngine;
 
 namespace HorrorUtez.Player
@@ -16,6 +17,7 @@ namespace HorrorUtez.Player
     {
         [SerializeField] private PlayerInputReader input;
         [SerializeField] private Light beam;
+        [SerializeField] private AudioSource source;
         [SerializeField] private bool startOn = true;
 
         [Tooltip("Degrees per second the beam chases the camera. Lower drags more.")]
@@ -28,9 +30,15 @@ namespace HorrorUtez.Player
             if (beam == null)
                 beam = GetComponent<Light>();
 
+            if (source == null)
+                source = GetComponent<AudioSource>();
+            _click = ProceduralAudio.CreateClick();
+
             if (beam != null)
                 beam.enabled = startOn;
         }
+
+        private AudioClip _click;
 
         private void LateUpdate()
         {
@@ -38,7 +46,11 @@ namespace HorrorUtez.Player
                 return;
 
             if (input != null && input.ToggleLight)
+            {
                 beam.enabled = !beam.enabled;
+                if (source != null && _click != null)
+                    source.PlayOneShot(_click, 0.5f);
+            }
 
             // Chase the parent's forward rather than inheriting it outright.
             transform.rotation = Quaternion.RotateTowards(

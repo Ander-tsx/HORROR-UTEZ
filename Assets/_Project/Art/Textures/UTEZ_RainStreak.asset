@@ -1,0 +1,48 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!28 &2800000
+Texture2D:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: UTEZ_RainStreak
+  m_ImageContentsHash:
+    serializedVersion: 2
+    Hash: 00000000000000000000000000000000
+  m_IsAlphaChannelOptional: 0
+  serializedVersion: 4
+  m_Width: 8
+  m_Height: 32
+  m_CompleteImageSize: 1024
+  m_MipsStripped: 0
+  m_TextureFormat: 4
+  m_MipCount: 1
+  m_IsReadable: 1
+  m_IsPreProcessed: 0
+  m_IgnoreMipmapLimit: 1
+  m_MipmapLimitGroupName: 
+  m_StreamingMipmaps: 0
+  m_StreamingMipmapsPriority: 0
+  m_VTOnly: 0
+  m_AlphaIsTransparency: 0
+  m_ImageCount: 1
+  m_TextureDimension: 2
+  m_TextureSettings:
+    serializedVersion: 2
+    m_FilterMode: 1
+    m_Aniso: 1
+    m_MipBias: 0
+    m_WrapU: 1
+    m_WrapV: 1
+    m_WrapW: 1
+  m_LightmapFormat: 0
+  m_ColorSpace: 1
+  m_PlatformBlob: 
+  image data: 1024
+  _typelessdata: ffffff00ffffff00ffffff00ffffff00ffffff00ffffff00ffffff00ffffff00ffffff00ffffff09ffffff12ffffff1bffffff1bffffff12ffffff09ffffff00ffffff00ffffff12ffffff23ffffff35ffffff35ffffff23ffffff12ffffff00ffffff00ffffff19ffffff33ffffff4cffffff4cffffff33ffffff19ffffff00ffffff00ffffff21ffffff42ffffff62ffffff62ffffff42ffffff21ffffff00ffffff00ffffff27ffffff4fffffff76ffffff76ffffff4fffffff27ffffff00ffffff00ffffff2dffffff5bffffff88ffffff88ffffff5bffffff2dffffff00ffffff00ffffff33ffffff66ffffff99ffffff99ffffff66ffffff33ffffff00ffffff00ffffff38ffffff70ffffffa7ffffffa7ffffff70ffffff38ffffff00ffffff00ffffff3cffffff78ffffffb4ffffffb4ffffff78ffffff3cffffff00ffffff00ffffff40ffffff7fffffffbfffffffbfffffff7fffffff40ffffff00ffffff00ffffff43ffffff85ffffffc8ffffffc8ffffff85ffffff43ffffff00ffffff00ffffff45ffffff8affffffcfffffffcfffffff8affffff45ffffff00ffffff00ffffff47ffffff8effffffd5ffffffd5ffffff8effffff47ffffff00ffffff00ffffff48ffffff90ffffffd9ffffffd9ffffff90ffffff48ffffff00ffffff00ffffff49ffffff92ffffffdaffffffdaffffff92ffffff49ffffff00ffffff00ffffff49ffffff92ffffffdaffffffdaffffff92ffffff49ffffff00ffffff00ffffff48ffffff90ffffffd9ffffffd9ffffff90ffffff48ffffff00ffffff00ffffff47ffffff8effffffd5ffffffd5ffffff8effffff47ffffff00ffffff00ffffff45ffffff8affffffcfffffffcfffffff8affffff45ffffff00ffffff00ffffff43ffffff85ffffffc8ffffffc8ffffff85ffffff43ffffff00ffffff00ffffff40ffffff7fffffffbfffffffbfffffff7fffffff40ffffff00ffffff00ffffff3cffffff78ffffffb4ffffffb4ffffff78ffffff3cffffff00ffffff00ffffff38ffffff70ffffffa7ffffffa7ffffff70ffffff38ffffff00ffffff00ffffff33ffffff66ffffff99ffffff99ffffff66ffffff33ffffff00ffffff00ffffff2dffffff5bffffff88ffffff88ffffff5bffffff2dffffff00ffffff00ffffff27ffffff4fffffff76ffffff76ffffff4fffffff27ffffff00ffffff00ffffff21ffffff42ffffff62ffffff62ffffff42ffffff21ffffff00ffffff00ffffff19ffffff33ffffff4cffffff4cffffff33ffffff19ffffff00ffffff00ffffff12ffffff23ffffff35ffffff35ffffff23ffffff12ffffff00ffffff00ffffff09ffffff12ffffff1bffffff1bffffff12ffffff09ffffff00ffffff00ffffff00ffffff00ffffff00ffffff00ffffff00ffffff00ffffff00
+  m_StreamData:
+    serializedVersion: 2
+    offset: 0
+    size: 0
+    path: 

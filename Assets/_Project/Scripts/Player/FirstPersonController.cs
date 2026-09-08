@@ -23,6 +23,12 @@ namespace HorrorUtez.Player
         [SerializeField] private float pitchMin = -80f;
         [SerializeField] private float pitchMax = 80f;
 
+        [Header("Jump")]
+        [Tooltip("Peak height in world units. Scaled world, so this is not real metres.")]
+        [SerializeField] private float jumpHeight = 1.6f;
+        [Tooltip("Grace period after walking off a ledge where a jump still registers.")]
+        [SerializeField] private float coyoteTime = 0.12f;
+
         [Header("Gravity")]
         [SerializeField] private float gravity = -18f;
         [Tooltip("Small downward push so the controller stays glued to slopes and steps.")]
@@ -35,11 +41,15 @@ namespace HorrorUtez.Player
         private Vector3 _horizontalVelocity;
         private float _verticalVelocity;
         private float _pitch;
+        private float _lastGroundedTime;
 
         /// <summary>Ground speed in m/s. Head bob and, later, footstep audio read this.</summary>
         public float CurrentSpeed => _horizontalVelocity.magnitude;
 
         public bool IsRunning { get; private set; }
+
+        /// <summary>True while the controller is on the ground. Footstep audio reads this.</summary>
+        public bool IsGrounded { get; private set; }
 
         private void Awake()
         {
@@ -92,10 +102,23 @@ namespace HorrorUtez.Player
             _horizontalVelocity = Vector3.MoveTowards(
                 _horizontalVelocity, targetVelocity, acceleration * Time.deltaTime);
 
-            if (_controller.isGrounded && _verticalVelocity < 0f)
+            IsGrounded = _controller.isGrounded;
+            if (IsGrounded)
+                _lastGroundedTime = Time.time;
+
+            if (IsGrounded && _verticalVelocity < 0f)
                 _verticalVelocity = groundedStick;
             else
                 _verticalVelocity += gravity * Time.deltaTime;
+
+            // Coyote time: jumping the instant you step off an edge is a near-universal
+            // player intent, and refusing it reads as the controller being unresponsive.
+            bool canJump = Time.time - _lastGroundedTime <= coyoteTime;
+            if (_input.Jump && canJump)
+            {
+                _verticalVelocity = Mathf.Sqrt(2f * jumpHeight * -gravity);
+                _lastGroundedTime = float.NegativeInfinity;
+            }
 
             Vector3 velocity = _horizontalVelocity + Vector3.up * _verticalVelocity;
             _controller.Move(velocity * Time.deltaTime);
