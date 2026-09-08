@@ -1,0 +1,50 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d7fd9488000d3734a9e00ee676215985, type: 3}
+  m_Name: UTEZ_Volume
+  m_EditorClassIdentifier: Unity.RenderPipelines.Core.Runtime::UnityEngine.Rendering.VolumeProfile
+  components:
+  - {fileID: 5021985705586464227}
+--- !u!114 &5021985705586464227
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9f8fdb8e5ba2040f894e1ada039d5531, type: 3}
+  m_Name: PsxFogVolume
+  m_EditorClassIdentifier: HorrorUtez.Rendering::HorrorUtez.Rendering.PsxFogVolume
+  active: 1
+  density:
+    m_OverrideState: 1
+    m_Value: 0.018
+  startDistance:
+    m_OverrideState: 1
+    m_Value: 3
+  fogColor:
+    m_OverrideState: 1
+    m_Value: {r: 0.42, g: 0.46, b: 0.52, a: 1}
+  ambientColor:
+    m_OverrideState: 1
+    m_Value: {r: 0.3, g: 0.32, b: 0.38, a: 1}
+  noiseScale:
+    m_OverrideState: 1
+    m_Value: 90
+  noiseStrength:
+    m_OverrideState: 1
+    m_Value: 0.06
+  noiseSpeed:
+    m_OverrideState: 1
+    m_Value: 0.02

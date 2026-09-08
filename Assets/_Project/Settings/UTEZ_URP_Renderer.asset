@@ -1,5 +1,19 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-2909599686307063234
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9bdfd777ccbed4ac898dd14b2264faf7, type: 3}
+  m_Name: PSX Fog
+  m_EditorClassIdentifier: HorrorUtez.Rendering::HorrorUtez.Rendering.PsxFogRenderFeature
+  m_Active: 1
+  shader: {fileID: 0}
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -24,8 +38,9 @@ MonoBehaviour:
     probeSamplingDebugMesh: {fileID: 0}
     probeSamplingDebugTexture: {fileID: 0}
     probeVolumeBlendStatesCS: {fileID: 0}
-  m_RendererFeatures: []
-  m_RendererFeatureMap: 
+  m_RendererFeatures:
+  - {fileID: -2909599686307063234}
+  m_RendererFeatureMap: 3e5a144380069fd7l
   postProcessData: {fileID: 0}
   m_AssetVersion: 3
   m_PrepassLayerMask:

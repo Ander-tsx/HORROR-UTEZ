@@ -5,6 +5,7 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 using PsxTerrainMaterials = HorrorUtez.Rendering.Editor.PsxTerrainMaterials;
+using PsxRenderingSetup = HorrorUtez.Rendering.Editor.PsxRenderingSetup;
 
 namespace HorrorUtez.World.Editor
 {
@@ -29,6 +30,7 @@ namespace HorrorUtez.World.Editor
             SetupUrp();
             TidyGeneratedSettings();
             PsxTerrainMaterials.EnsureAll();
+            PsxRenderingSetup.Setup();
             BuildUtezScene();
 
             AssetDatabase.SaveAssets();
@@ -109,6 +111,7 @@ namespace HorrorUtez.World.Editor
             var scene = EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects, NewSceneMode.Single);
             UtezTerrainBuilder.Build();
             SpawnPlayer();
+            PsxRenderingSetup.SpawnGlobalVolume();
             EditorSceneManager.SaveScene(scene, ScenePath);
             Debug.Log($"[UTEZ] Scene saved to {ScenePath}");
         }
