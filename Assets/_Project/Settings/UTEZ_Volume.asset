@@ -29,10 +29,10 @@ MonoBehaviour:
   active: 1
   density:
     m_OverrideState: 1
-    m_Value: 0.018
+    m_Value: 0.012
   startDistance:
     m_OverrideState: 1
-    m_Value: 3
+    m_Value: 5
   fogColor:
     m_OverrideState: 1
     m_Value: {r: 0.42, g: 0.46, b: 0.52, a: 1}
@@ -41,10 +41,10 @@ MonoBehaviour:
     m_Value: {r: 0.3, g: 0.32, b: 0.38, a: 1}
   noiseScale:
     m_OverrideState: 1
-    m_Value: 90
+    m_Value: 45
   noiseStrength:
     m_OverrideState: 1
-    m_Value: 0.06
+    m_Value: 0.12
   noiseSpeed:
     m_OverrideState: 1
     m_Value: 0.02

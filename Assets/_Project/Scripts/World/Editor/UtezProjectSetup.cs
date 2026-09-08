@@ -111,10 +111,50 @@ namespace HorrorUtez.World.Editor
             var scene = EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects, NewSceneMode.Single);
             UtezTerrainBuilder.Build();
             UtezBuildingBuilder.Build();
+            ConfigureLighting();
             SpawnPlayer();
             PsxRenderingSetup.SpawnGlobalVolume();
             EditorSceneManager.SaveScene(scene, ScenePath);
             Debug.Log($"[UTEZ] Scene saved to {ScenePath}");
+        }
+
+        /// <summary>
+        /// Dusk lighting aimed so the facades actually read.
+        ///
+        /// Unity's default directional light leaves every north-facing wall unlit, and with
+        /// no ambient term those faces render pure black — the CECADEC entrance, the one
+        /// facade we have a photo of, was a silhouette. This rakes the light from the north
+        /// and lifts ambient just enough that shadowed surfaces keep their colour.
+        /// </summary>
+        private static void ConfigureLighting()
+        {
+            Light sun = null;
+            foreach (var light in UnityEngine.Object.FindObjectsByType<Light>(FindObjectsSortMode.None))
+            {
+                if (light.type == LightType.Directional)
+                {
+                    sun = light;
+                    break;
+                }
+            }
+
+            if (sun == null)
+            {
+                var go = new GameObject("Directional Light");
+                sun = go.AddComponent<Light>();
+                sun.type = LightType.Directional;
+            }
+
+            sun.transform.rotation = Quaternion.Euler(30f, 160f, 0f);
+            sun.color = new Color(0.72f, 0.78f, 0.95f);
+            sun.intensity = 1.1f;
+            sun.shadows = LightShadows.Soft;
+
+            RenderSettings.sun = sun;
+            RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
+            RenderSettings.ambientLight = new Color(0.20f, 0.22f, 0.28f);
+
+            Debug.Log("[UTEZ] Dusk lighting configured.");
         }
 
         /// <summary>

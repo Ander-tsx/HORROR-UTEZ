@@ -40,7 +40,7 @@ namespace HorrorUtez.World.Editor
                 var wall = name == "CECADEC" ? red : beige;
 
                 if (fp.HasWalls)
-                    BuildShell(root.transform, name, fp, wall, roof);
+                    BuildShell(root.transform, name, fp, wall, beige, roof);
                 else
                     BuildCanopy(root.transform, name, fp, beige, roof);
             }
@@ -51,7 +51,7 @@ namespace HorrorUtez.World.Editor
         }
 
         private static void BuildShell(Transform parent, string name, UtezDimensions.Footprint fp,
-            Material wall, Material roof)
+            Material wall, Material trim, Material roof)
         {
             var group = MakeGroup(parent, name, fp);
 
@@ -64,7 +64,7 @@ namespace HorrorUtez.World.Editor
                          UtezDimensions.Side.East, UtezDimensions.Side.West,
                      })
             {
-                BuildWall(group, side, size, height, side == fp.Entrance, wall);
+                BuildWall(group, side, size, height, side == fp.Entrance, wall, trim);
             }
 
             float roofThickness = UtezDimensions.RoofThickness;
@@ -79,7 +79,7 @@ namespace HorrorUtez.World.Editor
         /// without overlapping.
         /// </summary>
         private static void BuildWall(Transform group, UtezDimensions.Side side, Vector2 size,
-            float height, bool withDoor, Material material)
+            float height, bool withDoor, Material material, Material trim)
         {
             float thickness = UtezDimensions.WallThickness;
             bool alongX = side is UtezDimensions.Side.North or UtezDimensions.Side.South;
@@ -115,6 +115,23 @@ namespace HorrorUtez.World.Editor
             Slab(group, name + "_Lintel",
                 Place(0f, doorHeight + (height - doorHeight) * 0.5f),
                 Extent(doorWidth, height - doorHeight), material);
+
+            // The pale pilasters flanking the entrance are what make CECADEC recognisable
+            // in the photo, so they are structure here rather than a later decal.
+            float scale = UtezDimensions.WorldScale;
+            float pilasterWidth = 1.5f * scale;
+            float proud = 0.35f * scale;
+            float pilasterOffset = (doorWidth + pilasterWidth) * 0.5f;
+
+            Vector3 Proud(float along) => alongX
+                ? new Vector3(along, height * 0.5f, sign * (offset + proud))
+                : new Vector3(sign * (offset + proud), height * 0.5f, along);
+            Vector3 ProudExtent() => alongX
+                ? new Vector3(pilasterWidth, height, thickness + proud)
+                : new Vector3(thickness + proud, height, pilasterWidth);
+
+            Slab(group, name + "_PilasterA", Proud(-pilasterOffset), ProudExtent(), trim);
+            Slab(group, name + "_PilasterB", Proud(pilasterOffset), ProudExtent(), trim);
         }
 
         /// <summary>Roof on four corner pillars. No walls: you see and walk straight through.</summary>
