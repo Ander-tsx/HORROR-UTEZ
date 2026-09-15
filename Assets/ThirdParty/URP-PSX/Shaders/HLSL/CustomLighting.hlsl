@@ -1,6 +1,12 @@
 #ifndef CUSTOM_LIGHTING_INCLUDED
 #define CUSTOM_LIGHTING_INCLUDED
 
+// HORROR-UTEZ local change: cap each additional light's contribution. URP's inverse-square
+// attenuation grows without bound as a surface nears the light (the head-mounted flashlight
+// a few centimetres from a door frame), and past half precision's 65504 the value turns to
+// inf, which the tonemapper and the PSX colour pass render as blue/black block noise.
+#define PSX_MAX_LIGHT 16.0
+
 void MainLight_float(float3 WorldPos, out float3 Direction, out float3 Color, out float DistanceAtten, out float ShadowAtten)
 {
 #ifdef SHADERGRAPH_PREVIEW
@@ -82,7 +88,7 @@ void AdditionalLights_float(float3 SpecColor, float Smoothness, float3 WorldPosi
     for (int i = 0; i < pixelLightCount; ++i)
     {
         Light light = GetAdditionalLight(i, WorldPosition);
-        half3 attenuatedLightColor = light.color * (light.distanceAttenuation * light.shadowAttenuation);
+        half3 attenuatedLightColor = min(light.color * (light.distanceAttenuation * light.shadowAttenuation), PSX_MAX_LIGHT);
         diffuseColor += LightingLambert(attenuatedLightColor, light.direction, WorldNormal);
         specularColor += LightingSpecular(attenuatedLightColor, light.direction, WorldNormal, WorldView, float4(SpecColor, 0), Smoothness);
     }
@@ -105,7 +111,7 @@ void AdditionalLights_half(half3 SpecColor, half Smoothness, half3 WorldPosition
     for (int i = 0; i < pixelLightCount; ++i)
     {
         Light light = GetAdditionalLight(i, WorldPosition);
-        half3 attenuatedLightColor = light.color * (light.distanceAttenuation * light.shadowAttenuation);
+        half3 attenuatedLightColor = min(light.color * (light.distanceAttenuation * light.shadowAttenuation), PSX_MAX_LIGHT);
         diffuseColor += LightingLambert(attenuatedLightColor, light.direction, WorldNormal);
         specularColor += LightingSpecular(attenuatedLightColor, light.direction, WorldNormal, WorldView, half4(SpecColor, 0), Smoothness);
     }

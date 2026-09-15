@@ -124,17 +124,17 @@ namespace HorrorUtez.Rendering.Editor
             // Ground is huge and always under the camera: heavy vertex jitter here reads as
             // nausea, not nostalgia. Keep the resolution high so the snapping stays subtle.
             mat.SetFloat(PsxShaderProperties.UseVertexJitter, 1f);
-            mat.SetFloat(PsxShaderProperties.VertexResolution, 320f);
+            mat.SetFloat(PsxShaderProperties.VertexResolution, 560f);
 
             // Affine warping is the signature look on large flat floors.
             mat.SetFloat(PsxShaderProperties.UseAffine, 1f);
             mat.SetFloat(PsxShaderProperties.AffineThreshold, 0.25f);
 
             mat.SetFloat(PsxShaderProperties.UsePixelation, 1f);
-            mat.SetFloat(PsxShaderProperties.TextureResolution, 128f);
+            mat.SetFloat(PsxShaderProperties.TextureResolution, 256f);
 
             mat.SetFloat(PsxShaderProperties.UseColorPrecision, 1f);
-            mat.SetFloat(PsxShaderProperties.ColorPrecision, 5f);
+            mat.SetFloat(PsxShaderProperties.ColorPrecision, 6f);
 
             // Clipping the ground away at distance looks broken; the fog handles depth.
             mat.SetFloat(PsxShaderProperties.UseCameraClipping, 0f);

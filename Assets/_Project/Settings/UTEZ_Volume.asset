@@ -15,28 +15,68 @@ MonoBehaviour:
   active: 1
   pixelHeight:
     m_OverrideState: 1
-    m_Value: 240
+    m_Value: 400
   colorLevels:
     m_OverrideState: 1
-    m_Value: 32
+    m_Value: 64
   ditherStrength:
     m_OverrideState: 1
-    m_Value: 1
+    m_Value: 0.55
   warp:
     m_OverrideState: 1
-    m_Value: 0.025
+    m_Value: 0.02
   aberration:
     m_OverrideState: 1
-    m_Value: 0.0015
+    m_Value: 0.001
   scanlineStrength:
     m_OverrideState: 1
-    m_Value: 0.12
+    m_Value: 0.08
   vignetteStrength:
     m_OverrideState: 1
-    m_Value: 0.35
+    m_Value: 0.22
   grainStrength:
     m_OverrideState: 1
-    m_Value: 0.04
+    m_Value: 0.035
+--- !u!114 &-2222481675713796893
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 97c23e3b12dc18c42a140437e53d3951, type: 3}
+  m_Name: Tonemapping
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.Tonemapping
+  active: 1
+  mode:
+    m_OverrideState: 1
+    m_Value: 1
+  neutralHDRRangeReductionMode:
+    m_OverrideState: 1
+    m_Value: 2
+  acesPreset:
+    m_OverrideState: 1
+    m_Value: 3
+  hueShiftAmount:
+    m_OverrideState: 1
+    m_Value: 0
+  detectPaperWhite:
+    m_OverrideState: 1
+    m_Value: 0
+  paperWhite:
+    m_OverrideState: 1
+    m_Value: 300
+  detectBrightnessLimits:
+    m_OverrideState: 1
+    m_Value: 1
+  minNits:
+    m_OverrideState: 1
+    m_Value: 0.005
+  maxNits:
+    m_OverrideState: 1
+    m_Value: 1000
 --- !u!114 &11400000
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -52,6 +92,7 @@ MonoBehaviour:
   components:
   - {fileID: 5021985705586464227}
   - {fileID: -2813660427095820823}
+  - {fileID: -2222481675713796893}
 --- !u!114 &5021985705586464227
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -67,10 +108,10 @@ MonoBehaviour:
   active: 1
   density:
     m_OverrideState: 1
-    m_Value: 0.012
+    m_Value: 0.018
   startDistance:
     m_OverrideState: 1
-    m_Value: 5
+    m_Value: 3.3
   fogColor:
     m_OverrideState: 1
     m_Value: {r: 0.42, g: 0.46, b: 0.52, a: 1}

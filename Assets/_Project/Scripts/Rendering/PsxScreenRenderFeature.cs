@@ -87,6 +87,11 @@ namespace HorrorUtez.Rendering
                 if (resourceData.isActiveTargetBackBuffer)
                     return;
 
+                // One switch for the whole look, so the editor can be worked in
+                // without the filter in the way. Off by default; see PsxLook.
+                if (!PsxLook.Enabled)
+                    return;
+
                 var volume = VolumeManager.instance.stack?.GetComponent<PsxScreenVolume>();
                 if (volume == null || !volume.IsActive())
                     return;

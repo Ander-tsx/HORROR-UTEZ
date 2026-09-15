@@ -91,10 +91,13 @@ namespace HorrorUtez.Rendering.Editor
 
             // Night-time campus: thin enough to see across the 20 m gap between buildings,
             // thick enough that the tree line and the map edge dissolve.
+            // Density is per world unit, so it has to be divided by WorldScale to keep the
+            // same real-world visibility when the campus is rebuilt at a different scale.
+            float scale = HorrorUtez.World.UtezDimensions.WorldScale;
             fog.density.overrideState = true;
-            fog.density.value = 0.012f;
+            fog.density.value = 0.018f / scale;
             fog.startDistance.overrideState = true;
-            fog.startDistance.value = 5f;
+            fog.startDistance.value = 3.3f * scale;
             fog.fogColor.overrideState = true;
             fog.fogColor.value = new Color(0.42f, 0.46f, 0.52f);
             fog.ambientColor.overrideState = true;
@@ -116,22 +119,29 @@ namespace HorrorUtez.Rendering.Editor
 
             // PS1 framebuffer: 240p internal, 5 bits per channel. The CRT settings stay
             // restrained — heavy warp and scanlines are exhausting over a whole session.
+            // Retuned after the first pass ate the props: at a literal 240p with a 5-bit
+            // framebuffer, a chromed bench three metres away came out as one grey blob with
+            // no edges left. The look has to survive being pointed at an actual model, so the
+            // internal resolution and the colour depth both came up. Everything else is
+            // seasoning and was pulled back with them.
             screen.pixelHeight.overrideState = true;
-            screen.pixelHeight.value = 240f;
+            screen.pixelHeight.value = 400f;
             screen.colorLevels.overrideState = true;
-            screen.colorLevels.value = 32f;
+            screen.colorLevels.value = 64f;
             screen.ditherStrength.overrideState = true;
-            screen.ditherStrength.value = 1f;
+            screen.ditherStrength.value = 0.55f;
             screen.warp.overrideState = true;
-            screen.warp.value = 0.025f;
+            screen.warp.value = 0.02f;
             screen.aberration.overrideState = true;
-            screen.aberration.value = 0.0015f;
+            screen.aberration.value = 0.001f;
             screen.scanlineStrength.overrideState = true;
-            screen.scanlineStrength.value = 0.12f;
+            screen.scanlineStrength.value = 0.08f;
             screen.vignetteStrength.overrideState = true;
-            screen.vignetteStrength.value = 0.35f;
+            screen.vignetteStrength.value = 0.22f;
             screen.grainStrength.overrideState = true;
-            screen.grainStrength.value = 0.04f;
+            screen.grainStrength.value = 0.035f;
+
+            EnsureTonemapping(profile);
 
             EditorUtility.SetDirty(screen);
             EditorUtility.SetDirty(profile);
@@ -139,6 +149,30 @@ namespace HorrorUtez.Rendering.Editor
         }
 
         /// <summary>Adds the scene-side global Volume that applies the profile.</summary>
+        /// <summary>
+        /// A tonemapper on the global volume.
+        ///
+        /// Without one, URP clips at 1.0: anything the torch lights from closer than about
+        /// five metres saturates to flat white, which is why every prop photographed near
+        /// the player came out as a featureless cutout. That reads as "the PSX filter
+        /// destroyed the model" and it is not the filter at all — the detail is gone before
+        /// the filter ever runs.
+        ///
+        /// Neutral rather than ACES: ACES pushes contrast and shifts hue, which fights a
+        /// look already built on crushed colour depth. Neutral just rolls the highlights off.
+        /// </summary>
+        private static void EnsureTonemapping(VolumeProfile profile)
+        {
+            if (!profile.TryGet<Tonemapping>(out var tonemapping))
+            {
+                tonemapping = profile.Add<Tonemapping>(overrides: true);
+                AssetDatabase.AddObjectToAsset(tonemapping, profile);
+            }
+
+            tonemapping.mode.overrideState = true;
+            tonemapping.mode.value = TonemappingMode.Neutral;
+        }
+
         public static Volume SpawnGlobalVolume()
         {
             var profile = AssetDatabase.LoadAssetAtPath<VolumeProfile>(ProfilePath);
@@ -153,6 +187,11 @@ namespace HorrorUtez.Rendering.Editor
             volume.isGlobal = true;
             volume.priority = 0f;
             volume.sharedProfile = profile;
+
+            // The render features read PsxLook on their own; this is what carries the switch
+            // into the materials, which the features cannot reach.
+            go.AddComponent<PsxLookBinder>();
+
             Debug.Log("[PSX] Global Volume added to the scene.");
             return volume;
         }

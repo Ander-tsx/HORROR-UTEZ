@@ -42,5 +42,9 @@ namespace HorrorUtez.Rendering
 
         // Distance-based vertex clipping.
         public const string UseCameraClipping = "Boolean_D258FF8E";
+
+        // Transparency master only: alpha = MainTex.a * multiplier, clipped below the threshold.
+        public const string AlphaClipping = "_Alpha_Clipping";
+        public const string AlphaMultiplier = "_Alpha_Multiplier";
     }
 }

@@ -17,26 +17,28 @@ namespace HorrorUtez.Rendering
     public sealed class PsxScreenVolume : VolumeComponent
     {
         [Header("Pixelation")]
-        [Tooltip("Internal vertical resolution. 240 is roughly PS1. 0 disables pixelation.")]
-        public ClampedFloatParameter pixelHeight = new(240f, 0f, 1080f);
+        [Tooltip("Internal vertical resolution. 240 is literal PS1 and eats detail; 400 keeps "
+             + "the crunch while a prop stays readable. 0 disables pixelation.")]
+        public ClampedFloatParameter pixelHeight = new(400f, 0f, 1080f);
 
         [Header("Colour")]
-        [Tooltip("Steps per channel. 32 = 5-bit, the PS1 framebuffer. 0 or 1 disables.")]
-        public ClampedFloatParameter colorLevels = new(32f, 0f, 256f);
+        [Tooltip("Steps per channel. 32 = 5-bit, the literal PS1 framebuffer, which bands "
+                 + "smooth metal into flat blobs. 64 keeps the era without that. 0 or 1 disables.")]
+        public ClampedFloatParameter colorLevels = new(64f, 0f, 256f);
 
         [Tooltip("How hard the Bayer pattern pushes values across quantisation steps.")]
-        public ClampedFloatParameter ditherStrength = new(1f, 0f, 2f);
+        public ClampedFloatParameter ditherStrength = new(0.55f, 0f, 2f);
 
         [Header("CRT")]
         [Tooltip("Barrel distortion. Small values only; past ~0.15 it reads as a fisheye.")]
-        public ClampedFloatParameter warp = new(0.03f, 0f, 0.3f);
+        public ClampedFloatParameter warp = new(0.02f, 0f, 0.3f);
 
         [Tooltip("Radial channel split. Costs two extra texture samples when above 0.")]
-        public ClampedFloatParameter aberration = new(0.0015f, 0f, 0.02f);
+        public ClampedFloatParameter aberration = new(0.001f, 0f, 0.02f);
 
-        public ClampedFloatParameter scanlineStrength = new(0.15f, 0f, 1f);
-        public ClampedFloatParameter vignetteStrength = new(0.35f, 0f, 1.5f);
-        public ClampedFloatParameter grainStrength = new(0.05f, 0f, 0.5f);
+        public ClampedFloatParameter scanlineStrength = new(0.08f, 0f, 1f);
+        public ClampedFloatParameter vignetteStrength = new(0.22f, 0f, 1.5f);
+        public ClampedFloatParameter grainStrength = new(0.035f, 0f, 0.5f);
 
         public bool IsActive() =>
             active && (pixelHeight.value > 0f
