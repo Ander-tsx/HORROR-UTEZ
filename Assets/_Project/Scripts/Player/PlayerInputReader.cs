@@ -1,3 +1,4 @@
+using HorrorUtez.Core;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -69,6 +70,12 @@ namespace HorrorUtez.Player
             ReadKeyboardMouse(ref move, ref look, ref run, ref toggleLight, ref jump);
             ReadGamepad(ref move, ref look, ref run, ref toggleLight, ref jump);
             ReadTouch(ref move, ref look, ref run, ref toggleLight, ref jump);
+
+            // One global knob over all three devices. Tuning mouse, stick and touch
+            // separately to answer "it's too fast" is three chances to get it wrong.
+            look *= GameSettings.LookSensitivity;
+            if (GameSettings.InvertY)
+                look.y = -look.y;
 
             Move = Vector2.ClampMagnitude(move, 1f);
             Look = look;

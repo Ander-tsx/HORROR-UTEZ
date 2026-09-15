@@ -1,10 +1,12 @@
 {
-    "name": "HorrorUtez.Player",
-    "rootNamespace": "HorrorUtez.Player",
+    "name": "HorrorUtez.UI",
+    "rootNamespace": "HorrorUtez.UI",
     "references": [
         "HorrorUtez.Core",
-        "HorrorUtez.World",
-        "Unity.InputSystem"
+        "HorrorUtez.Player",
+        "HorrorUtez.Rendering",
+        "Unity.InputSystem",
+        "UnityEngine.UI"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

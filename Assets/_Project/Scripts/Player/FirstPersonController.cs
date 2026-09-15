@@ -1,4 +1,5 @@
 using UnityEngine;
+using HorrorUtez.World;
 
 namespace HorrorUtez.Player
 {
@@ -7,15 +8,23 @@ namespace HorrorUtez.Player
     ///
     /// The player is NOT slowed down to create tension — that job belongs to the enemies,
     /// which are meant to be much faster. Exploration should feel unrestricted.
-    /// Speeds are also sized for a world built at UtezDimensions.WorldScale.
+    ///
+    /// The rig is human-sized (1.8 unit capsule) and is NOT multiplied by
+    /// UtezDimensions.WorldScale, so the values below are authored in real metres and real
+    /// m/s (WorldScale 1). Raising WorldScale would otherwise shrink the player relative to
+    /// the campus, so traversal — speeds, acceleration, jump height, gravity — is
+    /// multiplied by <see cref="_scale"/> at runtime. Look, crouch factors and timings are
+    /// scale-free and stay as authored.
     /// </summary>
     [RequireComponent(typeof(CharacterController))]
     [RequireComponent(typeof(PlayerInputReader))]
     public sealed class FirstPersonController : MonoBehaviour
     {
         [Header("Movement (units/s)")]
-        [SerializeField] private float walkSpeed = 3.8f;
-        [SerializeField] private float runSpeed = 7.5f;
+        [Tooltip("Brisk human walk. One unit is one metre at WorldScale 1.")]
+        [SerializeField] private float walkSpeed = 2.6f;
+        [Tooltip("Hard run. Fast enough to cross the explanada without it feeling like a chore.")]
+        [SerializeField] private float runSpeed = 5.2f;
         [Tooltip("How quickly the current speed chases the target speed.")]
         [SerializeField] private float acceleration = 12f;
 
@@ -29,8 +38,9 @@ namespace HorrorUtez.Player
         [SerializeField] private float crouchLerpSpeed = 9f;
 
         [Header("Jump")]
-        [Tooltip("Peak height in world units. Scaled world, so this is not real metres.")]
-        [SerializeField] private float jumpHeight = 1.6f;
+        [Tooltip("Peak height in world units — real metres at WorldScale 1. Well above the "
+                 + "0.3 m kerbs, which the CharacterController step offset already handles.")]
+        [SerializeField] private float jumpHeight = 1f;
         [Tooltip("Grace period after walking off a ledge where a jump still registers.")]
         [SerializeField] private float coyoteTime = 0.12f;
 
@@ -52,6 +62,14 @@ namespace HorrorUtez.Player
         private float _standHeight;
         private Vector3 _standHeadLocal;
         private float _crouchBlend;
+
+        /// <summary>
+        /// World-unit multiplier from <see cref="UtezDimensions.WorldScale"/>. The rig is
+        /// deliberately not scaled, so traversal distances and speeds are multiplied here
+        /// instead: crossing the campus keeps the same feel whatever the campus is scaled
+        /// to, and the jump arc keeps the same airtime because gravity scales with it.
+        /// </summary>
+        private float _scale = 1f;
 
         /// <summary>Ground speed in m/s. Head bob and, later, footstep audio read this.</summary>
         public float CurrentSpeed => _horizontalVelocity.magnitude;
@@ -75,6 +93,8 @@ namespace HorrorUtez.Player
             _standHeight = _controller.height;
             if (head != null)
                 _standHeadLocal = head.localPosition;
+
+            _scale = UtezDimensions.WorldScale;
         }
 
         private void Update()
@@ -157,12 +177,12 @@ namespace HorrorUtez.Player
             IsRunning = _input.Run && move.sqrMagnitude > 0.01f && _crouchBlend < 0.5f;
 
             Vector3 wish = transform.right * move.x + transform.forward * move.y;
-            float targetSpeed = IsRunning ? runSpeed : walkSpeed;
+            float targetSpeed = (IsRunning ? runSpeed : walkSpeed) * _scale;
             targetSpeed *= Mathf.Lerp(1f, crouchSpeedFactor, _crouchBlend);
             Vector3 targetVelocity = wish * targetSpeed;
 
             _horizontalVelocity = Vector3.MoveTowards(
-                _horizontalVelocity, targetVelocity, acceleration * Time.deltaTime);
+                _horizontalVelocity, targetVelocity, acceleration * _scale * Time.deltaTime);
 
             // CharacterController.isGrounded only reports what the LAST Move collided with,
             // so at high frame rates the downward stick shrinks below skin width and it
@@ -173,16 +193,18 @@ namespace HorrorUtez.Player
                 _lastGroundedTime = Time.time;
 
             if (IsGrounded && _verticalVelocity < 0f)
-                _verticalVelocity = groundedStick;
+                _verticalVelocity = groundedStick * _scale;
             else
-                _verticalVelocity += gravity * Time.deltaTime;
+                _verticalVelocity += gravity * _scale * Time.deltaTime;
 
             // Coyote time: jumping the instant you step off an edge is a near-universal
             // player intent, and refusing it reads as the controller being unresponsive.
             bool canJump = Time.time - _lastGroundedTime <= coyoteTime;
             if (_input.Jump && canJump)
             {
-                _verticalVelocity = Mathf.Sqrt(2f * jumpHeight * -gravity);
+                // Both jumpHeight and gravity are scaled at integration time, so the launch
+                // speed carries one _scale and the airtime is unchanged.
+                _verticalVelocity = Mathf.Sqrt(2f * jumpHeight * -gravity) * _scale;
                 _lastGroundedTime = float.NegativeInfinity;
             }
 

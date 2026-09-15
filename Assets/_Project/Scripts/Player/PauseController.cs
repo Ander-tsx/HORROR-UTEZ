@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -15,6 +16,18 @@ namespace HorrorUtez.Player
     {
         /// <summary>Read by the controller so a paused player cannot look around.</summary>
         public static bool IsPaused { get; private set; }
+
+        /// <summary>
+        /// Raised with the new state whenever the game pauses or resumes.
+        ///
+        /// The menu listens to this rather than the other way round: pausing has to keep
+        /// working whether or not any UI exists, and a controller that reaches into a
+        /// canvas is a controller that breaks the moment the canvas is not there.
+        /// </summary>
+        public static event Action<bool> PauseChanged;
+
+        /// <summary>Lets the menu's resume button close the menu without duplicating state.</summary>
+        public static void Resume() => SetPaused(false);
 
         private void OnEnable()
         {
@@ -47,6 +60,7 @@ namespace HorrorUtez.Player
             Time.timeScale = paused ? 0f : 1f;
             Cursor.lockState = paused ? CursorLockMode.None : CursorLockMode.Locked;
             Cursor.visible = paused;
+            PauseChanged?.Invoke(paused);
         }
     }
 }

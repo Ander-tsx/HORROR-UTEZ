@@ -21,7 +21,7 @@ namespace HorrorUtez.Player
         [Tooltip("World units between footfalls. Scaled world, so not real metres.")]
         [SerializeField] private float strideLength = 1.5f;
 
-        [SerializeField] private float volume = 0.35f;
+        [SerializeField] private float volume = 0.26f;
         [SerializeField] private Vector2 pitchRange = new(0.88f, 1.12f);
 
         private FirstPersonController _controller;
@@ -52,7 +52,9 @@ namespace HorrorUtez.Player
                 ProceduralAudio.CreateFootstep(202, soft: true),
                 ProceduralAudio.CreateFootstep(203, soft: true),
             };
-            _land = ProceduralAudio.CreateFootstep(301, soft: false);
+            // A landing is not a footstep played low: it is a heavier impact with a
+            // longer low end, so it gets its own synthesis.
+            _land = ProceduralAudio.CreateLanding();
         }
 
         private void Update()
@@ -64,8 +66,8 @@ namespace HorrorUtez.Player
 
             if (grounded && !_wasGrounded)
             {
-                source.pitch = 0.8f;
-                source.PlayOneShot(_land, volume * 1.4f);
+                source.pitch = Random.Range(0.94f, 1.06f);
+                source.PlayOneShot(_land, volume * 1.15f);
                 _distance = 0f;
             }
             _wasGrounded = grounded;
