@@ -5,6 +5,7 @@
         "HorrorUtez.Core",
         "HorrorUtez.World",
         "HorrorUtez.Player",
+        "HorrorUtez.UI",
         "HorrorUtez.Rendering",
         "HorrorUtez.Rendering.Editor",
         "Unity.RenderPipelines.Universal.Runtime",

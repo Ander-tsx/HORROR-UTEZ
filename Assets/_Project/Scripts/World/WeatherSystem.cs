@@ -49,7 +49,7 @@ namespace HorrorUtez.World
 
         [Header("Rain")]
         [SerializeField] private float maxEmissionRate = 2600f;
-        [SerializeField] private float maxRainVolume = 0.75f;
+        [SerializeField] private float maxRainVolume = 0.45f;
 
         /// <summary>0 = dry, 1 = downpour. Other systems read this rather than guessing.</summary>
         public float RainIntensity { get; private set; }

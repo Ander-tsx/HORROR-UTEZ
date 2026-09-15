@@ -41,6 +41,15 @@ namespace HorrorUtez.World.Editor
                 new Vector3(cecadec.ScaledCenter.x, 0f, cecadec.ScaledCenter.y),
                 cecadec.YawDeg);
 
+            // The reference bench, three metres from where the player spawns. This is the
+            // shot that answers "is the PSX filter eating the model" — it has to be taken at
+            // the distance a prop is actually looked at, not from across the plaza.
+            // Free camera, not the player rig: this shot exists to judge the models and the
+            // filter, so it must not also depend on the torch reaching them or on the ground
+            // probe landing right.
+            CapturePerspective(Path.Combine(dir, "utez_props_plaza.png"),
+                new Vector3(0f, 1.1f, 5.0f) * UtezDimensions.WorldScale, 180f);
+
             // Looking out from the campus edge: the shot that shows the tree line.
             Vector2 slabHalf = UtezDimensions.SlabSize * 0.5f;
             CaptureFromPlayer(Path.Combine(dir, "utez_treeline.png"),
@@ -138,8 +147,23 @@ namespace HorrorUtez.World.Editor
                 player.transform.rotation = Quaternion.Euler(0f, yaw.Value, 0f);
 
             // No physics step runs in edit mode, so drop the rig onto the ground manually.
-            if (Physics.Raycast(player.transform.position + Vector3.up * 5f, Vector3.down, out var hit, 50f))
+            //
+            // The rig's own CharacterController has to come out of the way first. A ray
+            // starting five metres up and pointing down enters that capsule from OUTSIDE,
+            // so it reports a hit on the top of the player's own head — and every eye-level
+            // capture came out 1.8 m too high, which is why props on the floor kept falling
+            // out of the bottom of frame.
+            var ownCollider = player.GetComponent<Collider>();
+            bool colliderWasEnabled = ownCollider != null && ownCollider.enabled;
+            if (ownCollider != null)
+                ownCollider.enabled = false;
+
+            if (Physics.Raycast(player.transform.position + Vector3.up * 5f, Vector3.down,
+                    out var hit, 50f, ~0, QueryTriggerInteraction.Ignore))
                 player.transform.position = hit.point;
+
+            if (ownCollider != null)
+                ownCollider.enabled = colliderWasEnabled;
 
             var previousClear = cam.clearFlags;
             var previousColor = cam.backgroundColor;

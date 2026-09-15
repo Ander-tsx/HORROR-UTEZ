@@ -11,18 +11,28 @@ namespace HorrorUtez.World.Editor
 {
     /// <summary>
     /// One-shot project setup: creates and assigns the URP pipeline asset, tidies the
-    /// auto-generated render settings into _Project/Settings, then creates the `utez`
-    /// scene and fills it with the campus terrain.
+    /// auto-generated render settings into _Project/Settings, then regenerates the
+    /// blockout scene from <see cref="UtezDimensions"/>.
     ///
-    /// Safe to re-run: existing assets are reused, the scene is rebuilt from
-    /// <see cref="UtezDimensions"/>. Runnable headless via -executeMethod.
+    /// It writes the blockout to <c>utez_blockout.unity</c>, every run. The playable scene
+    /// <c>utez.unity</c> is authored BY HAND in the editor — it is seeded from the blockout
+    /// the first time and never touched again, so stretching, moving and deleting pieces
+    /// in the Scene view sticks. To pull fresh geometry after a dimension change, open the
+    /// blockout and copy what you need across.
+    ///
+    /// Safe to re-run: assets are reused, only the blockout scene is rewritten.
+    /// Runnable headless via -executeMethod.
     /// </summary>
     public static class UtezProjectSetup
     {
         private const string SettingsFolder = "Assets/_Project/Settings";
         private const string UrpAssetPath = SettingsFolder + "/UTEZ_URP.asset";
         private const string UrpRendererPath = SettingsFolder + "/UTEZ_URP_Renderer.asset";
-        private const string ScenePath = "Assets/_Project/Scenes/utez.unity";
+
+        /// <summary>Regenerated from code on every run. A reference, not the playable scene.</summary>
+        private const string BlockoutScenePath = "Assets/_Project/Scenes/utez_blockout.unity";
+        /// <summary>Hand-authored, playable, in Build Settings. Seeded once, never overwritten.</summary>
+        public const string WorkingScenePath = "Assets/_Project/Scenes/utez.unity";
 
         [MenuItem("HORROR-UTEZ/Setup Project (URP + utez scene)")]
         public static void RunAll()
@@ -30,12 +40,36 @@ namespace HorrorUtez.World.Editor
             SetupUrp();
             TidyGeneratedSettings();
             PsxTerrainMaterials.EnsureAll();
+            UtezKit.EnsureAll();
+            UtezPropAssets.EnsureAll();
             PsxRenderingSetup.Setup();
             BuildUtezScene();
 
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
             Debug.Log("[UTEZ] Project setup complete.");
+        }
+
+        /// <summary>
+        /// A builder that wipes and regenerates a scene root calls this first. Returns true
+        /// to proceed. If the OPEN scene is the hand-authored working scene, it asks for
+        /// confirmation (auto-yes in batch, where there is no one to ask). During
+        /// <see cref="BuildUtezScene"/> the open scene is a fresh unsaved one, so this never
+        /// blocks the generator itself.
+        /// </summary>
+        public static bool GuardWorkingScene(string rootName)
+        {
+            if (UnityEngine.SceneManagement.SceneManager.GetActiveScene().path != WorkingScenePath)
+                return true;
+            if (Application.isBatchMode)
+                return true;
+
+            return EditorUtility.DisplayDialog(
+                $"Regenerate {rootName}?",
+                $"The open scene is {WorkingScenePath}, which is authored by hand. Regenerating " +
+                $"destroys its current {rootName} and rebuilds it from code — anything you moved, " +
+                "stretched or deleted there is lost.\n\nIterate the generator on utez_blockout.unity instead.",
+                "Regenerate anyway", "Cancel");
         }
 
         /// <summary>Entry point for batch mode; exits non-zero so the shell sees failures.</summary>
@@ -127,25 +161,70 @@ namespace HorrorUtez.World.Editor
             var player = SpawnPlayer();
             var volume = PsxRenderingSetup.SpawnGlobalVolume();
             UtezWeatherSetup.Build(player, volume, sun);
-            EditorSceneManager.SaveScene(scene, ScenePath);
-            RegisterInBuildSettings();
-            Debug.Log($"[UTEZ] Scene saved to {ScenePath}");
+            SpawnUi();
+
+            EditorSceneManager.SaveScene(scene, BlockoutScenePath);
+            AssetDatabase.ImportAsset(BlockoutScenePath, ImportAssetOptions.ForceSynchronousImport);
+            Debug.Log($"[UTEZ] Blockout regenerated at {BlockoutScenePath}.");
+
+            // The playable scene is hand-authored. Seed it from the blockout once, then
+            // leave it alone forever — this is what lets Scene-view edits persist.
+            if (AssetDatabase.LoadAssetAtPath<SceneAsset>(WorkingScenePath) == null)
+            {
+                AssetDatabase.CopyAsset(BlockoutScenePath, WorkingScenePath);
+                Debug.Log($"[UTEZ] Seeded working scene {WorkingScenePath} from the blockout. " +
+                          "Edit THIS one by hand; Setup Project will not regenerate it.");
+            }
+            else
+            {
+                Debug.Log($"[UTEZ] Working scene {WorkingScenePath} left untouched. To adopt fresh " +
+                          "geometry, open the blockout and copy pieces across — or delete the working " +
+                          "scene and re-run to reseed it.");
+            }
+
+            RegisterInBuildSettings(WorkingScenePath);
         }
 
         /// <summary>
-        /// Adds the scene to Build Settings. Without this it cannot be loaded by path at
-        /// runtime, so the play-mode smoke tests have nothing to load.
+        /// Drops in the pause menu. It builds its own hierarchy at runtime, so all the scene
+        /// needs to carry is the component — no canvas to author, nothing to keep wired.
         /// </summary>
-        private static void RegisterInBuildSettings()
+        private static void SpawnUi()
         {
-            foreach (var existing in EditorBuildSettings.scenes)
-                if (existing.path == ScenePath)
-                    return;
+            var go = new GameObject("UI");
+            go.AddComponent<HorrorUtez.UI.PauseMenu>();
+            Debug.Log("[UTEZ] Pause menu added to the scene.");
+        }
 
-            var scenes = new System.Collections.Generic.List<EditorBuildSettingsScene>(
-                EditorBuildSettings.scenes) { new(ScenePath, true) };
-            EditorBuildSettings.scenes = scenes.ToArray();
-            Debug.Log($"[UTEZ] Registered {ScenePath} in Build Settings.");
+        /// <summary>
+        /// Ensures <paramref name="path"/> is a live, enabled entry in Build Settings.
+        /// Rebuilds its entry rather than trusting a stale one, so a reseeded working scene
+        /// (new GUID, same path) is picked up. Without this the play-mode smoke tests have
+        /// nothing to load.
+        /// </summary>
+        private static void RegisterInBuildSettings(string path)
+        {
+            var kept = new System.Collections.Generic.List<EditorBuildSettingsScene>();
+            bool present = false;
+
+            foreach (var existing in EditorBuildSettings.scenes)
+            {
+                if (existing.path == path)
+                {
+                    present = true;
+                    kept.Add(new EditorBuildSettingsScene(path, true));
+                }
+                else
+                {
+                    kept.Add(existing);
+                }
+            }
+
+            if (!present)
+                kept.Add(new EditorBuildSettingsScene(path, true));
+
+            EditorBuildSettings.scenes = kept.ToArray();
+            Debug.Log($"[UTEZ] Build Settings: {path} registered.");
         }
 
         /// <summary>
@@ -199,10 +278,12 @@ namespace HorrorUtez.World.Editor
                     UnityEngine.Object.DestroyImmediate(cam.gameObject);
 
             var player = new GameObject("Player");
-            // World units, already scaled. The plaza gap runs roughly Z -14 .. +16 at
-            // WorldScale 1.5, so this stands in open ground facing the CECADEC entrance.
+            // The plaza gap runs from the CECADEC north wall (real Z -9.5) to the CDS south
+            // wall (real Z +10). Standing 5.3 real metres north of the origin puts the player
+            // in open ground facing the CECADEC entrance, and stays right at any WorldScale.
             player.transform.SetPositionAndRotation(
-                new Vector3(0f, 2f, 8f), Quaternion.Euler(0f, 180f, 0f));
+                new Vector3(0f, 2f * UtezDimensions.WorldScale, 5.3f * UtezDimensions.WorldScale),
+                Quaternion.Euler(0f, 180f, 0f));
 
             var controller = player.AddComponent<CharacterController>();
             controller.height = 1.8f;
@@ -240,13 +321,15 @@ namespace HorrorUtez.World.Editor
             var beam = torch.AddComponent<Light>();
             beam.type = LightType.Spot;
             beam.color = new Color(1f, 0.96f, 0.88f);
-            // URP punctual lights fall off with inverse square. The far wall of CECADEC is
-            // ~34 units away, so reaching it at all needs intensity in the hundreds:
-            // 34^2 is roughly 1150, and anything under that arrives as black.
-            // Compromise: inverse-square means whatever reaches the far wall blows out the
-            // floor two metres ahead. 900 lit the wall but burned the near pool to white;
-            // this trades some reach for a beam that reads as a torch rather than a flare.
-            beam.intensity = 350f;
+            // URP punctual lights fall off with inverse square, so a corridor tens of units
+            // long needs intensity in the hundreds just to put anything on the far wall.
+            // The trade is unavoidable: whatever reaches the far end blows out the floor two
+            // metres ahead. This value reads as a torch rather than a flare.
+            // Intensity must track WorldScale SQUARED — double the world and every surface
+            // sits twice as far away, which is a quarter of the light.
+            const float torchIntensityAt1x = 155f;
+            float lightScale = UtezDimensions.WorldScale * UtezDimensions.WorldScale;
+            beam.intensity = torchIntensityAt1x * lightScale;
             beam.range = 40f * UtezDimensions.WorldScale;
             beam.spotAngle = 46f;
             beam.innerSpotAngle = 18f;

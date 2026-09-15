@@ -10,8 +10,11 @@ namespace HorrorUtez.World.Editor
     /// concrete explanada, building footprint pads, grass bands, stone kerbs,
     /// an exterior dirt plane and a coarse boundary ring.
     ///
-    /// Not a rigid greybox — real, editable geometry driven by
-    /// <see cref="UtezDimensions"/>. Change a number there and run this again.
+    /// The footprint pads and the kerb loops are tiled from <see cref="UtezKit"/> pieces
+    /// (Kit_Pad, Kit_Kerb) so they can be remodelled in Blender. The big flat planes
+    /// (explanada, dirt, grass, boundary) stay primitives — they are not pieces.
+    ///
+    /// Driven by <see cref="UtezDimensions"/>. Change a number there and run this again.
     /// Materials are flat placeholders; PSX materials come later.
     /// </summary>
     public static class UtezTerrainBuilder
@@ -27,6 +30,9 @@ namespace HorrorUtez.World.Editor
         [MenuItem("HORROR-UTEZ/Build UTEZ Terrain")]
         public static void Build()
         {
+            if (!UtezProjectSetup.GuardWorkingScene(RootName))
+                return;
+
             var existing = GameObject.Find(RootName);
             if (existing != null)
                 Object.DestroyImmediate(existing);
@@ -37,9 +43,9 @@ namespace HorrorUtez.World.Editor
             var concrete = MakeMaterial("UTEZ_Concrete", new Color(0.62f, 0.62f, 0.60f));
             var grass = MakeMaterial("UTEZ_Grass", new Color(0.20f, 0.28f, 0.13f));
             var dirt = MakeMaterial("UTEZ_Dirt", new Color(0.36f, 0.28f, 0.19f));
-            var stone = MakeMaterial("UTEZ_Stone", new Color(0.45f, 0.43f, 0.40f));
-            var pad = MakeMaterial("UTEZ_Pad", new Color(0.70f, 0.70f, 0.70f));
             var forest = MakeMaterial("UTEZ_ForestMarker", new Color(0.10f, 0.16f, 0.10f));
+            // UTEZ_Stone / UTEZ_Pad are no longer used here — the kerb and pad are kit
+            // pieces now, carrying Kit_Kerb / Kit_Pad. The .mat assets stay for reference.
 
             // Exterior dirt. Its top face sits DirtDrop below the slab's; sharing a Y with
             // the slab would z-fight and the two would flicker over each other.
@@ -54,8 +60,11 @@ namespace HorrorUtez.World.Editor
                 size: new Vector3(UtezDimensions.SlabSize.x, SlabThickness, UtezDimensions.SlabSize.y),
                 material: concrete);
 
+            var kerbPiece = LoadKit(UtezKit.KerbPrefab);
+            var padPiece = LoadKit(UtezKit.PadPrefab);
+
             foreach (var (name, fp) in UtezDimensions.All)
-                BuildBuilding(root.transform, name, fp, grass, stone, pad);
+                BuildBuilding(root.transform, name, fp, grass, kerbPiece, padPiece);
 
             BuildBoundaryRing(root.transform, forest);
 
@@ -67,39 +76,51 @@ namespace HorrorUtez.World.Editor
 
         /// <summary>Footprint pad, plus a grass band and stone kerb loop when the building has one.</summary>
         private static void BuildBuilding(Transform parent, string name, UtezDimensions.Footprint fp,
-            Material grass, Material stone, Material pad)
+            Material grass, GameObject kerbPiece, GameObject padPiece)
         {
             var group = new GameObject($"{name}_Group").transform;
             group.SetParent(parent, false);
             group.localPosition = new Vector3(fp.ScaledCenter.x, 0f, fp.ScaledCenter.y);
             group.localRotation = Quaternion.Euler(0f, fp.YawDeg, 0f);
 
+            Vector2 size = fp.ScaledSize;
+
             if (fp.HasGrass)
             {
-                var grassSize = fp.ScaledSize + 2f * UtezDimensions.GrassMargin * Vector2.one;
+                var grassSize = size + 2f * UtezDimensions.GrassMargin * Vector2.one;
                 Slab(group, "Grass",
                     center: new Vector3(0f, GrassLift * 0.5f, 0f),
                     size: new Vector3(grassSize.x, GrassLift, grassSize.y), material: grass);
-                BuildKerbLoop(group, grassSize, stone);
+                BuildKerbLoop(group, grassSize, kerbPiece);
             }
 
-            Slab(group, "Pad",
-                center: new Vector3(0f, PadLift * 0.5f, 0f),
-                size: new Vector3(fp.ScaledSize.x, PadLift, fp.ScaledSize.y), material: pad);
+            // Concrete footprint pad, tiled from the kit piece so it can be remodelled.
+            UtezKit.TileArea(group, padPiece, null,
+                -size.x * 0.5f, size.x * 0.5f, -size.y * 0.5f, size.y * 0.5f, 0f, "Pad");
         }
 
-        /// <summary>Four thin boxes forming a rectangle at the outer edge of the grass band.</summary>
-        private static void BuildKerbLoop(Transform group, Vector2 outer, Material stone)
+        /// <summary>Kerb loop at the outer edge of the grass band, tiled from Kit_Kerb.</summary>
+        private static void BuildKerbLoop(Transform group, Vector2 outer, GameObject kerbPiece)
         {
-            float h = UtezDimensions.KerbHeight;
-            float w = UtezDimensions.KerbWidth;
+            var crossYZ = new Vector2(UtezDimensions.WorldScale, UtezDimensions.WorldScale);
             float hx = outer.x * 0.5f;
             float hz = outer.y * 0.5f;
+            float w = UtezDimensions.KerbWidth;
 
-            Slab(group, "Kerb_North", new Vector3(0f, h * 0.5f, hz), new Vector3(outer.x + w, h, w), stone);
-            Slab(group, "Kerb_South", new Vector3(0f, h * 0.5f, -hz), new Vector3(outer.x + w, h, w), stone);
-            Slab(group, "Kerb_East", new Vector3(hx, h * 0.5f, 0f), new Vector3(w, h, outer.y - w), stone);
-            Slab(group, "Kerb_West", new Vector3(-hx, h * 0.5f, 0f), new Vector3(w, h, outer.y - w), stone);
+            // North and south run along X and overlap the corners (outer.x + w); east and
+            // west run along Z and stop short of them (outer.y - w).
+            UtezKit.TileLinear(group, kerbPiece, null,
+                (along, _) => new Vector3(along, 0f, hz), Quaternion.identity,
+                -(outer.x + w) * 0.5f, (outer.x + w) * 0.5f, 0f, crossYZ, "Kerb_North");
+            UtezKit.TileLinear(group, kerbPiece, null,
+                (along, _) => new Vector3(along, 0f, -hz), Quaternion.identity,
+                -(outer.x + w) * 0.5f, (outer.x + w) * 0.5f, 0f, crossYZ, "Kerb_South");
+            UtezKit.TileLinear(group, kerbPiece, null,
+                (along, _) => new Vector3(hx, 0f, along), Quaternion.Euler(0f, 90f, 0f),
+                -(outer.y - w) * 0.5f, (outer.y - w) * 0.5f, 0f, crossYZ, "Kerb_East");
+            UtezKit.TileLinear(group, kerbPiece, null,
+                (along, _) => new Vector3(-hx, 0f, along), Quaternion.Euler(0f, 90f, 0f),
+                -(outer.y - w) * 0.5f, (outer.y - w) * 0.5f, 0f, crossYZ, "Kerb_West");
         }
 
         /// <summary>
@@ -144,6 +165,14 @@ namespace HorrorUtez.World.Editor
             GameObjectUtility.SetStaticEditorFlags(go,
                 StaticEditorFlags.BatchingStatic | StaticEditorFlags.OccluderStatic |
                 StaticEditorFlags.OccludeeStatic);
+        }
+
+        private static GameObject LoadKit(string path)
+        {
+            var go = AssetDatabase.LoadAssetAtPath<GameObject>(path);
+            if (go == null)
+                Debug.LogWarning($"[UTEZ] Missing kit piece '{path}'. Run HORROR-UTEZ > Rebuild Building Kit.");
+            return go;
         }
 
         /// <summary>

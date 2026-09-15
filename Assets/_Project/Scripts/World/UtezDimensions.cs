@@ -11,22 +11,32 @@ namespace HorrorUtez.World
     ///
     /// Every raw value here is the REAL measured one, in real metres. The world is then
     /// built at <see cref="WorldScale"/>. Keeping the two separate means the survey data
-    /// stays honest and re-checkable while the playable space gets the extra room that
-    /// interiors need for movement, collision and content.
+    /// stays honest and re-checkable no matter what the playable space is scaled to.
     /// </summary>
     public static class UtezDimensions
     {
         /// <summary>
         /// Global multiplier from real metres to world units.
         ///
-        /// At 1.0 the campus is accurate but reads cramped from eye level and leaves too
-        /// little interior volume to lay out rooms. Raise this to make the buildings loom;
-        /// every derived dimension follows, including heights, so proportions never skew.
+        /// 1.0 = one world unit is one real metre, which the human-sized player rig
+        /// (1.8 units tall, 1.65 unit eye height) expects — so the campus reads at its true
+        /// size and the player is 1:1 with it. Held at 1 because the map is now hand-authored
+        /// in the Scene view (see docs/technical/level-editing.md): a piece dragged from the
+        /// Project window lands at the same size the builders place it, with no scale to
+        /// reconcile. Raising this again would reintroduce that mismatch.
+        ///
+        /// Anything tuned against world distance is still derived from this, not typed in by
+        /// hand — punctual light intensity (WorldScale squared), fog density (÷ WorldScale),
+        /// player traversal (× WorldScale) — so a future change stays coherent.
         /// </summary>
-        public const float WorldScale = 1.5f;
+        public const float WorldScale = 1f;
 
         /// <summary>Real storey height for these institutional blocks, before scaling.</summary>
         public const float FloorHeight = 4f;
+
+        /// <summary>Real interior-floor slab thickness in metres, before scaling.</summary>
+        public const float FloorThicknessRaw = 0.35f;
+        public static float FloorThickness => FloorThicknessRaw * WorldScale;
 
         /// <summary>Which wall carries the main entrance. Walls are named by compass point.</summary>
         public enum Side { None, North, South, East, West }
@@ -34,6 +44,13 @@ namespace HorrorUtez.World
         /// <summary>Real door dimensions in metres, before scaling.</summary>
         public const float DoorWidth = 3f;
         public const float DoorHeight = 3f;
+
+        /// <summary>
+        /// Doorway of a landmark entrance (CECADEC north), real metres. The corridor behind it
+        /// is as wide (CORR_HALF * 2 in Tools/blender/gen_cecadec_interior.py, DOOR_HALF * 2 in
+        /// lm_entrance.py): 11 floor tiles of 40 cm, counted in the site photos.
+        /// </summary>
+        public const float LandmarkDoorWidth = 4.4f;
 
         /// <summary>Footprint on the ground plane, plus the data the building pass needs.</summary>
         public readonly struct Footprint
@@ -115,19 +132,73 @@ namespace HorrorUtez.World
             ("Auditorium", Auditorium),
         };
 
+        /// <summary>
+        /// Converts a point in a footprint's LOCAL space, given in REAL metres, to a world
+        /// position. Local +X is that building's east, local +Z its north, origin at its
+        /// centre — so a placement stays correct when the building's yaw or centre changes.
+        /// </summary>
+        public static Vector3 LocalToWorld(Footprint fp, Vector2 localMetres, float heightMetres = 0f)
+        {
+            var offset = Quaternion.Euler(0f, fp.YawDeg, 0f)
+                         * new Vector3(localMetres.x, heightMetres, localMetres.y) * WorldScale;
+            return new Vector3(fp.ScaledCenter.x, 0f, fp.ScaledCenter.y) + offset;
+        }
+
+        /// <summary>World heading for something facing <paramref name="localYaw"/> inside a footprint.</summary>
+        public static float LocalToWorldYaw(Footprint fp, float localYaw) => fp.YawDeg + localYaw;
+
+        // ---- Interior layout -------------------------------------------------
+        private const float StairwellWidthRaw = 9f;   // real metres, east-west
+        private const float StairwellDepthRaw = 12f;  // real metres, north-south
+        private const float StairwellInsetRaw = 1f;   // gap to the north and east walls
+
+        /// <summary>
+        /// The stairwell opening, in the footprint's own local space and in world units:
+        /// local +X is the footprint's east, local +Z its north, origin at its centre.
+        ///
+        /// It lives here rather than inside the building pass because the prop pass has to
+        /// put extinguishers beside the stairs and benches clear of them, and two copies of
+        /// the same rectangle drift apart the first time anyone moves it.
+        ///
+        /// Parked in the north-east corner, which on both two-storey buildings is the
+        /// diagonal opposite of the entrance.
+        /// </summary>
+        public static Rect StairwellLocal(Footprint fp) => Scale(StairwellLocalMetres(fp), WorldScale);
+
+        /// <summary>The same rectangle in REAL metres, for callers that scale on their own.</summary>
+        public static Rect StairwellLocalMetres(Footprint fp)
+        {
+            Vector2 size = fp.Size;
+            float centerX = size.x * 0.5f - StairwellWidthRaw * 0.5f - StairwellInsetRaw;
+            float centerZ = size.y * 0.5f - StairwellDepthRaw * 0.5f - StairwellInsetRaw;
+            return new Rect(centerX - StairwellWidthRaw * 0.5f, centerZ - StairwellDepthRaw * 0.5f,
+                StairwellWidthRaw, StairwellDepthRaw);
+        }
+
+        private static Rect Scale(Rect r, float k) => new(r.x * k, r.y * k, r.width * k, r.height * k);
+
         // ---- Ground detail (real metres, scaled on access) ------------------
         private const float GrassMarginRaw = 4f;
-        private const float KerbHeightRaw = 0.3f;
-        private const float KerbWidthRaw = 0.3f;
+        /// <summary>Kerb section, real metres. Public so <see cref="UtezKit"/> can size its piece.</summary>
+        public const float KerbHeightRaw = 0.3f;
+        public const float KerbWidthRaw = 0.3f;
+        /// <summary>Concrete footprint-pad slab thickness, real metres.</summary>
+        public const float PadThicknessRaw = 0.05f;
 
         public static float GrassMargin => GrassMarginRaw * WorldScale;
         public static float KerbHeight => KerbHeightRaw * WorldScale;
         public static float KerbWidth => KerbWidthRaw * WorldScale;
 
-        // ---- Building detail -------------------------------------------------
-        private const float WallThicknessRaw = 0.4f;
-        private const float RoofThicknessRaw = 0.5f;
-        private const float PillarThicknessRaw = 0.5f;
+        // ---- Building detail (real metres) ---------------------------------
+        /// <summary>Real wall thickness in metres. Public so props can stand clear of a wall.</summary>
+        public const float WallThicknessRaw = 0.4f;
+        public const float RoofThicknessRaw = 0.5f;
+        public const float PillarThicknessRaw = 0.5f;
+        /// <summary>Entrance-pilaster width, and how far it stands proud of the facade.</summary>
+        public const float PilasterWidthRaw = 1.5f;
+        public const float PilasterProudRaw = 0.35f;
+        /// <summary>Height of the glazing band faked at each storey.</summary>
+        public const float WindowBandHeightRaw = 1.6f;
 
         public static float WallThickness => WallThicknessRaw * WorldScale;
         public static float RoofThickness => RoofThicknessRaw * WorldScale;

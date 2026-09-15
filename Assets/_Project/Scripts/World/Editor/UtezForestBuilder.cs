@@ -63,6 +63,9 @@ namespace HorrorUtez.World.Editor
         [MenuItem("HORROR-UTEZ/Build UTEZ Forest")]
         public static void Build()
         {
+            if (!UtezProjectSetup.GuardWorkingScene(RootName))
+                return;
+
             var existing = GameObject.Find(RootName);
             if (existing != null)
                 Object.DestroyImmediate(existing);

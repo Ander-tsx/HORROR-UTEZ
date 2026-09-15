@@ -25,6 +25,24 @@ namespace HorrorUtez.World.Editor
 
         private const string ScenePath = "Assets/_Project/Scenes/utez.unity";
 
+        /// <summary>
+        /// Triangles from the submesh descriptors rather than from mesh.triangles.
+        ///
+        /// Imported props are marked non-readable to keep a second copy of every mesh out
+        /// of memory on mobile, and touching mesh.triangles on one throws. Index counts are
+        /// metadata and stay available either way.
+        /// </summary>
+        private static long TriangleCount(Mesh mesh)
+        {
+            long total = 0;
+            for (int i = 0; i < mesh.subMeshCount; i++)
+            {
+                if (mesh.GetTopology(i) == MeshTopology.Triangles)
+                    total += mesh.GetIndexCount(i) / 3;
+            }
+            return total;
+        }
+
         [MenuItem("HORROR-UTEZ/Report Scene Stats")]
         public static void Report()
         {
@@ -47,7 +65,7 @@ namespace HorrorUtez.World.Editor
             {
                 var filter = renderer.GetComponent<MeshFilter>();
                 if (filter != null && filter.sharedMesh != null)
-                    triangles += filter.sharedMesh.triangles.Length / 3;
+                    triangles += TriangleCount(filter.sharedMesh);
 
                 foreach (var material in renderer.sharedMaterials)
                     if (material != null)

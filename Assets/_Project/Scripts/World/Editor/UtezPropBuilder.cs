@@ -7,13 +7,17 @@ using UnityEngine.SceneManagement;
 namespace HorrorUtez.World.Editor
 {
     /// <summary>
-    /// Places the campus street furniture: lamp posts around the explanada, and the two
-    /// flagpoles that stand beside the CECADEC entrance in the reference photo.
+    /// Places the campus furniture: lamp posts around the explanada, the two flagpoles
+    /// beside the CECADEC entrance, and one reference copy of each imported prop.
     ///
     /// Lamps matter more than they look. They give the plaza pools of light to move
     /// between, which is what turns an evenly-lit space into one with somewhere to hide —
     /// and they give the flashlight something to compete with instead of being the only
     /// light source in the game.
+    ///
+    /// The imported props are not dressed into the buildings on purpose — see
+    /// BuildImportedProps. Lamps and flagpoles are, because their positions follow from the
+    /// campus geometry rather than from taste.
     /// </summary>
     public static class UtezPropBuilder
     {
@@ -23,6 +27,9 @@ namespace HorrorUtez.World.Editor
         [MenuItem("HORROR-UTEZ/Build UTEZ Props")]
         public static void Build()
         {
+            if (!UtezProjectSetup.GuardWorkingScene(RootName))
+                return;
+
             var existing = GameObject.Find(RootName);
             if (existing != null)
                 Object.DestroyImmediate(existing);
@@ -41,6 +48,8 @@ namespace HorrorUtez.World.Editor
 
             BuildFlagpoles(root.transform, metal);
 
+            int imported = BuildImportedProps(root.transform);
+
             // Lamp posts never move either; only their light values change at runtime.
             foreach (var renderer in root.GetComponentsInChildren<MeshRenderer>())
                 GameObjectUtility.SetStaticEditorFlags(renderer.gameObject,
@@ -49,7 +58,8 @@ namespace HorrorUtez.World.Editor
 
             var scene = SceneManager.GetActiveScene();
             EditorSceneManager.MarkSceneDirty(scene);
-            Debug.Log($"[PROPS] Placed {lamps} lamp posts and 2 flagpoles.");
+            Debug.Log($"[PROPS] Placed {lamps} lamp posts, 2 flagpoles and " +
+                      $"{imported} imported props in front of the spawn.");
         }
 
         /// <summary>Evenly spaced down both long edges of the explanada, inset off the kerb.</summary>
@@ -104,8 +114,9 @@ namespace HorrorUtez.World.Editor
             // Sodium-vapour orange: the colour of every neglected campus car park at night.
             light.color = new Color(1f, 0.78f, 0.48f);
             light.range = 22f * scale;
-            // Inverse-square again, so this needs to be large to reach the ground at all.
-            light.intensity = 140f;
+            // Inverse-square again, so this needs to be large to reach the ground at all —
+            // and it has to track scale SQUARED, since the head sits `height` units up.
+            light.intensity = 62f * scale * scale;
             light.shadows = LightShadows.None;
             lightGo.AddComponent<LampFlicker>();
         }
@@ -133,6 +144,71 @@ namespace HorrorUtez.World.Editor
                 pole.transform.localScale = new Vector3(0.08f * scale, height * 0.5f, 0.08f * scale);
                 pole.GetComponent<MeshRenderer>().sharedMaterial = metal;
             }
+        }
+
+        // ---- Imported props ---------------------------------------------------
+
+        /// <summary>
+        /// One bench and one extinguisher, dropped in the open ground in front of the player
+        /// spawn.
+        ///
+        /// Deliberately ONE of each and deliberately not dressed into the buildings. Placing
+        /// furniture is an art call, not a geometry call: the useful thing an automated pass
+        /// can do is put a correctly scaled, correctly oriented copy where it will be seen on
+        /// the first frame, and leave duplicating and arranging to whoever is looking at it.
+        ///
+        /// Re-running this pass wipes and re-places them, so anything moved by hand should be
+        /// dragged out of UTEZ_Props first — or copied, which is the point.
+        /// </summary>
+        private static int BuildImportedProps(Transform parent)
+        {
+            var group = new GameObject("Imported").transform;
+            group.SetParent(parent, false);
+
+            int placed = 0;
+
+            // Real metres in front of the spawn, which stands at Z +5.3 looking south.
+            placed += Place(group, UtezPropAssets.BenchPrefab, "Bench_Waiting3",
+                new Vector3(-1.3f, 0f, 2.0f), BenchSitterYaw);
+
+            placed += Place(group, UtezPropAssets.ExtinguisherPrefab, "FireExtinguisher",
+                new Vector3(1.4f, 0f, 2.0f), 180f);
+
+            return placed;
+        }
+
+        /// <summary>
+        /// Which way the person sitting on the bench looks, in world degrees.
+        ///
+        /// 180 = the sitter looks north, back toward the spawn, so the player walks up to the
+        /// seats rather than to the backrest.
+        ///
+        /// The mesh's backrest sits on local -Z, NOT on +Z as the export axes suggested — a
+        /// capture from the player's own camera settled it after the first guess put every
+        /// bench the wrong way round. This is the single number that decides it: if it ever
+        /// reads backwards again, add or subtract 180 here and nothing else needs touching.
+        /// </summary>
+        private const float BenchSitterYaw = 180f;
+
+        private static int Place(Transform parent, string prefabPath, string name,
+            Vector3 positionMetres, float yaw)
+        {
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
+            if (prefab == null)
+            {
+                Debug.LogWarning($"[PROPS] No prefab at {prefabPath}. " +
+                                 "Run HORROR-UTEZ > Rebuild PSX Prop Assets first.");
+                return 0;
+            }
+
+            float scale = UtezDimensions.WorldScale;
+            var instance = (GameObject)PrefabUtility.InstantiatePrefab(prefab, parent);
+            instance.name = name;
+            instance.transform.SetPositionAndRotation(
+                positionMetres * scale, Quaternion.Euler(0f, yaw, 0f));
+            // The prefabs are authored at real metres, so they carry WorldScale themselves.
+            instance.transform.localScale = Vector3.one * scale;
+            return 1;
         }
 
         private static Material LoadMaterial(string name)
