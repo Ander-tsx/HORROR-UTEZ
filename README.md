@@ -19,5 +19,3 @@ Assets/
 Packages/          Manifiesto de paquetes Unity
 ProjectSettings/   Config del proyecto (generado por el editor)
 ```
-
-`docs/` y `CLAUDE.md` son privados del equipo y no se publican.
