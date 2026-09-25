@@ -72,3 +72,6 @@ crashlytics-build.properties
 # ---------------------------------------------------------------------------
 /CLAUDE.md
 /docs/
+
+# Personal reference photos for the player character (only the processed textures are committed)
+Tools/character/source/
