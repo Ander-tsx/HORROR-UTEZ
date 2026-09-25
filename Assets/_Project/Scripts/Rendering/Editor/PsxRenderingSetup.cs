@@ -93,19 +93,22 @@ namespace HorrorUtez.Rendering.Editor
             // thick enough that the tree line and the map edge dissolve.
             // Density is per world unit, so it has to be divided by WorldScale to keep the
             // same real-world visibility when the campus is rebuilt at a different scale.
+            // Colour: deep blue-violet, not grey. Grey fog over a night scene reads as smog;
+            // the reference renders sink every distance into the same saturated night blue
+            // the moonlight uses, so the fog and the light agree about what time it is.
             float scale = HorrorUtez.World.UtezDimensions.WorldScale;
             fog.density.overrideState = true;
-            fog.density.value = 0.018f / scale;
+            fog.density.value = 0.02f / scale;
             fog.startDistance.overrideState = true;
-            fog.startDistance.value = 3.3f * scale;
+            fog.startDistance.value = 4f * scale;
             fog.fogColor.overrideState = true;
-            fog.fogColor.value = new Color(0.42f, 0.46f, 0.52f);
+            fog.fogColor.value = PsxNightPalette.FogClear;
             fog.ambientColor.overrideState = true;
-            fog.ambientColor.value = new Color(0.30f, 0.32f, 0.38f);
+            fog.ambientColor.value = new Color(0.62f, 0.62f, 0.72f);
             fog.noiseScale.overrideState = true;
-            fog.noiseScale.value = 45f;
+            fog.noiseScale.value = 90f;
             fog.noiseStrength.overrideState = true;
-            fog.noiseStrength.value = 0.12f;
+            fog.noiseStrength.value = 0.05f;
             fog.noiseSpeed.overrideState = true;
             fog.noiseSpeed.value = 0.02f;
 
@@ -117,31 +120,30 @@ namespace HorrorUtez.Rendering.Editor
                 AssetDatabase.AddObjectToAsset(screen, profile);
             }
 
-            // PS1 framebuffer: 240p internal, 5 bits per channel. The CRT settings stay
-            // restrained — heavy warp and scanlines are exhausting over a whole session.
-            // Retuned after the first pass ate the props: at a literal 240p with a 5-bit
-            // framebuffer, a chromed bench three metres away came out as one grey blob with
-            // no edges left. The look has to survive being pointed at an actual model, so the
-            // internal resolution and the colour depth both came up. Everything else is
-            // seasoning and was pulled back with them.
+            // Second retune, against the "PS1 render" reference look: crunchy textures and
+            // snapping geometry, but a clean, readable frame. At 400p with the dither keyed to
+            // native pixels the whole screen read as static; the style lives in the surfaces
+            // (PsxLit) and the light, so the screen pass is now a light touch — no tube warp,
+            // no scanlines, dither only where a gradient bands.
             screen.pixelHeight.overrideState = true;
-            screen.pixelHeight.value = 400f;
+            screen.pixelHeight.value = 540f;
             screen.colorLevels.overrideState = true;
             screen.colorLevels.value = 64f;
             screen.ditherStrength.overrideState = true;
-            screen.ditherStrength.value = 0.55f;
+            screen.ditherStrength.value = 0.15f;
             screen.warp.overrideState = true;
-            screen.warp.value = 0.02f;
+            screen.warp.value = 0f;
             screen.aberration.overrideState = true;
-            screen.aberration.value = 0.001f;
+            screen.aberration.value = 0.0008f;
             screen.scanlineStrength.overrideState = true;
-            screen.scanlineStrength.value = 0.08f;
+            screen.scanlineStrength.value = 0f;
             screen.vignetteStrength.overrideState = true;
-            screen.vignetteStrength.value = 0.22f;
+            screen.vignetteStrength.value = 0.3f;
             screen.grainStrength.overrideState = true;
-            screen.grainStrength.value = 0.035f;
+            screen.grainStrength.value = 0.025f;
 
             EnsureTonemapping(profile);
+            EnsureGrading(profile);
 
             EditorUtility.SetDirty(screen);
             EditorUtility.SetDirty(profile);
@@ -173,6 +175,57 @@ namespace HorrorUtez.Rendering.Editor
             tonemapping.mode.value = TonemappingMode.Neutral;
         }
 
+        /// <summary>
+        /// Bloom and grading for the night look.
+        ///
+        /// Bloom is what makes a lamp, a lit window or a sign read as a light source rather
+        /// than a bright texture — every practical in the reference renders haloes. The
+        /// threshold sits just under 1 so only emissive surfaces and hot spots bloom, never
+        /// a pale wall under the torch.
+        ///
+        /// The grade pushes shadows toward blue-violet and leaves highlights warm, so the
+        /// sodium lamps and the moonlit ground pull apart instead of meeting in grey.
+        /// </summary>
+        private static void EnsureGrading(VolumeProfile profile)
+        {
+            var bloom = GetOrAdd<Bloom>(profile);
+            bloom.threshold.Override(0.85f);
+            bloom.intensity.Override(0.9f);
+            bloom.scatter.Override(0.72f);
+            bloom.tint.Override(new Color(1f, 0.94f, 0.96f));
+            bloom.highQualityFiltering.Override(false);
+            bloom.downscale.Override(BloomDownscaleMode.Half);
+
+            var adjustments = GetOrAdd<ColorAdjustments>(profile);
+            adjustments.postExposure.Override(0.35f);
+            adjustments.contrast.Override(14f);
+            adjustments.colorFilter.Override(new Color(0.93f, 0.94f, 1f));
+            adjustments.saturation.Override(10f);
+
+            var whiteBalance = GetOrAdd<WhiteBalance>(profile);
+            whiteBalance.temperature.Override(-12f);
+            whiteBalance.tint.Override(8f);
+
+            var smh = GetOrAdd<ShadowsMidtonesHighlights>(profile);
+            smh.shadows.Override(new Vector4(0.9f, 0.9f, 1.18f, 0f));
+            smh.midtones.Override(new Vector4(0.98f, 0.97f, 1.04f, 0f));
+            smh.highlights.Override(new Vector4(1.04f, 1f, 0.96f, 0f));
+
+            foreach (var component in new VolumeComponent[] { bloom, adjustments, whiteBalance, smh })
+                EditorUtility.SetDirty(component);
+        }
+
+        private static T GetOrAdd<T>(VolumeProfile profile) where T : VolumeComponent
+        {
+            if (!profile.TryGet<T>(out var component))
+            {
+                component = profile.Add<T>(overrides: false);
+                AssetDatabase.AddObjectToAsset(component, profile);
+            }
+            component.active = true;
+            return component;
+        }
+
         public static Volume SpawnGlobalVolume()
         {
             var profile = AssetDatabase.LoadAssetAtPath<VolumeProfile>(ProfilePath);
@@ -191,6 +244,7 @@ namespace HorrorUtez.Rendering.Editor
             // The render features read PsxLook on their own; this is what carries the switch
             // into the materials, which the features cannot reach.
             go.AddComponent<PsxLookBinder>();
+            go.AddComponent<PsxStyleApplier>();
 
             Debug.Log("[PSX] Global Volume added to the scene.");
             return volume;

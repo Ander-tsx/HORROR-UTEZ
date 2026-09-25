@@ -58,5 +58,38 @@ namespace HorrorUtez.Rendering
         }
 
         public static void Toggle() => Enabled = !Enabled;
+
+        private const string StyleKey = "HorrorUtez.PsxLook.Style";
+        private static PsxVisualStyle _style;
+        private static bool _styleLoaded;
+
+        /// <summary>Raised when the visual style changes. PsxStyleApplier and the menu listen.</summary>
+        public static event Action<PsxVisualStyle> StyleChanged;
+
+        /// <summary>Which of the looks in <see cref="PsxStylePresets"/> is active. Defaults to RetroPixel.</summary>
+        public static PsxVisualStyle Style
+        {
+            get
+            {
+                if (!_styleLoaded)
+                {
+                    _style = (PsxVisualStyle)Math.Clamp(PlayerPrefs.GetInt(StyleKey, 0), 0, PsxStylePresets.Count - 1);
+                    _styleLoaded = true;
+                }
+                return _style;
+            }
+            set
+            {
+                if (_styleLoaded && _style == value)
+                    return;
+                _style = value;
+                _styleLoaded = true;
+                PlayerPrefs.SetInt(StyleKey, (int)value);
+                PlayerPrefs.Save();
+                StyleChanged?.Invoke(value);
+            }
+        }
+
+        public static void NextStyle() => Style = (PsxVisualStyle)(((int)Style + 1) % PsxStylePresets.Count);
     }
 }

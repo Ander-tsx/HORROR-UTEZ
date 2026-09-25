@@ -75,10 +75,10 @@ namespace HorrorUtez.Rendering.Editor
             Directory.CreateDirectory(MaterialFolder);
             Directory.CreateDirectory(TextureFolder);
 
-            var shader = Shader.Find(PsxShaderProperties.UnlitMaster);
+            var shader = PsxMaterialDefaults.LitShader;
             if (shader == null)
             {
-                Debug.LogError($"[PSX] Shader not found: {PsxShaderProperties.UnlitMaster}. Is Assets/ThirdParty/URP-PSX vendored?");
+                Debug.LogError($"[PSX] Shader not found: {PsxShaderProperties.Lit}. Has PsxLit.shader imported without errors?");
                 return;
             }
 
@@ -104,6 +104,31 @@ namespace HorrorUtez.Rendering.Editor
             Debug.Log($"[PSX] {Defs.Length} terrain materials written to {MaterialFolder}");
         }
 
+        /// <summary>
+        /// Re-bakes only the generated texture assets, in place (same GUID), leaving every
+        /// material alone — so a texture someone dragged onto a material by hand survives.
+        /// </summary>
+        public static void RegenerateTextures()
+        {
+            int rebuilt = 0;
+            foreach (var def in Defs)
+            {
+                string texPath = $"{TextureFolder}/{def.Name}.asset";
+                var existing = AssetDatabase.LoadAssetAtPath<Texture2D>(texPath);
+                if (existing == null)
+                    continue;
+
+                var tex = BuildTexture(def);
+                EditorUtility.CopySerialized(tex, existing);
+                Object.DestroyImmediate(tex);
+                EditorUtility.SetDirty(existing);
+                rebuilt++;
+            }
+
+            AssetDatabase.SaveAssets();
+            Debug.Log($"[PSX] Re-baked {rebuilt} terrain textures (clumped noise, mipmapped).");
+        }
+
         private static void WriteMaterial(Def def, Shader shader, Texture2D tex)
         {
             string path = $"{MaterialFolder}/{def.Name}.mat";
@@ -117,34 +142,16 @@ namespace HorrorUtez.Rendering.Editor
 
             mat.SetTexture(PsxShaderProperties.MainTex, tex);
             mat.SetVector(PsxShaderProperties.Tiling, def.Tiling);
-            mat.SetFloat(PsxShaderProperties.IsLit, 1f);
-            mat.SetFloat(PsxShaderProperties.IsSpecular, 0f);
-            mat.SetFloat(PsxShaderProperties.Smoothness, 0f);
 
-            // Ground is huge and always under the camera: heavy vertex jitter here reads as
-            // nausea, not nostalgia. Keep the resolution high so the snapping stays subtle.
-            mat.SetFloat(PsxShaderProperties.UseVertexJitter, 1f);
-            mat.SetFloat(PsxShaderProperties.VertexResolution, 560f);
-
-            // Affine warping is the signature look on large flat floors.
-            mat.SetFloat(PsxShaderProperties.UseAffine, 1f);
-            mat.SetFloat(PsxShaderProperties.AffineThreshold, 0.25f);
-
-            mat.SetFloat(PsxShaderProperties.UsePixelation, 1f);
-            mat.SetFloat(PsxShaderProperties.TextureResolution, 256f);
-
-            mat.SetFloat(PsxShaderProperties.UseColorPrecision, 1f);
-            mat.SetFloat(PsxShaderProperties.ColorPrecision, 6f);
-
-            // Clipping the ground away at distance looks broken; the fog handles depth.
-            mat.SetFloat(PsxShaderProperties.UseCameraClipping, 0f);
-
-            EditorUtility.SetDirty(mat);
+            PsxMaterialDefaults.Apply(mat, PsxMaterialDefaults.Classify(def.Name),
+                PsxMaterialDefaults.IsWettable(def.Name));
+            PsxMaterialDefaults.SetTransparent(mat, false);
         }
 
         private static Texture2D BuildTexture(Def def)
         {
-            var tex = new Texture2D(TexSize, TexSize, TextureFormat.RGBA32, mipChain: false)
+            // Mipmapped: without them the point-sampled grass and dirt crawl at distance.
+            var tex = new Texture2D(TexSize, TexSize, TextureFormat.RGBA32, mipChain: true)
             {
                 name = def.Name,
                 filterMode = FilterMode.Point,
@@ -165,13 +172,13 @@ namespace HorrorUtez.Rendering.Editor
                     Pattern.Blocks => BlocksPixel(def, x, y, rng),
                     Pattern.Panels => PanelsPixel(def, y),
                     Pattern.Foliage => FoliagePixel(def, x, y),
-                    _ => NoisePixel(def, rng),
+                    _ => NoisePixel(def, x, y),
                 };
                 pixels[y * TexSize + x] = c;
             }
 
             tex.SetPixels32(pixels);
-            tex.Apply(updateMipmaps: false);
+            tex.Apply(updateMipmaps: true);
             return tex;
         }
 
@@ -183,9 +190,17 @@ namespace HorrorUtez.Rendering.Editor
             return joint ? def.Accent : def.Base;
         }
 
-        private static Color NoisePixel(Def def, System.Random rng)
+        /// <summary>
+        /// Clumped, not per-pixel. Full-range noise on every texel was the television static
+        /// on the grass: at 7x13 tiling each screen pixel landed on an unrelated value.
+        /// Blocks of 4 with a narrow range read as tufts and soil grains instead.
+        /// </summary>
+        private static Color NoisePixel(Def def, int x, int y)
         {
-            return Color.Lerp(def.Base, def.Accent, (float)rng.NextDouble());
+            const int block = 4;
+            int h = (x / block) * 73856093 ^ (y / block) * 19349663 ^ def.Name.Length * 83492791;
+            float t = ((h & 0x7fffffff) % 1000) / 1000f;
+            return Color.Lerp(def.Base, def.Accent, 0.2f + t * 0.6f);
         }
 
         /// <summary>

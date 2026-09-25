@@ -2,6 +2,7 @@ using System.IO;
 using UnityEditor;
 using UnityEngine;
 using HorrorUtez.Rendering;
+using HorrorUtez.Rendering.Editor;
 
 namespace HorrorUtez.World.Editor
 {
@@ -64,6 +65,13 @@ namespace HorrorUtez.World.Editor
         /// </summary>
         public const string CecadecInteriorPrefab = LandmarkPrefabFolder + "/CecadecInterior.prefab";
 
+        /// <summary>
+        /// CECADEC above the ground floor: the intermediate floor between storeys (an empty
+        /// concrete crawl level, 1.04 m clear) and the upper floor's corridor, rooms fronts,
+        /// stairwell head and glazed screens. Shares CECADEC_North's origin and pose.
+        /// </summary>
+        public const string CecadecUpperPrefab = LandmarkPrefabFolder + "/CecadecUpper.prefab";
+
         private enum Surface { Opaque, Cutout, Transparent, Emissive }
 
         /// <summary>
@@ -108,6 +116,15 @@ namespace HorrorUtez.World.Editor
             ("Kit_Nosing", "T_Nosing", 2f, 2f, Surface.Opaque),
             ("Kit_Light", "T_Light", 1f, 1f, Surface.Emissive),
             ("Kit_Signs", "T_Signs", 1f, 1f, Surface.Opaque),
+            // Toilets, waiting tables and the intermediate floor (2026-09-16); must match
+            // MAPS in gen_interior_textures.py.
+            ("Kit_Tile_Wall", "T_Tile_Wall", 0.5f, 0.5f, Surface.Opaque),
+            ("Kit_Tile_Counter", "T_Tile_Counter", 1f / 1.6f, 1f / 1.6f, Surface.Opaque),
+            ("Kit_Porcelain", "T_Porcelain", 1f, 1f, Surface.Opaque),
+            ("Kit_Paint_Grey", "T_Paint_Grey", 1f, 1f, Surface.Opaque),
+            ("Kit_Mirror", "T_Mirror", 1f, 1f, Surface.Opaque),
+            ("Kit_Wood_Desk", "T_Wood_Desk", 1f, 1f, Surface.Opaque),
+            ("Kit_Concrete", "T_Concrete", 0.5f, 0.5f, Surface.Opaque),
             // CDS south facade and CECADEC east facade (photos 33-35), in CECADEC_North.
             ("Kit_Canvas_Red", "T_Canvas_Red", 0.5f, 0.5f, Surface.Opaque),
             ("Kit_Palm", "T_Palm", 1f, 1f, Surface.Cutout),
@@ -147,11 +164,11 @@ namespace HorrorUtez.World.Editor
             Directory.CreateDirectory(PrefabFolder);
             AssetDatabase.Refresh();
 
-            var shader = Shader.Find(PsxShaderProperties.UnlitMaster);
+            var shader = PsxMaterialDefaults.LitShader;
             if (shader == null)
             {
-                Debug.LogError($"[KIT] Shader not found: {PsxShaderProperties.UnlitMaster}. " +
-                               "Is Assets/ThirdParty/URP-PSX vendored?");
+                Debug.LogError($"[KIT] Shader not found: {PsxShaderProperties.Lit}. " +
+                               "Has Assets/_Project/Shaders/PsxLit.shader imported without errors?");
                 return;
             }
 
@@ -196,22 +213,23 @@ namespace HorrorUtez.World.Editor
             Debug.Log($"[KIT] {built}/8 prefabs written to {PrefabFolder}; meshes from the .blend " +
                       $"files in {MeshFolder}.");
 
-            var transparent = Shader.Find(PsxShaderProperties.PbrMasterTransparent);
             foreach (var (name, map, u, v, kind) in LandmarkMaterials)
             {
-                var mat = WriteMaterial(name, kind == Surface.Transparent && transparent != null ? transparent : shader,
+                var mat = WriteMaterial(name, shader,
                     new Color(0.5f, 0.5f, 0.5f), new Color(0.45f, 0.45f, 0.45f), Joints.None,
                     new Authored(map, u, v));
                 switch (kind)
                 {
                     case Surface.Transparent:
+                        PsxMaterialDefaults.Apply(mat, PsxSurfaceKind.Glass, wettable: false);
+                        PsxMaterialDefaults.SetTransparent(mat, true);
                         mat.SetFloat(PsxShaderProperties.AlphaMultiplier,
                             TransparentAlpha.TryGetValue(name, out float alpha) ? alpha : 0.4f);
                         mat.SetFloat(PsxShaderProperties.AlphaClipping, 0f);
                         break;
                     case Surface.Emissive:
-                        // Unlit: the globe reads as the light source, full brightness at night.
-                        mat.SetFloat(PsxShaderProperties.IsLit, 0f);
+                        // Glows and blooms: the globe reads as the light source at night.
+                        PsxMaterialDefaults.Apply(mat, PsxSurfaceKind.Emissive, wettable: false);
                         break;
                 }
             }
@@ -220,8 +238,9 @@ namespace HorrorUtez.World.Editor
             // After the materials: landmarks bind their slots to them by name at import.
             int landmarks = BuildLandmarkPrefab(CecadecNorthPrefab, "CECADEC_North");
             landmarks += BuildLandmarkPrefab(CecadecInteriorPrefab, "CecadecInterior");
+            landmarks += BuildLandmarkPrefab(CecadecUpperPrefab, "CecadecUpper");
             AssetDatabase.SaveAssets();
-            Debug.Log($"[KIT] {landmarks}/2 landmark prefabs written to {LandmarkPrefabFolder}.");
+            Debug.Log($"[KIT] {landmarks}/3 landmark prefabs written to {LandmarkPrefabFolder}.");
         }
 
         // ---- Placement API (used by both builders) -------------------------
@@ -421,7 +440,7 @@ namespace HorrorUtez.World.Editor
         /// 10 m out along those axes. Wherever the .blend -> FBX -> Unity chain sends them,
         /// turn (and if it mirrored, flip) the model so east = +X, north = +Z, up = +Y.
         /// </summary>
-        private static bool AlignAxes(Transform root, Transform body, string pieceName)
+        internal static bool AlignAxes(Transform root, Transform body, string pieceName)
         {
             var east = FindDeep(body, "Probe_East");
             var north = FindDeep(body, "Probe_North");
@@ -629,25 +648,8 @@ namespace HorrorUtez.World.Editor
                 mat.SetTexture(PsxShaderProperties.MainTex, art != null ? art : placeholder);
                 mat.SetVector(PsxShaderProperties.Tiling, art != null ? authored.Value.Tiling : Vector2.one);
             }
-            mat.SetFloat(PsxShaderProperties.IsLit, 1f);
-            mat.SetFloat(PsxShaderProperties.IsSpecular, 0f);
-            mat.SetFloat(PsxShaderProperties.Smoothness, 0f);
-
-            mat.SetFloat(PsxShaderProperties.UseVertexJitter, 1f);
-            mat.SetFloat(PsxShaderProperties.VertexResolution, 560f);
-
-            mat.SetFloat(PsxShaderProperties.UseAffine, 1f);
-            mat.SetFloat(PsxShaderProperties.AffineThreshold, 0.25f);
-
-            mat.SetFloat(PsxShaderProperties.UsePixelation, 1f);
-            mat.SetFloat(PsxShaderProperties.TextureResolution, 256f);
-
-            mat.SetFloat(PsxShaderProperties.UseColorPrecision, 1f);
-            mat.SetFloat(PsxShaderProperties.ColorPrecision, 6f);
-
-            mat.SetFloat(PsxShaderProperties.UseCameraClipping, 0f);
-
-            EditorUtility.SetDirty(mat);
+            PsxMaterialDefaults.Apply(mat, PsxMaterialDefaults.Classify(name), PsxMaterialDefaults.IsWettable(name));
+            PsxMaterialDefaults.SetTransparent(mat, false);
             return mat;
         }
 
@@ -676,7 +678,8 @@ namespace HorrorUtez.World.Editor
                 pixels[y * size + x] = c;
             }
 
-            var tex = new Texture2D(size, size, TextureFormat.RGBA32, mipChain: false)
+            // Mipmapped: without them a point-sampled texture shimmers into noise at distance.
+            var tex = new Texture2D(size, size, TextureFormat.RGBA32, mipChain: true)
             {
                 name = name,
                 filterMode = FilterMode.Point,
@@ -684,7 +687,7 @@ namespace HorrorUtez.World.Editor
                 anisoLevel = 0,
             };
             tex.SetPixels32(pixels);
-            tex.Apply(updateMipmaps: false);
+            tex.Apply(updateMipmaps: true);
 
             string path = $"{TextureFolder}/{name}.asset";
             var existing = AssetDatabase.LoadAssetAtPath<Texture2D>(path);

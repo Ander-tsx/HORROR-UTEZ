@@ -52,6 +52,11 @@ namespace HorrorUtez.Rendering
             if (cameraType == CameraType.Preview || cameraType == CameraType.Reflection)
                 return;
 
+            // The puddle mirror is crunched once, by the main camera's pass, as part of the
+            // final frame. Running it here too would put a vignette inside every puddle.
+            if (PsxPlanarReflection.IsReflectionCamera(renderingData.cameraData.camera))
+                return;
+
             renderer.EnqueuePass(_pass);
         }
 

@@ -2,6 +2,7 @@ using System.IO;
 using UnityEditor;
 using UnityEngine;
 using HorrorUtez.Rendering;
+using HorrorUtez.Rendering.Editor;
 
 namespace HorrorUtez.World.Editor
 {
@@ -98,11 +99,11 @@ namespace HorrorUtez.World.Editor
             Directory.CreateDirectory(TextureFolder);
             Directory.CreateDirectory(PrefabFolder);
 
-            var shader = Shader.Find(PsxShaderProperties.UnlitMaster);
+            var shader = PsxMaterialDefaults.LitShader;
             if (shader == null)
             {
-                Debug.LogError($"[PROPS] Shader not found: {PsxShaderProperties.UnlitMaster}. " +
-                               "Is Assets/ThirdParty/URP-PSX vendored?");
+                Debug.LogError($"[PROPS] Shader not found: {PsxShaderProperties.Lit}. " +
+                               "Has Assets/_Project/Shaders/PsxLit.shader imported without errors?");
                 return;
             }
 
@@ -223,34 +224,11 @@ namespace HorrorUtez.World.Editor
 
             mat.SetTexture(PsxShaderProperties.MainTex, texture);
             mat.SetVector(PsxShaderProperties.Tiling, Vector2.one);
-            mat.SetFloat(PsxShaderProperties.IsLit, 1f);
-            mat.SetFloat(PsxShaderProperties.IsSpecular, slot.Specular ? 1f : 0f);
-            mat.SetFloat(PsxShaderProperties.Smoothness, slot.Specular ? 0.55f : 0f);
-            if (slot.Specular)
-                mat.SetColor(PsxShaderProperties.Specular, new Color(0.85f, 0.87f, 0.90f));
 
-            // Props are small and often close to the camera, where jitter reads as a broken
-            // mesh rather than a PS1 one. High vertex resolution keeps the snapping present
-            // but subtle, matching what the terrain materials do.
-            mat.SetFloat(PsxShaderProperties.UseVertexJitter, 1f);
-            mat.SetFloat(PsxShaderProperties.VertexResolution, 560f);
-
-            // Affine warping is off here on purpose. The style guide reserves it for floors
-            // and large walls; on a prop the size of an extinguisher the polygons are too
-            // small for the swim to read as anything but a texture glitch.
-            mat.SetFloat(PsxShaderProperties.UseAffine, 0f);
-
-            // Same texel budget as the terrain, so props do not look sharper than the world
-            // they stand on.
-            mat.SetFloat(PsxShaderProperties.UsePixelation, 1f);
-            mat.SetFloat(PsxShaderProperties.TextureResolution, 256f);
-
-            mat.SetFloat(PsxShaderProperties.UseColorPrecision, 1f);
-            mat.SetFloat(PsxShaderProperties.ColorPrecision, 6f);
-
-            mat.SetFloat(PsxShaderProperties.UseCameraClipping, 0f);
-
-            EditorUtility.SetDirty(mat);
+            // Specular slots are bare metal; the rest are judged by name like everything else.
+            var kind = slot.Specular ? PsxSurfaceKind.Metal : PsxMaterialDefaults.Classify(slot.Name);
+            PsxMaterialDefaults.Apply(mat, kind, PsxMaterialDefaults.IsWettable(slot.Name));
+            PsxMaterialDefaults.SetTransparent(mat, false);
             return mat;
         }
 

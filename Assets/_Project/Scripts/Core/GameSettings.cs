@@ -24,6 +24,12 @@ namespace HorrorUtez.Core
         private const string FrameCapKey = "HorrorUtez.Settings.FrameCap";
         private const string FullscreenKey = "HorrorUtez.Settings.Fullscreen";
         private const string ResolutionKey = "HorrorUtez.Settings.ResolutionIndex";
+        private const string FovKey = "HorrorUtez.Settings.FieldOfView";
+
+        /// <summary>Vertical field of view limits, in degrees (Unity's Camera.fieldOfView).</summary>
+        public const float MinFieldOfView = 50f;
+        public const float MaxFieldOfView = 95f;
+        public const float DefaultFieldOfView = 65f;
 
         /// <summary>
         /// Selectable frame caps. 0 means "no cap" — hand it to Unity as -1.
@@ -39,6 +45,7 @@ namespace HorrorUtez.Core
         private static float _lookSensitivity;
         private static bool _invertY;
         private static int _frameCapIndex;
+        private static float _fieldOfView;
 
         /// <summary>Raised after any setting changes, so open UI can refresh itself.</summary>
         public static event Action Changed;
@@ -74,6 +81,40 @@ namespace HorrorUtez.Core
                 _lookSensitivity = value;
                 PlayerPrefs.SetFloat(SensitivityKey, value);
                 Apply();
+            }
+        }
+
+        /// <summary>
+        /// Vertical field of view in degrees. The player camera applies it; see
+        /// FirstPersonController. Wider makes the campus read bigger and emptier, narrower
+        /// makes it close and claustrophobic.
+        /// </summary>
+        public static float FieldOfView
+        {
+            get { Load(); return _fieldOfView; }
+            set
+            {
+                Load();
+                value = Mathf.Clamp(Mathf.Round(value), MinFieldOfView, MaxFieldOfView);
+                if (Mathf.Approximately(_fieldOfView, value)) return;
+                _fieldOfView = value;
+                PlayerPrefs.SetFloat(FovKey, value);
+                Apply();
+            }
+        }
+
+        /// <summary>
+        /// The horizontal angle the vertical <see cref="FieldOfView"/> gives on the current
+        /// screen. Players compare FOVs horizontally (90 "feels normal" on PC), so the menu
+        /// shows both.
+        /// </summary>
+        public static float HorizontalFieldOfView
+        {
+            get
+            {
+                float aspect = Screen.height > 0 ? (float)Screen.width / Screen.height : 16f / 9f;
+                float halfV = FieldOfView * 0.5f * Mathf.Deg2Rad;
+                return 2f * Mathf.Atan(Mathf.Tan(halfV) * aspect) * Mathf.Rad2Deg;
             }
         }
 
@@ -226,6 +267,8 @@ namespace HorrorUtez.Core
             _masterVolume = PlayerPrefs.GetFloat(VolumeKey, 0.8f);
             _lookSensitivity = PlayerPrefs.GetFloat(SensitivityKey, 1f);
             _invertY = PlayerPrefs.GetInt(InvertYKey, 0) != 0;
+            _fieldOfView = Mathf.Clamp(PlayerPrefs.GetFloat(FovKey, DefaultFieldOfView),
+                MinFieldOfView, MaxFieldOfView);
             // Default to 60: high enough to feel modern, low enough not to melt a phone.
             _frameCapIndex = Mathf.Clamp(PlayerPrefs.GetInt(FrameCapKey, 1), 0, FrameCaps.Length - 1);
         }

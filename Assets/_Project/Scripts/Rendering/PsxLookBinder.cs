@@ -35,8 +35,6 @@ namespace HorrorUtez.Rendering
             Shader.PropertyToID(PsxShaderProperties.UseColorPrecision),
         };
 
-        private const string PsxShaderPrefix = "Shader Graphs/URP_PSX";
-
         private static readonly List<Material> MaterialBuffer = new();
 
         private void OnEnable()
@@ -99,7 +97,7 @@ namespace HorrorUtez.Rendering
             foreach (var material in MaterialBuffer)
             {
                 if (material != null && material.shader != null &&
-                    material.shader.name.StartsWith(PsxShaderPrefix, System.StringComparison.Ordinal))
+                    PsxShaderProperties.IsPsxSurface(material.shader.name))
                     return true;
             }
 

@@ -12,6 +12,7 @@ namespace HorrorUtez.Rendering.Editor
     public static class PsxShaderCheck
     {
         private const string PsxFolder = "Assets/ThirdParty/URP-PSX";
+        private const string ProjectShaderFolder = "Assets/_Project/Shaders";
 
         [MenuItem("HORROR-UTEZ/Check PSX Shaders")]
         public static void Check()
@@ -19,7 +20,7 @@ namespace HorrorUtez.Rendering.Editor
             var broken = new List<string>();
             int shaders = 0, subGraphs = 0;
 
-            foreach (string guid in AssetDatabase.FindAssets("t:Shader", new[] { PsxFolder }))
+            foreach (string guid in AssetDatabase.FindAssets("t:Shader", new[] { PsxFolder, ProjectShaderFolder }))
             {
                 string path = AssetDatabase.GUIDToAssetPath(guid);
                 var shader = AssetDatabase.LoadAssetAtPath<Shader>(path);
@@ -62,6 +63,7 @@ namespace HorrorUtez.Rendering.Editor
         {
             foreach (string name in new[]
                      {
+                         PsxShaderProperties.Lit,
                          "Shader Graphs/URP_PSX_Unlit_Master",
                          "Shader Graphs/URP_PSX_PBR_Master",
                      })

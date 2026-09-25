@@ -38,12 +38,16 @@ namespace HorrorUtez.UI
         private CanvasGroup _group;
 
         private Toggle _psxToggle;
+        private Text _styleValue;
         private Toggle _invertToggle;
         private Toggle _fullscreenToggle;
         private Slider _volumeSlider;
         private Text _volumeValue;
         private Slider _sensitivitySlider;
         private Text _sensitivityValue;
+        private Slider _fovSlider;
+        private Text _fovValue;
+        private Text _fovCaption;
         private Text _frameCapValue;
         private Text _resolutionValue;
 
@@ -62,6 +66,7 @@ namespace HorrorUtez.UI
             PauseController.PauseChanged += SetVisible;
             GameSettings.Changed += Refresh;
             PsxLook.Changed += OnPsxChanged;
+            PsxLook.StyleChanged += OnStyleChanged;
         }
 
         private void OnDisable()
@@ -69,9 +74,12 @@ namespace HorrorUtez.UI
             PauseController.PauseChanged -= SetVisible;
             GameSettings.Changed -= Refresh;
             PsxLook.Changed -= OnPsxChanged;
+            PsxLook.StyleChanged -= OnStyleChanged;
         }
 
         private void OnPsxChanged(bool _) => Refresh();
+
+        private void OnStyleChanged(PsxVisualStyle _) => Refresh();
 
         private void SetVisible(bool visible)
         {
@@ -152,11 +160,19 @@ namespace HorrorUtez.UI
             _psxToggle = ToggleRow(panel, "Filtro PSX", value => PsxLook.Enabled = value);
             Caption(panel, "Apagado por defecto: el filtro estorba al modelar y colocar props.");
 
+            _styleValue = CycleRow(panel, "Estilo visual", PsxLook.NextStyle);
+            Caption(panel, "Retro pixelado · PS1 render (con temblor) · Penumbra (terror).");
+
             (_volumeSlider, _volumeValue) = SliderRow(panel, "Volumen", 0f, 1f,
                 value => GameSettings.MasterVolume = value);
 
             (_sensitivitySlider, _sensitivityValue) = SliderRow(panel, "Sensibilidad", 0.25f, 3f,
                 value => GameSettings.LookSensitivity = value);
+
+            (_fovSlider, _fovValue) = SliderRow(panel, "Campo de visión", GameSettings.MinFieldOfView,
+                GameSettings.MaxFieldOfView, value => GameSettings.FieldOfView = value);
+            _fovSlider.wholeNumbers = true;
+            _fovCaption = Caption(panel, "");
 
             _invertToggle = ToggleRow(panel, "Invertir eje Y", value => GameSettings.InvertY = value);
 
@@ -224,11 +240,12 @@ namespace HorrorUtez.UI
             SetHeight(text.rectTransform, 60);
         }
 
-        private static void Caption(RectTransform parent, string content)
+        private static Text Caption(RectTransform parent, string content)
         {
             var text = Label("Caption", parent, content, 15, TextAnchor.MiddleLeft);
             text.color = new Color(Ink.r, Ink.g, Ink.b, 0.45f);
             SetHeight(text.rectTransform, 22);
+            return text;
         }
 
         private static void SetHeight(RectTransform rect, float height)
@@ -378,6 +395,7 @@ namespace HorrorUtez.UI
             try
             {
                 _psxToggle.isOn = PsxLook.Enabled;
+                _styleValue.text = PsxStylePresets.Current.Label;
                 _invertToggle.isOn = GameSettings.InvertY;
 
                 _volumeSlider.value = GameSettings.MasterVolume;
@@ -385,6 +403,11 @@ namespace HorrorUtez.UI
 
                 _sensitivitySlider.value = GameSettings.LookSensitivity;
                 _sensitivityValue.text = $"{GameSettings.LookSensitivity:0.00}x";
+
+                _fovSlider.value = GameSettings.FieldOfView;
+                _fovValue.text = $"{GameSettings.FieldOfView:0}°";
+                _fovCaption.text = $"Vertical {GameSettings.FieldOfView:0}° · horizontal " +
+                                   $"{GameSettings.HorizontalFieldOfView:0}° en esta pantalla. Más alto = más amplio.";
 
                 _frameCapValue.text = GameSettings.FrameCapLabel;
 

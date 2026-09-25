@@ -1,20 +1,41 @@
 namespace HorrorUtez.Rendering
 {
     /// <summary>
-    /// Property reference names for the vendored URP-PSX master shaders.
+    /// Property reference names for the PSX surface shaders.
     ///
-    /// The original graphs never set reference names, so every property ships with an
-    /// auto-generated id like "Boolean_43476D73". These constants restore the meaning.
-    /// Extracted from the .shadergraph JSON; regenerate with
-    /// HORROR-UTEZ > Dump PSX Shader Properties if the graphs are ever re-authored.
-    ///
-    /// Note: the graphs expose NO base colour. Albedo comes from <see cref="MainTex"/> only.
+    /// The vendored URP-PSX graphs never set reference names, so every property ships with
+    /// an auto-generated id like "Boolean_43476D73". These constants restore the meaning.
+    /// <see cref="Lit"/> — the project's own shader, which replaced the graphs — declares the
+    /// very same ids, so a material moves between them without losing a value.
     /// </summary>
     public static class PsxShaderProperties
     {
+        /// <summary>The project's PSX surface shader. Everything new should use this.</summary>
+        public const string Lit = "HorrorUtez/PSX/Lit";
+        public const string Puddle = "HorrorUtez/PSX/Puddle";
+
         public const string UnlitMaster = "Shader Graphs/URP_PSX_Unlit_Master";
         public const string PbrMaster = "Shader Graphs/URP_PSX_PBR_Master";
         public const string PbrMasterTransparent = "Shader Graphs/URP_PSX_PBR_Master_with_transparency";
+
+        /// <summary>True for the vendored graphs and for <see cref="Lit"/>.</summary>
+        public static bool IsPsxSurface(string shaderName) =>
+            shaderName == Lit ||
+            shaderName.StartsWith("Shader Graphs/URP_PSX", System.StringComparison.Ordinal);
+
+        // PsxLit only.
+        public const string BaseColor = "_BaseColor";
+        public const string EmissionMap = "_EmissionMap";
+        public const string EmissionColor = "_EmissionColor";
+        public const string Wettable = "_Wettable";
+        public const string SnapSlide = "_PsxSnapSlide";
+        public const string Surface = "_Surface";
+        public const string SrcBlend = "_SrcBlend";
+        public const string DstBlend = "_DstBlend";
+        public const string SrcBlendAlpha = "_SrcBlendAlpha";
+        public const string DstBlendAlpha = "_DstBlendAlpha";
+        public const string ZWrite = "_ZWrite";
+        public const string Cull = "_Cull";
 
         // Surface
         public const string MainTex = "Texture2D_4450AB74";

@@ -254,16 +254,19 @@ namespace HorrorUtez.World.Editor
                 sun.type = LightType.Directional;
             }
 
+            // Night, per the reel-look palette: a cold low moon and a navy ambient term, so the
+            // sodium lamps are what actually light the plaza. UtezReelLook finishes the job
+            // (night sky, reflection cubemap, lamp bulbs) on an existing scene.
             sun.transform.rotation = Quaternion.Euler(30f, 160f, 0f);
-            sun.color = new Color(0.72f, 0.78f, 0.95f);
-            sun.intensity = 1.1f;
-            sun.shadows = LightShadows.Soft;
+            sun.color = HorrorUtez.Rendering.PsxNightPalette.Moon;
+            sun.intensity = HorrorUtez.Rendering.PsxNightPalette.MoonIntensityClear;
+            sun.shadows = LightShadows.Hard;
 
             RenderSettings.sun = sun;
             RenderSettings.ambientMode = UnityEngine.Rendering.AmbientMode.Flat;
-            RenderSettings.ambientLight = new Color(0.20f, 0.22f, 0.28f);
+            RenderSettings.ambientLight = HorrorUtez.Rendering.PsxNightPalette.AmbientClear;
 
-            Debug.Log("[UTEZ] Dusk lighting configured.");
+            Debug.Log("[UTEZ] Night lighting configured.");
             return sun;
         }
 
@@ -286,9 +289,9 @@ namespace HorrorUtez.World.Editor
                 Quaternion.Euler(0f, 180f, 0f));
 
             var controller = player.AddComponent<CharacterController>();
-            controller.height = 1.8f;
+            controller.height = 1.7f;
             controller.radius = 0.3f;
-            controller.center = new Vector3(0f, 0.9f, 0f);
+            controller.center = new Vector3(0f, 0.85f, 0f);
             controller.slopeLimit = 50f;
             controller.stepOffset = 0.35f;
             controller.skinWidth = 0.02f;
@@ -304,13 +307,17 @@ namespace HorrorUtez.World.Editor
 
             var head = new GameObject("Head");
             head.transform.SetParent(player.transform, false);
-            head.transform.localPosition = new Vector3(0f, 1.65f, 0f);
+            head.transform.localPosition = new Vector3(0f, 1.55f, 0f);
 
             var camera = head.AddComponent<Camera>();
             camera.tag = "MainCamera";
             camera.nearClipPlane = 0.05f;
             camera.farClipPlane = 400f;
             camera.fieldOfView = 65f;
+            // Without URP camera data post-processing is off: no tonemapper, no bloom.
+            var cameraData = head.AddComponent<UnityEngine.Rendering.Universal.UniversalAdditionalCameraData>();
+            cameraData.renderPostProcessing = true;
+            cameraData.antialiasing = UnityEngine.Rendering.Universal.AntialiasingMode.None;
             head.AddComponent<AudioListener>();
             head.AddComponent<HorrorUtez.Player.HeadBob>();
 

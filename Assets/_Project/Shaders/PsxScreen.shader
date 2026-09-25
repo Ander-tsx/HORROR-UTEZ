@@ -116,12 +116,19 @@ Shader "HorrorUtez/PSX/Screen"
                     color = SampleScene(pixelUv);
                 }
 
+                // One virtual pixel = one dither cell and one grain cell. Keyed to the native
+                // screen instead, the 4x4 Bayer tile shrank to a speck inside every chunky
+                // pixel and read as television static over the whole frame.
+                float2 virtualPixel = _PixelHeight > 0.0
+                    ? floor(uv * resolution)
+                    : floor(rawUv * _ScreenParams.xy);
+
                 // Dither BEFORE quantising: adding the threshold then snapping is what turns
                 // a hard band edge into an alternating pattern. Quantising first would just
                 // add noise on top of the bands.
                 if (_ColorLevels > 1.0)
                 {
-                    float2 pixelCoord = floor(rawUv * _ScreenParams.xy);
+                    float2 pixelCoord = virtualPixel;
                     int index = (int)(fmod(pixelCoord.y, 4.0) * 4.0 + fmod(pixelCoord.x, 4.0));
                     float threshold = (BayerMatrix[index] - 0.5) * _DitherStrength;
 
@@ -143,7 +150,7 @@ Shader "HorrorUtez/PSX/Screen"
 
                 if (_GrainStrength > 0.0)
                 {
-                    float grain = Hash21(rawUv * _ScreenParams.xy + frac(_Time.y) * 431.0);
+                    float grain = Hash21(virtualPixel + frac(_Time.y) * 431.0);
                     color *= 1.0 - _GrainStrength * (grain - 0.5);
                 }
 
