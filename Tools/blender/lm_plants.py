@@ -165,3 +165,34 @@ def palm_clump(col, name, x, y, z, stems=3, height=5.5, seed=0):
             yaw = 2 * math.pi * k / count + rng.uniform(-0.2, 0.2)
             _frond(crown, rng, top, yaw, rng.uniform(1.7, 2.3), 0.9, rng.uniform(0.8, 1.3))
     return [make_object(name + "_Trunk", trunk, col), make_object(name + "_Canopy", crown, col)]
+
+
+def coconut_palm(col, name, x, y, z, height=11.0, seed=0):
+    """Coconut palm of the plaza (photos 3, 4): one thick ringed trunk swelling at the
+    foot and leaning a little, a crown of long drooping fronds and a cluster of nuts.
+    <name>_Trunk takes a collider, <name>_Canopy does not (the *_Canopy rule)."""
+    rng = random.Random(seed)
+    lean = Vector((rng.uniform(-0.12, 0.12), rng.uniform(-0.12, 0.12), 0.0))
+    base = Vector((x, y, z - 0.1))
+    trunk = MeshBuilder(["Kit_PalmTrunk"])
+    steps = 5
+    pts, radii = [], []
+    for k in range(steps + 1):
+        t = k / steps
+        pts.append(base + Vector((0.0, 0.0, height * t)) + lean * (height * t * t))
+        radii.append(0.30 - 0.15 * t ** 0.6)
+    trunk.tube(pts, radii, "Kit_PalmTrunk", segs=7)
+    top = pts[-1]
+
+    crown = MeshBuilder(["Kit_Palm"])
+    count = rng.randint(11, 14)
+    for k in range(count):
+        yaw = 2 * math.pi * k / count + rng.uniform(-0.15, 0.15)
+        _frond(crown, rng, tuple(top), yaw, rng.uniform(3.0, 3.9), 1.15, rng.uniform(1.0, 1.5))
+    nuts = MeshBuilder(["Kit_Bark"])
+    for k in range(5):
+        a = 2 * math.pi * k / 5
+        nuts.sphere((top.x + 0.26 * math.cos(a), top.y + 0.26 * math.sin(a), top.z - 0.22),
+                    0.13, "Kit_Bark", segs=6, rings=3)
+    return [make_object(name + "_Trunk", trunk, col), make_object(name + "_Canopy", crown, col),
+            make_object(name + "_Nuts", nuts, col)]

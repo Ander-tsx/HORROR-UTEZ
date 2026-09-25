@@ -51,6 +51,14 @@ MAPS = {
     "T_Glass_Frosted": (T.glass_frosted, 1.0),
     "T_Glass_Tinted": (T.glass_tinted, 1.0),
     "T_Light": (T.light_panel, 1.0),
+    # Toilets, waiting tables and the intermediate floor (2026-09-16).
+    "T_Tile_Wall": (T.tile_wall, 2.0),
+    "T_Tile_Counter": (T.tile_counter, 1.6),
+    "T_Porcelain": (T.porcelain, 1.0),
+    "T_Paint_Grey": (T.paint_grey, 1.0),
+    "T_Mirror": (T.mirror, 1.0),
+    "T_Wood_Desk": (T.wood_desk, 1.0),
+    "T_Concrete": (T.concrete_raw, 2.0),
 }
 
 

@@ -54,7 +54,9 @@ namespace HorrorUtez.World.Editor
             new("PSX_Tree4", 80, 8f, 14f, true, new[] { "UTEZ_Bark", "UTEZ_Leaves" }),
             // Bare trunks read as dead wood; they carry most of the dread in a treeline.
             new("PSX_Treetrunk", 45, 5f, 9f, true, new[] { "UTEZ_Bark", "UTEZ_Bark" }),
-            new("PSX_Rock", 120, 0.6f, 2.2f, false, new[] { "UTEZ_RockGrey" }),
+            // Boulders along the treeline: with the ring pulled in they read as the natural
+            // edge of the site rather than as scatter, so there are more of them and bigger.
+            new("PSX_Rock", 200, 0.7f, 3.0f, false, new[] { "UTEZ_RockGrey" }),
             new("PSX_Grass", 260, 0.3f, 0.7f, false, new[] { "UTEZ_Leaves" }),
             new("PSX_Reed", 90, 0.4f, 0.9f, false, new[] { "UTEZ_LeavesDry" }),
             new("PSX_Dandelion", 70, 0.2f, 0.4f, false, new[] { "UTEZ_Leaves" }),
@@ -155,12 +157,16 @@ namespace HorrorUtez.World.Editor
         private static bool TryPickPoint(System.Random random, out Vector3 point)
         {
             Vector2 slabHalf = UtezDimensions.SlabSize * 0.5f;
-            Vector2 outerHalf = UtezDimensions.DirtSize * 0.5f + Vector2.one * UtezDimensions.ForestRingWidth;
+            // Sample inside the dirt plane, not past it: trees beyond its edge stand over
+            // nothing. ForestRingWidth is the thickness of the invisible boundary wall
+            // (UtezTerrainBuilder.BuildBoundaryRing), not extra ground to scatter on.
+            Vector2 outerHalf = UtezDimensions.DirtSize * 0.5f;
             Vector2 center = UtezDimensions.SlabCenter;
 
-            // Keep the wood off the campus edge. Trees this tall crowding the kerb read
-            // as a wall right at the boundary instead of as a treeline in the distance.
-            float clearance = 18f * UtezDimensions.WorldScale;
+            // A treeline right at the boundary is exactly what is wanted now: the map is
+            // the building zone and the wood closes it. Only enough clearance to keep a
+            // trunk off the concrete kerb.
+            float clearance = 3f * UtezDimensions.WorldScale;
 
             for (int attempt = 0; attempt < 24; attempt++)
             {

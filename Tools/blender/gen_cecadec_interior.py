@@ -1,10 +1,19 @@
 """
-CECADEC ground floor, v2: the straight corridor from the main door to the south wall,
-the wider cross corridor (glass doors east, stairs west), the rooms' fronts on both
-sides, fittings and signage. Layout from the user's floor plan
-(docs/map/reference/cecadec-interior-pasillo/plano-usuario-28.png) normalised to the
-measured 20 x 45 m footprint; every element's look from the site photos (see lm_interior.py).
-Room interiors stay empty (floor, ceiling, plain walls) until their own phase.
+CECADEC ground floor, v3: the straight corridor from the main door, the wider cross
+corridor (glass doors east, stairs west), the short corridor south of it, the rooms'
+fronts on both sides, fittings and signage. Room interiors stay empty (floor, ceiling,
+plain walls) until their own phase.
+
+v3 fixes the corridor's length. v2 took it from the user's rough floor plan
+(docs/map/reference/cecadec-interior-pasillo/plano-usuario-28.png) and made the first
+leg 28.40 m, which left 6.44 m of dead wall between the electrical closet and the glazed
+fronts once those, the toilet alcoves and the signs block were placed at their measured
+lengths. The first leg is now 21.96 m (door at s = 0.4, cross corridor at s = 22.36) and
+the 6.44 m went south of the cross: the corridor dead-ends at S_END = 38.16 and the last
+bay of the 45 m footprint is a room, not corridor. East of the first leg there are three
+rooms only, not six: Aula 1 (one room, one door, its front running past the column
+between the benches), Aula 2 and CC9. Lab de Procesos and the south-east lab moved to
+the east side of the south leg.
 
 Axes: X east, Y north, Z up, metres. Origin: the main door threshold — the same point
 as CECADEC_North.blend's origin, so both share one pose in Unity. Walking in you face
@@ -29,15 +38,17 @@ sys.dont_write_bytecode = True
 import bpy  # noqa: E402
 
 import geolib  # noqa: E402
+import lm_bath  # noqa: E402
 import lm_interior  # noqa: E402
 
-for _m in (geolib, lm_interior):
+for _m in (geolib, lm_interior, lm_bath):
     importlib.reload(_m)
 
 from geolib import MeshBuilder, make_empty, make_object, rect  # noqa: E402
-from lm_interior import (BAR, CEIL, PART_T, PILLAR_PROUD, PILLAR_W, RISE, TREAD, Wall)  # noqa: E402
+from lm_interior import (BAR, BASE_T, CEIL, PART_T, PILLAR_PROUD, PILLAR_W, RISE, TREAD, Wall)  # noqa: E402
 
 I = lm_interior
+B = lm_bath
 PREFIX = "CecadecInterior_"
 
 # Unity material -> (map, Tiling u, Tiling v). Must match UtezKit.LandmarkMaterials.
@@ -64,6 +75,13 @@ MATERIALS = {
     "Kit_Paint_Blue": ("T_Paint_Blue.png", 1.0, 1.0),
     "Kit_Light": ("T_Light.png", 1.0, 1.0),
     "Kit_Signs": ("T_Signs.png", 1.0, 1.0),
+    # Toilets and the waiting tables of the cross corridor (2026-09-16).
+    "Kit_Tile_Wall": ("T_Tile_Wall.png", 0.5, 0.5),
+    "Kit_Tile_Counter": ("T_Tile_Counter.png", 1 / 1.6, 1 / 1.6),
+    "Kit_Porcelain": ("T_Porcelain.png", 1.0, 1.0),
+    "Kit_Paint_Grey": ("T_Paint_Grey.png", 1.0, 1.0),
+    "Kit_Mirror": ("T_Mirror.png", 1.0, 1.0),
+    "Kit_Wood_Desk": ("T_Wood_Desk.png", 1.0, 1.0),
 }
 
 # ---- Layout (metres; s = distance south of the main door along the corridor walls) ----
@@ -71,13 +89,14 @@ MATERIALS = {
 CORR = 2.2                       # corridor half-width: 11 tiles of 40 cm = 4.4 m
 IN_X = 9.6                       # inner face of the east / west outer walls
 N_S, S_S = 0.4, 44.6             # inner faces of the north / south outer walls
-BAND = (28.8, 34.8)              # cross corridor, 6 m (plan: 64-79 % of the depth)
+BAND = (22.36, 28.36)            # cross corridor, 6 m
+S_END = 38.16                    # the corridor's south dead end; rooms fill S_END..S_S
 FIELD = 1.4                      # light field tiles; 2 darker tiles each side
 WALL_X = CORR + PART_T           # room side of the corridor partitions
 COL_W, COL_PROUD = 0.6, 0.28     # the four columns at the cross corridor's corners
-EAST_DOOR = (29.3, 34.3)         # glass doors in the east wall (UtezBuildingBuilder.CecadecEastDoorRaw)
-STAIR = dict(x_foot=-4.4, x_land=-7.7, f1=(-31.1, -29.52), f2=(-33.0, -31.3),
-             parapet=(-29.52, -29.40), stringer=(-33.12, -33.0), centre=(-31.3, -31.1))
+EAST_DOOR = (22.86, 27.86)       # glass doors in the east wall (UtezBuildingBuilder.CecadecEastDoorRaw)
+STAIR = dict(x_foot=-4.4, x_land=-7.7, f1=(-24.66, -23.08), f2=(-26.56, -24.86),
+             parapet=(-23.08, -22.96), stringer=(-26.68, -26.56), centre=(-24.86, -24.66))
 
 E = Wall((CORR, 0.0), (0.0, -1.0), (1.0, 0.0))       # east corridor wall, rooms east
 W = Wall((-CORR, 0.0), (0.0, -1.0), (-1.0, 0.0))     # west corridor wall, rooms west
@@ -94,33 +113,70 @@ def cell(m):
 # Photo 23: troffers in mirrored pairs across the corridor, every 5 tiles (3.05 m), with
 # a supply diffuser or a return grille on the axis between each pair.
 PAIR = 1.22
-N_ROWS = range(3, 46, 5)
-S_ROWS = range(60, 73, 5)
+N_ROWS = range(3, 35, 5)
+S_ROWS = range(50, 63, 5)
+BAND_ROWS = (38.5, 41.5, 44.5)
 TROFFERS = (
     [(side * PAIR, cell(m)) for m in N_ROWS for side in (-1, 1)]
-    + [(0.61 * k, cell(49)) for k in range(-6, 16, 3)]
-    + [(0.61 * k, cell(55)) for k in range(-15, 16, 3)]
+    + [(0.61 * k, cell(BAND_ROWS[0])) for k in range(-6, 16, 3)]
+    + [(0.61 * k, cell(BAND_ROWS[2])) for k in range(-15, 16, 3)]
     + [(side * PAIR, cell(m)) for m in S_ROWS for side in (-1, 1)]
 )
 DIFFUSERS = ([(0.0, cell(m)) for i, m in enumerate(N_ROWS) if i % 2 == 0]
              + [(0.0, cell(m)) for i, m in enumerate(S_ROWS) if i % 2 == 0]
-             + [(0.61 * k, cell(52)) for k in (-6, 0, 6, 12)])
+             + [(0.61 * k, cell(BAND_ROWS[1])) for k in (-6, 0, 6, 12)])
 RETURNS = ([(0.0, cell(m)) for i, m in enumerate(N_ROWS) if i % 2 == 1]
            + [(0.0, cell(m)) for i, m in enumerate(S_ROWS) if i % 2 == 1])
-SMOKE = [(0.0, cell(m)) for m in (6, 26, 68)] + [(-4.88, cell(51))]
+SMOKE = [(0.0, cell(m)) for m in (6, 26, 58)] + [(-4.88, cell(40.5))]
 
 # One fluorescent light per fitting pair (UtezKit turns every *_Fluoro empty into a light
 # with FluorescentFlicker), four along the cross corridor, one in the open stairwell.
 FLUOROS = ([(f"N{i}", 0.0, cell(m), CEIL - 0.08) for i, m in enumerate(N_ROWS, 1)]
            + [(f"S{i}", 0.0, cell(m), CEIL - 0.08) for i, m in enumerate(S_ROWS, 1)]
-           + [(f"Band{i}", x, cell(52), CEIL - 0.08) for i, x in enumerate((-3.66, 0.0, 3.66, 7.32), 1)]
-           + [("Stair", -6.4, -31.2, 3.7)])
+           + [(f"Band{i}", x, cell(BAND_ROWS[1]), CEIL - 0.08)
+              for i, x in enumerate((-3.66, 0.0, 3.66, 7.32), 1)]
+           + [("Stair", -6.4, -24.76, 3.7)]
+           # Surface battens in the two toilets (world coords of WC's light positions).
+           + [("WCMenA", -4.80, -20.46, CEIL - 0.06), ("WCMenB", -7.40, -20.46, CEIL - 0.06),
+              ("WCWomen", -5.60, -17.76, CEIL - 0.06)])
 
 # Floor and ceiling pieces: URP lights each object with at most 8 lights, so no piece may
 # sit under more than a few fittings. Cuts fall between fitting rows, never through one.
-N_BREAKS = [0.0, cell(5.5), cell(15.5), cell(25.5), cell(35.5), -BAND[0]]
-S_BREAKS = [-BAND[1], cell(67.5), -S_S]
+N_BREAKS = [0.0, cell(5.5), cell(15.5), cell(25.5), -BAND[0]]
+S_BREAKS = [-BAND[1], cell(53), -S_END]
 BAND_X = [-IN_X, -CORR, CORR, 5.9, IN_X]
+
+# Walls between rooms, behind the corridor fronts (one per front boundary).
+E_DIVIDERS = (8.605, 14.055, 33.485)
+W_DIVIDERS = (5.715, 10.975, 16.235, 33.80)
+
+# ---- Toilets, west side, behind the signs block --------------------------------------
+# From the user's hand plan (docs/map/reference/cecadec-interior-pasillo/
+# plano-usuario-bano.png) and their own edit of the .blend on 2026-09-15, where the signs
+# block was thinned from 1.52 m to 0.25 m: the corridor wall there is thin, each of the
+# two openings has no leaf, and a baffle a metre behind it stops you seeing in. The men's
+# room (south, the left opening facing the wall) carries the fixtures in the plan's order
+# away from the door: basins under a mirror, urinals behind grey screens, WC cubicles.
+# The women's room (north, right) is blocked with a steel cabinet and left empty.
+#
+# One change from the sketch: it draws the cubicles in the same 1.1 m strip as the other
+# two bays, which at the room's real 2.59 m width would make them 0.62 m wide. They turn
+# to face the door instead and take the full width of the back wall.
+WC = dict(
+    s0=16.46, s1=21.76,           # inner faces of the block's north and south walls
+    door_n=(16.46, 17.46),        # women's opening
+    door_s=(20.76, 21.76),        # men's opening
+    front=0.25,                   # depth of the thin corridor wall between the openings
+    baffle=(1.40, 1.52),          # screen wall a metre inside each opening
+    split=(19.05, 19.17),         # divider between the two rooms
+    back=7.38,                    # inner face of the west outer wall's plaster lining
+    basins=(1.64, 3.44),          # depth range of the washbasin slab
+    bay_wall=(3.58, 3.70),        # return wall between basins and urinals
+    urinals=(4.20, 4.80, 5.40),   # depths of the three urinal centres
+    screens=(4.50, 5.10, 5.70),   # depths of the grey plywood screens between them
+    stalls=(5.95, 7.38),          # depth range of the cubicle row
+    bay=1.15,                     # how far the fixture bays reach off the south wall
+)
 
 
 def _pieces(breaks):
@@ -160,7 +216,10 @@ def u_floors(col):
                                               ((xa, b1, z0), (xb, b1 + 0.8, z1))], "Kit_Tile_Border")
     for side, x0, x1 in (("E", WALL_X, IN_X), ("W", -IN_X, -WALL_X)):
         _slab(col, f"Floor_Rooms_N{side}", rect(x0, -(BAND[0] - PART_T), x1, -N_S), z0, z1, "Kit_Tile_Floor")
-        _slab(col, f"Floor_Rooms_S{side}", rect(x0, -S_S, x1, -(BAND[1] + PART_T)), z0, z1, "Kit_Tile_Floor")
+        _slab(col, f"Floor_Rooms_S{side}", rect(x0, -S_END, x1, -(BAND[1] + PART_T)), z0, z1, "Kit_Tile_Floor")
+    # The corridor dead-ends at S_END; the last bay of the building is one full-width room.
+    for i, (x0, x1) in enumerate(zip((-IN_X, 0.0), (0.0, IN_X)), 1):
+        _slab(col, f"Floor_Back{i}", rect(x0, -S_S, x1, -S_END), z0, z1, "Kit_Tile_Floor")
 
 
 def _holes_in(x0, y0, x1, y1):
@@ -185,7 +244,9 @@ def u_ceilings(col):
         _slab(col, f"Ceiling_Band{i}", poly, z0, z1, "Kit_Ceiling", holes=_holes_in(xa, b1, xb, b0))
     for side, x0, x1 in (("E", WALL_X, IN_X), ("W", -IN_X, -WALL_X)):
         _slab(col, f"Ceiling_Rooms_N{side}", rect(x0, -(BAND[0] - PART_T), x1, -N_S), z0, z1, "Kit_Ceiling")
-        _slab(col, f"Ceiling_Rooms_S{side}", rect(x0, -S_S, x1, -(BAND[1] + PART_T)), z0, z1, "Kit_Ceiling")
+        _slab(col, f"Ceiling_Rooms_S{side}", rect(x0, -S_END, x1, -(BAND[1] + PART_T)), z0, z1, "Kit_Ceiling")
+    for i, (x0, x1) in enumerate(zip((-IN_X, 0.0), (0.0, IN_X)), 1):
+        _slab(col, f"Ceiling_Back{i}", rect(x0, -S_S, x1, -S_END), z0, z1, "Kit_Ceiling")
 
 
 def u_ceiling_fixtures(col):
@@ -204,9 +265,9 @@ def u_rooms(col):
     walls (whose inner face is still the red facade material). Interiors come later."""
     t = PART_T / 2
     walls = []
-    for s in (4.915, 8.605, 13.575, 18.545, 24.025):
+    for s in E_DIVIDERS:
         walls.append(((WALL_X, -s - t, 0.0), (IN_X - 0.02, -s + t, CEIL)))
-    for s in (10.975, 16.725):
+    for s in W_DIVIDERS:
         walls.append(((-IN_X + 0.02, -s - t, 0.0), (-WALL_X, -s + t, CEIL)))
     _boxes(col, "Room_Dividers", walls, "Kit_Wall_White")
     lin = [
@@ -215,118 +276,154 @@ def u_rooms(col):
         ((-IN_X, -(BAND[0] - PART_T), 0.0), (-IN_X + 0.02, -N_S - 0.02, CEIL)),
         ((IN_X - 0.02, -S_S + 0.02, 0.0), (IN_X, -(BAND[1] + PART_T), CEIL)),
         ((-IN_X, -S_S + 0.02, 0.0), (-IN_X + 0.02, -(BAND[1] + PART_T), CEIL)),
-        ((WALL_X, -S_S, 0.0), (IN_X, -S_S + 0.02, CEIL)), ((-IN_X, -S_S, 0.0), (-WALL_X, -S_S + 0.02, CEIL)),
+        ((-IN_X, -S_S, 0.0), (IN_X, -S_S + 0.02, CEIL)),
     ]
     _boxes(col, "Lining_Rooms", lin, "Kit_Wall_White")
-    _boxes(col, "Lining_CorridorSouth", [((-CORR, -S_S, 0.0), (CORR, -S_S + 0.02, CEIL))], "Kit_Wall_White")
-    _boxes(col, "Lining_CorridorSouth_Skirting", [((-CORR, -S_S + 0.02, 0.0), (CORR, -S_S + 0.026, 0.10))],
-           "Kit_Frame")
+    # Back wall of the corridor: the dead end between the fronts, and the room divider
+    # that carries the same line out to the outer walls.
+    _boxes(col, "Wall_CorridorEnd", [((-CORR, -S_END, 0.0), (CORR, -S_END + PART_T, CEIL))], "Kit_Wall_White")
+    _boxes(col, "Wall_CorridorEnd_Skirting",
+           [((-CORR, -S_END + PART_T, 0.0), (CORR, -S_END + PART_T + BASE_T, 0.10))], "Kit_Frame")
+    _boxes(col, "Room_BackDivider", [((-IN_X + 0.02, -S_END, 0.0), (-WALL_X, -S_END + PART_T, CEIL)),
+                                     ((WALL_X, -S_END, 0.0), (IN_X - 0.02, -S_END + PART_T, CEIL))],
+           "Kit_Wall_White")
     _boxes(col, "Lining_Stairwell", [((-IN_X, -BAND[1], 0.0), (-IN_X + 0.02, -BAND[0], 4.0))], "Kit_Wall_White")
     _boxes(col, "Lining_EastDoor", [((IN_X - 0.02, -EAST_DOOR[0], 0.0), (IN_X, -BAND[0], CEIL)),
                                     ((IN_X - 0.02, -BAND[1], 0.0), (IN_X, -EAST_DOOR[1], CEIL))], "Kit_Wall_White")
 
 
 def u_corridor_east(col):
-    """East side, main door to the cross corridor (photos 5, 6, 7, 13, 22, 23, 24)."""
+    """East side, main door to the cross corridor (photos 5, 6, 7, 13, 22, 23, 24).
+
+    Three rooms only: Aula 1 (one room, one door — its glazed front runs past the column
+    that stands between the two benches), Aula 2, and CC9, which is the widest of them."""
     I.plaster(col, "E_Jamb", E, N_S, 0.7)
+    # Aula 1, north half: the leaf and its paper signs live here.
     I.glazed_front(col, "Aula1", E, 0.7, 4.69, [0.59, 1.18, 1.20],
                    [dict(at="end", name="Aula1", signs=[("CARD_WHITE", 0.0, 1.55)])])
     I.decal(col, "Aula1", E, "AULA1", 3.34, 1.65, d=0.055)
     I.decal(col, "Aula1_Prohibido", E, "PROHIBIDO_A1", 3.34, 1.44, d=0.055)
     I.pillar(col, "Pillar_E1", E, 4.915)
     I.extinguisher(col, "Extinguisher_E1", E, 4.915, top=1.55, face=-PILLAR_PROUD)
-    I.glazed_front(col, "Aula2", E, 5.14, 8.38, [0.93, 0.92, 0.37],
-                   [dict(at="start", name="Aula2", transom="panel", signs=[("HORARIO_A2", 0.0, 1.53)])])
-    I.decal(col, "Aula2", E, "AULA2", 6.56, 1.48, d=0.055)
+    # Aula 1, south half: same partition past the column, glazing only.
+    I.glazed_front(col, "Aula1South", E, 5.14, 8.38, [0.93, 0.92, 0.37], [])
     I.pillar(col, "Pillar_E2", E, 8.605)
-    I.plain_front(col, "CC9", E, 8.83, 13.35, door=dict(at="end", name="CC9", signs=[
+    I.glazed_front(col, "Aula2", E, 8.83, 13.83, [0.93, 0.92, 0.37],
+                   [dict(at="start", name="Aula2", transom="panel", signs=[("HORARIO_A2", 0.0, 1.53)])])
+    I.decal(col, "Aula2", E, "AULA2", 10.25, 1.48, d=0.055)
+    I.pillar(col, "Pillar_E3", E, 14.055)
+    I.extinguisher(col, "Extinguisher_E3", E, 14.055, top=1.55, face=-PILLAR_PROUD)
+    I.decal(col, "Extintor_E3", E, "EXTINTOR", 14.055, 2.05, d=-PILLAR_PROUD - 0.004)
+    I.plain_front(col, "CC9", E, 14.28, BAND[0] - COL_W, door=dict(at="end", name="CC9", signs=[
         ("CC9", 0.0, 1.90), ("PROHIBIDO_CC9", 0.0, 1.66), ("AHORREMOS", -0.22, 1.50), ("HORARIO_CC9", 0.18, 1.50)]))
-    I.pillar(col, "Pillar_E3", E, 13.575)
-    I.plain_front(col, "LabProcesos", E, 13.80, 18.32, door=dict(at="start", name="LabProcesos", signs=[
-        ("LAB_PROCESOS", 0.0, 1.93), ("LAB_NOTICE", 0.0, 1.60)]))
-    I.decal(col, "Procesos_Evac", E, "EVAC_LEFT", 15.17, 1.92)
-    I.decal(col, "Procesos_Apaga", E, "APAGA", 15.10, 1.62)
-    I.pillar(col, "Pillar_E4", E, 18.545)
-    I.extinguisher(col, "Extinguisher_E4", E, 18.545, top=1.55, face=-PILLAR_PROUD)
-    I.decal(col, "Extintor_E4", E, "EXTINTOR", 18.545, 2.05, d=-PILLAR_PROUD - 0.004)
-    I.plain_front(col, "RoomE5", E, 18.77, 23.80, door=dict(at="end", name="RoomE5"))
-    I.pillar(col, "Pillar_E5", E, 24.025)
-    I.plain_front(col, "RoomE6", E, 24.25, BAND[0] - COL_W)
     I.pillar(col, "Column_NE", E, BAND[0] - COL_W / 2, width=COL_W, proud=COL_PROUD)
 
 
-def _alcove(col, name, s0, s1, depth, side_at=None):
-    """Recessed entrance to the toilets (photo 8): back wall, one side wall, skirting."""
-    I.plaster(col, name + "_Back", W, s0, s1, depth=PART_T, skirting=False)[0]
-    bj = MeshBuilder(["Kit_Wall_White"])
-    W.box(bj, s0, s1, depth, depth + PART_T, 0.0, CEIL, "Kit_Wall_White")
-    if side_at is not None:
-        W.box(bj, side_at - PART_T if side_at <= s0 else side_at, side_at if side_at <= s0 else side_at + PART_T,
-              PART_T, depth + PART_T, 0.0, CEIL, "Kit_Wall_White")
-    make_object(name + "_Walls", bj, col)
-    sk = MeshBuilder(["Kit_Frame"])
-    W.box(sk, s0, s1, depth - 0.006, depth, 0.0, 0.10, "Kit_Frame")
-    make_object(name + "_Skirting", sk, col)
-
-
 def u_corridor_west(col):
-    """West side, main door to the cross corridor (photos 1, 2, 3, 4, 8, 23, 24)."""
-    I.plaster(col, "W_Jamb", W, N_S, 0.7)
-    I.tinted_front(col, "RoomNW", W, 0.7, 5.5, sign="PROHIBIDO_A1")
-    I.pillar(col, "Pillar_W1", W, 5.725)
-    I.closet(col, "Electrical", W, 5.95, 10.75)
-    I.pillar(col, "Pillar_W2", W, 10.975)
+    """West side, main door to the cross corridor (photos 1, 2, 3, 4, 8, 23, 24).
 
-    depth = 1.40
-    # Alcove A (s 11.2..12.2), signs block, alcove B (15.5..16.5).
-    for name, s0, s1, side in (("ToiletA", 11.2, 12.2, 11.2), ("ToiletB", 15.5, 16.5, 16.5)):
+    Two smoked-glass fronts, the electrical closet, then the toilet alcoves either side of
+    the signs block, hard against the cross corridor's column. Layout corrected on the
+    user's own hand placement of those elements (2026-09-15)."""
+    I.plaster(col, "W_Jamb", W, N_S, 0.7)
+    I.tinted_front(col, "RoomNW1", W, 0.7, 5.5, sign="PROHIBIDO_A1")
+    I.pillar(col, "Pillar_W1", W, 5.715)
+    I.tinted_front(col, "RoomNW2", W, 5.93, 10.73, sign="PROHIBIDO_A1")
+    I.pillar(col, "Pillar_W2", W, 10.975)
+    I.closet(col, "Electrical", W, 11.21, 16.01)
+    I.pillar(col, "Pillar_W3", W, 16.235, skirt=0.04)
+
+    # Toilets: thin front wall, two doorless openings, a baffle inside each (see WC).
+    b0, b1 = WC["baffle"]
+    for name, (s0, s1), side in (("ToiletA", WC["door_n"], "north"), ("ToiletB", WC["door_s"], "south")):
         mb = MeshBuilder(["Kit_Wall_White"])
-        W.box(mb, s0, s1, depth, depth + PART_T, 0.0, CEIL, "Kit_Wall_White")
-        if side == s0:
-            W.box(mb, s0 - PART_T, s0, PART_T, depth + PART_T, 0.0, CEIL, "Kit_Wall_White")
+        W.box(mb, s0, s1, b0, b1, 0.0, CEIL, "Kit_Wall_White")
+        if side == "north":
+            W.box(mb, s0 - PART_T, s0, 0.0, WC["back"], 0.0, CEIL, "Kit_Wall_White")
         else:
-            W.box(mb, s1, s1 + PART_T, PART_T, depth + PART_T, 0.0, CEIL, "Kit_Wall_White")
+            W.box(mb, s1, s1 + PART_T, 0.0, WC["back"], 0.0, CEIL, "Kit_Wall_White")
         make_object(name + "_Walls", mb, col)
         sk = MeshBuilder(["Kit_Frame"])
-        W.box(sk, s0, s1, depth - 0.006, depth, 0.0, 0.10, "Kit_Frame")
-        if side == s0:
-            W.box(sk, s0, s0 + 0.006, PART_T, depth - 0.006, 0.0, 0.10, "Kit_Frame")
-        else:
-            W.box(sk, s1 - 0.006, s1, PART_T, depth - 0.006, 0.0, 0.10, "Kit_Frame")
+        W.box(sk, s0, s1, b0 - 0.006, b0, 0.0, 0.10, "Kit_Frame")
         make_object(name + "_Skirting", sk, col)
-    # Photo 8 (facing west): switch in the left (southern) alcove, towel dispenser and
-    # broom in the right (northern) one.
-    I.decal(col, "ToiletB_Switch", W, "SWITCH", 16.0, 1.05, d=depth - 0.004)
+    # Photo 8 (facing west): the light switch sits on the baffle of the men's entrance.
+    I.decal(col, "ToiletB_Switch", W, "SWITCH", 21.26, 1.05, d=b0 - 0.004)
+    I.decal(col, "WC_Men", W, "WC_MEN", 20.62, 1.85)
+    I.decal(col, "WC_Women", W, "WC_WOMEN", 17.60, 1.85)
+    I.decal(col, "WC_FueraServicio", W, "FUERA_SERVICIO", 17.60, 1.50)
 
     blk = MeshBuilder(["Kit_Wall_White"])
-    W.box(blk, 12.2, 15.5, 0.0, depth + PART_T, 0.0, CEIL, "Kit_Wall_White")
+    W.box(blk, 17.46, 20.76, 0.0, WC["front"], 0.0, CEIL, "Kit_Wall_White")
     make_object("SignsBlock", blk, col)
-    e = 0.006
     sk = MeshBuilder(["Kit_Frame"])
-    W.plan(sk, [(12.2 - e, depth - e), (12.2 - e, -e), (15.5 + e, -e), (15.5 + e, depth - e),
-                (15.5, depth - e), (15.5, 0.0), (12.2, 0.0), (12.2, depth - e)], 0.0, 0.10, "Kit_Frame")
+    W.box(sk, 17.46, 20.76, -0.006, 0.0, 0.0, 0.10, "Kit_Frame")
     make_object("SignsBlock_Skirting", sk, col)
-    I.decal(col, "Block_Evac", W, "EVAC_RIGHT", 13.85, 2.20)
-    I.decal(col, "Block_Agua", W, "AHORRA_AGUA", 13.85, 1.80)
-    I.decal(col, "Block_Residuos", W, "COLOCA", 14.56, 1.52)
-    I.decal(col, "Block_Switch", W, "SWITCH", 13.95, 0.94)
-    for name, s, label, lid in (("PET", 14.74, "BIN_PET", False), ("Organico", 14.0, "BIN_ORG", False),
-                                ("Otros", 13.19, "BIN_OTROS", True)):
+    I.decal(col, "Block_Evac", W, "EVAC_RIGHT", 19.11, 2.20)
+    I.decal(col, "Block_Agua", W, "AHORRA_AGUA", 19.11, 1.80)
+    I.decal(col, "Block_Residuos", W, "COLOCA", 19.82, 1.52)
+    I.decal(col, "Block_Switch", W, "SWITCH", 19.21, 0.94)
+    for name, s, label, lid in (("PET", 20.00, "BIN_PET", False), ("Organico", 19.26, "BIN_ORG", False),
+                                ("Otros", 18.45, "BIN_OTROS", True)):
         x, y, _ = W.p(s, -0.30, 0.0)
         I.recycling_bin(col, "Bin_" + name, x, y, (1.0, 0.0), label, lid=lid)
-    disp = MeshBuilder(["Kit_Frame"])
-    W.box(disp, 12.1, 12.2, 0.45, 0.75, 1.25, 1.60, "Kit_Frame")
-    make_object("Detail_TowelDispenser", disp, col)
     broom = MeshBuilder(["Kit_Metal_Red", "Kit_Wood_Door"])
-    hx, hy, _ = W.p(11.5, 1.2, 0.0)
+    hx, hy, _ = W.p(16.76, 1.2, 0.0)
     broom.box((hx - 0.04, hy - 0.15, 0.0), (hx + 0.04, hy + 0.15, 0.12), "Kit_Metal_Red")
-    tx, ty, _ = W.p(11.35, 1.33, 0.0)
+    tx, ty, _ = W.p(16.61, 1.33, 0.0)
     broom.tube([(hx, hy, 0.12), (tx, ty, 1.35)], [0.012, 0.012], "Kit_Wood_Door", segs=6)
     make_object("Detail_Broom", broom, col)
 
-    I.pillar(col, "Pillar_W3", W, 16.725)
-    I.plain_front(col, "RoomW", W, 16.95, BAND[0] - COL_W, transom_band=False)
-    I.pillar(col, "Column_NW", W, BAND[0] - COL_W / 2, width=COL_W, proud=COL_PROUD)
+    I.pillar(col, "Column_NW", W, BAND[0] - COL_W / 2, width=COL_W, proud=COL_PROUD, skirt=0.035)
+
+
+def u_toilets(col):
+    """The two toilets behind the signs block (layout and sources in WC).
+
+    Men's room (south): washbasins on a cast concrete slab under a wall mirror, a return
+    wall, three urinals behind grey plywood screens, three WC cubicles across the back.
+    Women's room (north): tiled, empty, and blocked at its opening by a steel cabinet.
+    Both are tiled to 2.10 m; above that the rooms' plaster lining shows, as on site.
+    """
+    men0, men1 = WC["split"][1], WC["s1"]
+    wom0, wom1 = WC["s0"], WC["split"][0]
+    front, back = WC["front"], WC["back"]
+    t = 0.012
+
+    B.partition(col, "WC_Divider", W, WC["split"][0], WC["split"][1], front, back, 0.0, CEIL)
+    for tag, s_a, s_b, d_a, d_b in (
+            ("Men_South", men1 - t, men1, front, back), ("Men_Divider", men0, men0 + t, front, back),
+            ("Men_Front", men0, WC["door_s"][0], front, front + t),
+            ("Men_Back", men0, men1, back - t, back),
+            ("Women_North", wom0, wom0 + t, front, back), ("Women_Divider", wom1 - t, wom1, front, back),
+            ("Women_Front", WC["door_n"][1], wom1, front, front + t),
+            ("Women_Back", wom0, wom1, back - t, back)):
+        B.partition(col, "WC_Tile_" + tag, W, s_a, s_b, d_a, d_b, 0.0, B.TILE_TOP, mat="Kit_Tile_Wall")
+
+    face = men1 - t                      # the tiled face the men's fittings hang on
+    B.basin_counter(col, "WC_Basins", W, men1, -1.0, *WC["basins"])
+    B.mirror(col, "WC_Mirror", W, face, -1.0, *WC["basins"])
+    B.partition(col, "WC_BayWall", W, men1 - WC["bay"], men1, *WC["bay_wall"], 0.0, B.TILE_TOP,
+                mat="Kit_Tile_Wall")
+    for i, dc in enumerate(WC["urinals"], 1):
+        B.urinal(col, f"WC_Urinal{i}", W, men1, -1.0, dc)
+    for i, dc in enumerate(WC["screens"], 1):
+        B.urinal_screen(col, f"WC_Screen{i}", W, face, -1.0, dc)
+    B.cubicle_row(col, "WC_Stall", W, men0, men1, WC["stalls"][0], WC["stalls"][1] - t)
+
+    disp = MeshBuilder(["Kit_Frame"])
+    W.box(disp, men0 + t, men0 + t + 0.10, 2.25, 2.55, 1.25, 1.60, "Kit_Frame")
+    make_object("Detail_TowelDispenser", disp, col)
+
+    # The women's room is shut: a steel cabinet shoved across the opening from the inside.
+    cx, cy, _ = W.p(sum(WC["door_n"]) / 2, 0.50, 0.0)
+    B.steel_cabinet(col, "WC_Women_Blockage", cx, cy, (1.0, 0.0))
+
+    for name, s, d in (("MenA", 20.46, 2.60), ("MenB", 20.46, 5.20), ("Women", 17.76, 3.40)):
+        lx, ly, _ = W.p(s, d, 0.0)
+        B.batten_light(col, name, lx, ly)
+    for name, s, d in (("Men", 20.30, 4.60), ("Women", 17.76, 5.60)):
+        dx, dy, _ = W.p(s, d, 0.0)
+        B.floor_drain(col, "Detail_Drain" + name, dx, dy)
 
 
 def u_band(col):
@@ -334,8 +431,12 @@ def u_band(col):
     I.plaster(col, "BandN_East", BN, WALL_X, IN_X)
     for i, x in enumerate((3.9, 5.2, 6.5, 7.8), 1):
         I.decal(col, f"Plaque{i}", BN, "PLAQUE", x, 1.75)
+    # Waiting tables along the wall on the way to the east doors ("entrada 2"), from
+    # mesas-entrada2-a/b/c.png: 1.22 x 0.60 m panel-sided tables, their backs 3 cm off
+    # the wall. The one nearest the corridor carries the book set and the magazines.
     for i, x in enumerate((3.6, 5.4, 7.2), 1):
-        I.low_bench(col, f"LowBench{i}", x, -BAND[0] - 0.25)
+        B.coffee_table(col, f"LowBench{i}", x, -BAND[0] - 0.33,
+                       books=(-0.20, 0.12, 0.05, -0.14) if i == 1 else None)
     I.plaster(col, "BandN_West", BN, -IN_X, -WALL_X)
     I.box_prop(col, "Detail_FirstAid", (-3.4, -BAND[0] - 0.12, 1.18), (-3.1, -BAND[0], 1.53), "Kit_Paint_Blue")
     I.decal(col, "Botiquin", BN, "BOTIQUIN", -3.25, 1.88)
@@ -427,23 +528,32 @@ def u_stairs(col):
 
 
 def u_corridor_south(col):
-    """Cross corridor to the south wall (photos 11, 12)."""
+    """Cross corridor to the corridor's dead end (photos 11, 12). East: Lab de Procesos
+    and the south-east lab; west: Lab IoT and the south-west room. The last bay of the
+    building, past S_END, is a room, not corridor."""
     b1 = BAND[1]
     I.pillar(col, "Column_SE", E, b1 + COL_W / 2, width=COL_W, proud=COL_PROUD)
-    I.plain_front(col, "LabSE", E, b1 + COL_W, S_S, door=dict(at="start", name="LabSE"))
     I.pillar(col, "Column_SW", W, b1 + COL_W / 2, width=COL_W, proud=COL_PROUD)
     s0 = b1 + COL_W
+
+    I.plain_front(col, "LabProcesos", E, s0, 33.26, door=dict(at="start", name="LabProcesos", signs=[
+        ("LAB_PROCESOS", 0.0, 1.93), ("LAB_NOTICE", 0.0, 1.60)]))
+    I.decal(col, "Procesos_Evac", E, "EVAC_LEFT", s0 + 1.37, 1.92)
+    I.decal(col, "Procesos_Apaga", E, "APAGA", s0 + 1.30, 1.62)
+    I.pillar(col, "Pillar_S1", E, 33.485)
+    I.plain_front(col, "LabSE", E, 33.71, S_END, door=dict(at="start", name="LabSE"))
+
     I.glazed_front(col, "LabIoT", W, s0, s0 + 4.84, [1.0, 1.0, 1.0],
                    [dict(at="start", name="LabIoTSide", transom="Kit_Glass_Clear"),
                     dict(at="start", name="LabIoT", infill="Kit_Panel_Grey", glass_from=1.10,
                          transom="Kit_Glass_Clear")],
                    knee=0.95, lower="Kit_Glass_Clear", upper="Kit_Glass_Clear", head=2.25)
-    I.decal(col, "LabIoT", W, "LAB_IOT", s0 + 2.04 + 0.5, 1.90, d=0.055)
-    I.plain_front(col, "RoomSW", W, s0 + 4.84, S_S)
+    I.decal(col, "LabIoT", W, "LAB_IOT", s0 + 2.54, 1.90, d=0.055)
+    I.plain_front(col, "RoomSW", W, s0 + 4.84, S_END)
 
 
 def u_furniture(col):
-    for name, wall, s in (("Bench_Aula1", E, 2.0), ("Bench_Aula2", E, 7.4), ("Bench_IoT", W, 38.9)):
+    for name, wall, s in (("Bench_Aula1", E, 2.0), ("Bench_Aula2", E, 7.4), ("Bench_IoT", W, 32.46)):
         x, y, _ = wall.p(s, -0.33, 0.0)
         I.bench(col, name, x, y, (-wall.n[0], -wall.n[1]))
 
@@ -466,6 +576,7 @@ UNITS = {
     "rooms": ("Rooms", u_rooms),
     "corridor_east": ("CorridorEast", u_corridor_east),
     "corridor_west": ("CorridorWest", u_corridor_west),
+    "toilets": ("Toilets", u_toilets),
     "band": ("Band", u_band),
     "east_door": ("EastDoor", u_east_door),
     "stairs": ("Stairs", u_stairs),
@@ -558,13 +669,19 @@ def rebuild(out_blend, keys):
 VIEWS = {
     # Same spots and directions as the site photos they are named after.
     "photo23_walking_in": ((0.5, -1.2, 1.55), (0.4, -20.0, 1.45), 20),
-    "photo24_looking_back": ((-0.4, -17.5, 1.55), (0.0, 0.0, 1.45), 20),
-    "photo5_aula2": ((-1.6, -6.9, 1.35), (2.2, -6.9, 1.35), 20),
-    "photo2_closet": ((1.7, -8.35, 1.40), (-2.2, -8.35, 1.35), 20),
-    "photo8_bins": ((1.7, -13.85, 1.30), (-2.2, -13.85, 1.20), 20),
-    "photo20_east_doors": ((-1.2, -31.8, 1.55), (9.6, -31.8, 1.25), 20),
-    "photo10_stairs": ((1.6, -31.0, 1.55), (-9.6, -31.2, 1.9), 20),
-    "photo11_south": ((0.4, -30.2, 1.55), (0.0, -44.6, 1.3), 20),
+    "photo24_looking_back": ((-0.4, -11.0, 1.55), (0.0, 0.0, 1.45), 20),
+    "photo5_aula2": ((-1.6, -11.3, 1.35), (2.2, -11.3, 1.35), 20),
+    "photo2_closet": ((1.7, -13.6, 1.40), (-2.2, -13.6, 1.35), 20),
+    "photo8_bins": ((1.7, -19.11, 1.30), (-2.2, -19.11, 1.20), 20),
+    "photo20_east_doors": ((-1.2, -25.36, 1.55), (9.6, -25.36, 1.25), 20),
+    "photo10_stairs": ((1.6, -24.56, 1.55), (-9.6, -24.76, 1.9), 20),
+    "photo11_south": ((0.4, -23.76, 1.55), (0.0, -38.16, 1.3), 20),
+    # Toilets and the waiting tables (2026-09-16).
+    "wc_men_in": ((-3.6, -21.0, 1.60), (-9.2, -20.6, 1.10), 18),
+    "wc_men_basins": ((-4.9, -19.5, 1.50), (-4.7, -21.7, 1.00), 20),
+    "wc_men_stalls": ((-6.3, -20.2, 1.60), (-9.3, -20.4, 1.20), 20),
+    "wc_women_blocked": ((-1.3, -16.96, 1.55), (-5.0, -16.96, 1.15), 20),
+    "tables_entrance2": ((1.9, -24.6, 1.45), (8.4, -22.7, 0.55), 22),
 }
 
 

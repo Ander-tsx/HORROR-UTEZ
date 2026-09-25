@@ -1,19 +1,29 @@
 """
 CDS south facade (the wall facing CECADEC's north entrance) and what joins it to the
-plaza: photos 33 and 34 (docs/map/reference/cecadec-cds-plaza/). It lives in the
-CECADEC_North landmark because the plaza is one place; it is posed on CDS's kit wall.
+plaza. It lives in the CECADEC_North landmark because the plaza is one place; it is posed
+on CDS's kit wall.
+
+v2 (2026-09-16), from the four photos in docs/map/reference/cds-south/ taken from
+CECADEC's main door. What changed against v1, which had been read off two distant shots:
+
+* The red band over the storefront is **not a canvas awning**. It is a rigid painted
+  visor: a shallow sloping top that leaves the wall just under the window sill, a deep
+  vertical fascia hanging off its front edge, and a dark soffit going back to the wall.
+  Its front fascia carries a vertical joint every 1.2 m or so (T_Canvas_Red already has
+  exactly that pattern, so the material name stays even though it is not canvas).
+* The parapet is capped with a **cream coping**, and the pilasters stop 1.0 m under it —
+  the red fascia runs on past them to the coping.
+* Heights re-measured against the 8.5 m parapet (photo 2, 50.2 px per metre, +-0.15 m):
+  storefront head 2.73, visor eaves 4.15, visor at the wall 4.76, window sill 4.92,
+  window head 6.31, pilaster top 7.47, coping 8.28, parapet 8.50.
+* Added: the entrance doors, the cream plinth under the storefront, the roof-top air
+  handling unit, the green exit sign, and the grass strip with its volcanic-stone kerb
+  that runs the whole length of the facade (v1 only had it under the east bays).
 
 CDS is turned 8.5 degrees against CECADEC (UtezDimensions: CECADEC -13, CDS -4.5). In
 this file's frame (CECADEC's: X east, Y north, origin on its main door threshold) CDS's
 south wall's outer face is centred on CENTRE and runs along AXIS for 31 m. Facade frame:
   u  along the wall from its west end,  v  out from the wall towards CECADEC,  z  up.
-
-Facade, west to east: 7 stucco pilasters and 6 bays. Bays 1-5 carry a red canvas awning
-over dark aluminium storefront glazing (bay 5 has a red panel instead of glass); bay 6,
-wider, is plain glazing behind the magnolia. The awnings rise straight to a ribbon window
-per bay; above it the deep red fascia, with the pilasters stopping partway up it. In front: a raised paved strip, a lawn planter with a
-stone kerb along the eastern bays (magnolia, shrubs, a flagpole), a second flagpole on the
-strip, and the red lamp post at the foot of the hill (photo 33).
 """
 
 import math
@@ -25,21 +35,32 @@ import lm_props
 ANGLE = math.radians(-8.5)
 AXIS = (math.cos(ANGLE), math.sin(ANGLE))
 OUT = (AXIS[1], -AXIS[0])            # from the wall towards CECADEC
-CENTRE = (10.30, 18.26)              # UtezDimensions.Cds, outer face, in CECADEC's frame
+# UtezDimensions.Cds, outer face of the south wall, in CECADEC's frame. Recomputed on
+# 2026-09-16 when the footprint moved 4 m west: campus (-4, 21) -> here.
+CENTRE = (6.399, 19.162)
 LENGTH = 31.0
 WEST_END = (CENTRE[0] - AXIS[0] * LENGTH / 2, CENTRE[1] - AXIS[1] * LENGTH / 2)
 
 PIL_W, PIL_PROUD = 0.75, 0.35
 BAY_W = [4.2, 4.2, 4.2, 4.2, 4.2, 4.6]
-RED_PANEL_BAY = 4                    # zero-based: the fifth bay (photo 34)
-AWNING_BAYS = range(5)
-# The awning runs from the storefront head right up to the ribbon windows (photos 33, 34):
-# no red band shows between them; the pilasters stop partway up the fascia.
-STORE_TOP, AWN_TOP, WIN_TOP, PIL_TOP, TOP = 2.6, 4.5, 5.9, 6.9, 8.5
-SPAN_TOP = AWN_TOP
+RED_PANEL_BAY = 4                    # zero-based: the fifth bay (photo 2)
+DOOR_BAY = 2                         # the entrance sits at the east end of the third bay
+VISOR_BAYS = range(6)                # every bay carries the visor (photos 1, 2)
+
+PLINTH = 0.25
+STORE_TOP = 2.73                     # storefront head = the visor's soffit
+EAVE = 4.15                          # top of the visor's front fascia
+VISOR_TOP = 4.76                     # where the visor meets the wall
+SILL = 4.92
+WIN_TOP = 6.31
+PIL_TOP = 7.47
+COPING = 8.28
+TOP = 8.50
+VISOR_OUT = 1.40                     # how far the visor stands off the wall
 BAR = 0.05
+
 STRIP_Z = 0.212                      # 1 cm over the plaza's entrance level (0.20)
-PLANTER_U = (20.25, 30.9)
+GRASS_V = 1.55                       # width of the grass strip at the foot of the facade
 BED_Z, KERB_TOP, KERB_W = 0.36, 0.45, 0.30
 
 
@@ -51,6 +72,13 @@ def _plan_prism(mb, poly, z0, z1, mat, side_mat=None):
     """Prism with its outline in the facade's (u, v) plan."""
     mb.transform = lambda q: P(q[0], q[1], q[2])
     mb.prism(poly, z0, z1, mat, side_mat=side_mat, bottom=True)
+    mb.transform = None
+
+
+def _section(mb, profile, u0, u1, mat):
+    """Prism whose outline is given in the facade's (v, z) section, run from u0 to u1."""
+    mb.transform = lambda q: P(q[2], q[0], q[1])
+    mb.prism(profile, u0, u1, mat, bottom=True)
     mb.transform = None
 
 
@@ -107,22 +135,47 @@ def _glazing(col, name, u0, u1, z0, z1, rail=None, light=1.05):
             make_object(name + "_Back", back, col)]
 
 
-def _awning(col, name, u0, u1, rx=1.0, rz=1.55, t=0.025, segs=8):
-    """Tall quarter-elliptic canvas awning: the curve leaves the wall at AWN_TOP and comes
-    down to a straight valance whose hem is at STORE_TOP; closed ends."""
-    cz = AWN_TOP - rz
-    ang = [math.pi / 2 * k / segs for k in range(segs + 1)]
-    outer = [(0.04 + math.sin(a) * rx, cz + math.cos(a) * rz) for a in ang]
-    inner = [(0.04 + math.sin(a) * (rx - t), cz + math.cos(a) * (rz - t)) for a in ang]
-    r = rx
+def _entrance(col, name, u0, u1):
+    """Double glass doors in the storefront: fixed side lights, two leaves, a transom
+    over them. The leaves are their own objects, hinged and closed (photo 1)."""
+    made = []
+    leaf = 1.05
+    mid = (u0 + u1) / 2
+    d0, d1 = mid - leaf, mid + leaf
+    head = 2.35
+    holes = [rect(u0 + BAR, PLINTH + BAR, d0 - BAR / 2, STORE_TOP - BAR),
+             rect(d1 + BAR / 2, PLINTH + BAR, u1 - BAR, STORE_TOP - BAR),
+             rect(d0 + BAR / 2, head + BAR / 2, d1 - BAR / 2, STORE_TOP - BAR)]
+    frame = MeshBuilder(["Kit_Frame"])
+    _panel(frame, rect(u0, PLINTH, u1, STORE_TOP),
+           holes + [rect(d0 + BAR / 2, PLINTH, d1 - BAR / 2, head - BAR / 2)], 0.03, 0.11, "Kit_Frame")
+    made.append(make_object(name + "_Frame", frame, col))
+    panes = MeshBuilder(["Kit_Glass_Tinted"])
+    for h in holes:
+        _pane(panes, h[0][0] - 0.01, h[2][0] + 0.01, h[0][1] - 0.01, h[2][1] + 0.01, 0.07,
+              "Kit_Glass_Tinted")
+    made.append(make_object(name + "_Pane", panes, col))
+    for tag, hinge, free in (("West", d0 + BAR, mid - 0.01), ("East", d1 - BAR, mid + 0.01)):
+        a, b = sorted((hinge, free))
+        mb = MeshBuilder(["Kit_Frame", "Kit_Glass_Tinted", "Kit_Metal_White"])
+        _panel(mb, rect(a, PLINTH + 0.02, b, head - BAR / 2),
+               [rect(a + 0.06, PLINTH + 0.10, b - 0.06, head - 0.12)], 0.055, 0.085, "Kit_Frame")
+        _pane(mb, a + 0.05, b - 0.05, PLINTH + 0.09, head - 0.11, 0.07, "Kit_Glass_Tinted")
+        pull = free + (0.10 if hinge < free else -0.10)
+        _box(mb, pull - 0.02, pull + 0.02, 0.02, 0.05, 0.95, 1.20, "Kit_Metal_White")
+        made.append(make_object("Door_CDS" + tag, mb, col, pivot=P(hinge, 0.07, 0.0)))
+    return made
+
+
+def _visor(col, name, u0, u1):
+    """The rigid red visor over the storefront (photos 1, 2): a sloping top from the wall
+    down to the eaves, a deep front fascia, and the soffit back to the wall. One closed
+    prism per bay, so the ends read as cut panels the way they do on site."""
+    profile = [(0.0, VISOR_TOP), (VISOR_OUT, EAVE), (VISOR_OUT, STORE_TOP),
+               (VISOR_OUT - 0.12, STORE_TOP), (VISOR_OUT - 0.12, STORE_TOP + 0.10),
+               (0.0, STORE_TOP + 0.28)]
     mb = MeshBuilder(["Kit_Canvas_Red"])
-    mb.transform = lambda q: P(q[2], q[0], q[1])        # (v, z, u) -> world
-    mb.prism(outer + inner[::-1], u0 + 0.06, u1 - 0.06, "Kit_Canvas_Red", bottom=True)
-    fan = [(0.04, cz)] + outer
-    for ua, ub in ((u0 + 0.04, u0 + 0.06), (u1 - 0.06, u1 - 0.04)):
-        mb.prism(fan, ua, ub, "Kit_Canvas_Red", bottom=True)
-    mb.transform = None
-    _box(mb, u0 + 0.04, u1 - 0.04, 0.04 + r - t, 0.04 + r, STORE_TOP, cz, "Kit_Canvas_Red")
+    _section(mb, profile, u0 + 0.02, u1 - 0.02, "Kit_Canvas_Red")
     return [make_object(name, mb, col)]
 
 
@@ -133,57 +186,83 @@ def facade(col):
         mb = MeshBuilder(["Kit_Trim"])
         _box(mb, a, b, 0.0, PIL_PROUD + 0.1, 0.0, PIL_TOP, "Kit_Trim")
         made.append(make_object(f"CDS_Pilaster{i}", mb, col))
-    fascia = MeshBuilder(["Kit_Wall_Red"])
-    _box(fascia, 0.0, LENGTH, 0.0, PIL_PROUD + 0.07, WIN_TOP, TOP, "Kit_Wall_Red")
-    made.append(make_object("CDS_Fascia", fascia, col))
 
+    # Red wall: the band between the window head and the coping, and the sill band under
+    # the ribbon windows that the visor hangs off.
+    fascia = MeshBuilder(["Kit_Wall_Red"])
+    _box(fascia, 0.0, LENGTH, 0.0, PIL_PROUD + 0.07, WIN_TOP, COPING, "Kit_Wall_Red")
+    made.append(make_object("CDS_Fascia", fascia, col))
+    cap = MeshBuilder(["Kit_Trim"])
+    _box(cap, -0.05, LENGTH + 0.05, 0.0, PIL_PROUD + 0.14, COPING, TOP, "Kit_Trim")
+    made.append(make_object("CDS_Coping", cap, col))
     for i, (a, b) in enumerate(bays):
         tag = f"CDS_Bay{i + 1}"
+        # Red spandrel between the visor's head and the window sill.
         span = MeshBuilder(["Kit_Wall_Red"])
-        _box(span, a, b, 0.0, 0.25, STORE_TOP, SPAN_TOP, "Kit_Wall_Red")
+        _box(span, a, b, 0.0, 0.25, VISOR_TOP - 0.05, SILL, "Kit_Wall_Red")
         made.append(make_object(tag + "_Spandrel", span, col))
+        plinth = MeshBuilder(["Kit_Trim"])
+        _box(plinth, a, b, 0.0, 0.16, 0.0, PLINTH, "Kit_Trim")
+        made.append(make_object(tag + "_Plinth", plinth, col))
+
         if i == RED_PANEL_BAY:
             panel = MeshBuilder(["Kit_Wall_Red"])
-            _box(panel, a, b, 0.0, 0.08, 0.0, STORE_TOP, "Kit_Wall_Red")
+            _box(panel, a, b, 0.0, 0.08, PLINTH, STORE_TOP, "Kit_Wall_Red")
             made.append(make_object(tag + "_Panel", panel, col))
+        elif i == DOOR_BAY:
+            made += _glazing(col, tag + "_Store", a, b - 2.9, PLINTH, STORE_TOP, rail=2.3)
+            made += _entrance(col, "CDS_Entrance", b - 2.9, b)
         else:
-            made += _glazing(col, tag + "_Store", a, b, 0.0, STORE_TOP, rail=2.3)
-        made += _glazing(col, tag + "_Window", a, b, SPAN_TOP, WIN_TOP, light=1.0)
-        if i in AWNING_BAYS:
-            made += _awning(col, tag + "_Awning", a, b)
+            made += _glazing(col, tag + "_Store", a, b, PLINTH, STORE_TOP, rail=2.3)
+        made += _glazing(col, tag + "_Window", a, b, SILL, WIN_TOP, light=1.0)
+        if i in VISOR_BAYS:
+            made += _visor(col, tag + "_Visor", a, b)
+
+    # Roof-top air handling unit, just showing over the parapet (photos 1, 2).
+    ahu = MeshBuilder(["Kit_Metal_Grey"])
+    _box(ahu, 14.6, 16.4, -2.6, -1.4, TOP - 0.55, TOP + 0.45, "Kit_Metal_Grey")
+    made.append(make_object("CDS_RoofUnit", ahu, col))
+
+    # Green running-man sign over the entrance bay's pilaster (photo 2).
+    sign = MeshBuilder(["Kit_Paint_Green"])
+    u = pils[DOOR_BAY + 1][0] + PIL_W / 2
+    _box(sign, u - 0.20, u + 0.20, PIL_PROUD + 0.106, PIL_PROUD + 0.126, 2.95, 3.20,
+         "Kit_Paint_Green")
+    made.append(make_object("Decal_CDS_Exit", sign, col))
     return made
 
 
 def front(col):
+    """What lies between the facade and the plaza (photos 1, 2): a grass strip behind a
+    volcanic-stone kerb running the whole length, the paved strip in front of it, the
+    magnolia bed at the east end, flagpoles, and the red lamp post at the foot of the hill."""
     made = []
-    u_split = PLANTER_U[0] - 0.05
     strip = MeshBuilder(["Kit_Slab"])
-    _plan_prism(strip, [(0.0, 0.0), (u_split, 0.0), (u_split, 2.4), (LENGTH, 2.4), (LENGTH, 3.2), (0.0, 3.2)],
-                0.0, STRIP_Z, "Kit_Slab")
+    _plan_prism(strip, rect(0.0, GRASS_V, LENGTH, 3.4), 0.0, STRIP_Z, "Kit_Slab")
     made.append(make_object("Paving_CDSStrip", strip, col))
 
-    bed = MeshBuilder(["Kit_Grass", "Kit_Stone"])
-    _plan_prism(bed, rect(PLANTER_U[0], 0.02, PLANTER_U[1], 2.3), 0.0, BED_Z, "Kit_Grass", side_mat="Kit_Stone")
-    made.append(make_object("Planter_CDS_Bed", bed, col))
+    # Grass at the foot of the wall, held by a stone kerb; it steps up over the paving.
+    lawn = MeshBuilder(["Kit_Grass", "Kit_Stone"])
+    _plan_prism(lawn, rect(0.0, 0.02, LENGTH, GRASS_V), 0.0, BED_Z, "Kit_Grass", side_mat="Kit_Stone")
+    made.append(make_object("Planter_CDS_Lawn", lawn, col))
     kerb = MeshBuilder(["Kit_Stone"])
-    path = [P(u_split, 0.0), P(u_split, 2.4), P(PLANTER_U[1] + 0.05, 2.4), P(PLANTER_U[1] + 0.05, 0.0)]
+    path = [P(-0.1, GRASS_V), P(LENGTH + 0.1, GRASS_V)]
     kerb.sweep([(p[0], p[1]) for p in path], KERB_W, 0.0, KERB_TOP, "Kit_Stone")
     made.append(make_object("Planter_CDS_Kerb", kerb, col))
 
-    x, y, _ = P(27.8, 1.25)                    # in front of the wide east bay (photo 34)
+    x, y, _ = P(27.8, 0.95)                    # in front of the wide east bay (photo 2)
     made += lm_plants.tree(col, "Tree_CDSMagnolia", x, y, BED_Z, height=6.8, fork=1.5, crown=3.4, seed=31)
-    for i, (u, v, r) in enumerate(((22.0, 1.2, 0.55), (28.9, 1.0, 0.6), (24.0, 0.7, 0.45)), 1):
+    for i, (u, v, r) in enumerate(((22.0, 0.9, 0.55), (28.9, 0.8, 0.6), (24.0, 0.6, 0.45),
+                                   (6.4, 0.8, 0.5), (12.1, 0.7, 0.45)), 1):
         x, y, _ = P(u, v)
         made.append(lm_plants.shrub(col, f"Plant_CDS_Shrub{i}", x, y, BED_Z, radius=r, seed=120 + i))
-    for i, (u, v) in enumerate(((21.2, 1.6), (27.4, 1.9), (30.0, 1.4)), 1):
+    for i, (u, v) in enumerate(((21.2, 1.2), (27.4, 1.3), (30.0, 1.0), (3.2, 1.1), (16.8, 1.2)), 1):
         x, y, _ = P(u, v)
         made.append(lm_plants.tuft(col, f"Plant_CDS_Tuft{i}", x, y, BED_Z, size=0.7, seed=140 + i))
 
-    # Photo 34: one pole at the planter's front edge by the red-panel bay, one past
-    # CDS's east corner on the plaza.
-    x, y, _ = P(21.2, 2.1)
-    made.append(lm_props.flagpole(col, "Flagpole_CDS1", x, y, BED_Z))
-    x, y, _ = P(33.0, 1.8)
-    made.append(lm_props.flagpole(col, "Flagpole_CDS2", x, y, 0.2))
+    # Photo 2: a line of white poles stands on the paved strip in front of the facade.
+    for i, u in enumerate((11.4, 21.2, 25.6), 1):
+        x, y, _ = P(u, 2.6)
+        made.append(lm_props.flagpole(col, f"Flagpole_CDS{i}", x, y, STRIP_Z, height=8.4))
     made.append(lm_props.lamp_post(col, "Lamp_CDSWest", -10.6, 18.2, 0.2, height=5.2))
     return made

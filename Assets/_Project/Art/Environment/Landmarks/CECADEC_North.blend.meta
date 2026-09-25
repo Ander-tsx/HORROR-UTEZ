@@ -42,6 +42,11 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: Kit_Concrete
+    second: {fileID: 2100000, guid: 6c52dc552f69541619ca1b0cc9de75b3, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: Kit_Floor
     second: {fileID: 2100000, guid: 54674b7deb12b426eb1b3397125b6604, type: 2}
   - first:
@@ -127,6 +132,11 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: Kit_Mirror
+    second: {fileID: 2100000, guid: 5a1c0867bc1874066b82b9cd10ebb427, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: Kit_Nosing
     second: {fileID: 2100000, guid: 1e620b1d6463144ccafea11d7df8bcb0, type: 2}
   - first:
@@ -144,6 +154,11 @@ ModelImporter:
       assembly: UnityEngine.CoreModule
       name: Kit_Paint_Green
     second: {fileID: 2100000, guid: 91a85a1ee3b82409ea78a533e55e1869, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Kit_Paint_Grey
+    second: {fileID: 2100000, guid: effbecccb02704215919e4d25486d44f, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
@@ -174,6 +189,11 @@ ModelImporter:
       assembly: UnityEngine.CoreModule
       name: Kit_Plastic_Grey
     second: {fileID: 2100000, guid: 243e31361cba745158ca31baf93f3e01, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Kit_Porcelain
+    second: {fileID: 2100000, guid: 31a4bce88a93c4b9197b7148bccd5861, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
@@ -212,8 +232,18 @@ ModelImporter:
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
+      name: Kit_Tile_Counter
+    second: {fileID: 2100000, guid: 70d2bf4a67e1740d9942ba5c97788afa, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
       name: Kit_Tile_Floor
     second: {fileID: 2100000, guid: b3e376d6ceb7f4dcea425e1a185a4512, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Kit_Tile_Wall
+    second: {fileID: 2100000, guid: 0621cc5cb24b945a9afa9083aade19e4, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule
@@ -239,6 +269,11 @@ ModelImporter:
       assembly: UnityEngine.CoreModule
       name: Kit_Wall_White
     second: {fileID: 2100000, guid: aaea8a03af8f04cbf9e9cd16b61ebd17, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Kit_Wood_Desk
+    second: {fileID: 2100000, guid: d036048abcb51499792bef7e36e6c144, type: 2}
   - first:
       type: UnityEngine:Material
       assembly: UnityEngine.CoreModule

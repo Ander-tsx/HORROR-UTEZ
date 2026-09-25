@@ -105,8 +105,17 @@ namespace HorrorUtez.World
         /// MEASURED: 30.78 x 22.23 m, closed perimeter 105.67 m. North wall drops ~4.5 deg
         /// toward the east. No grass band — CDS meets the concrete directly.
         /// </summary>
+        /// <summary>
+        /// MEASURED: 30.78 x 22.23 m, closed perimeter 105.67 m. North wall drops ~4.5 deg
+        /// toward the east. No grass band — CDS meets the concrete directly.
+        /// Centre moved 4 m west on 2026-09-16: at x = 0 its south-east corner stood 2.4 m
+        /// from the auditorium's colonnade and the passage between them was unwalkable.
+        /// The covered walkway was stretched by the same 4 m so it still meets CDS's east
+        /// wall. If this moves again, recompute lm_cds.CENTRE and lm_aud.CANOPY_CENTRE
+        /// (the recipe is in lm_aud.py's docstring).
+        /// </summary>
         public static readonly Footprint Cds =
-            new(size: new Vector2(31f, 22f), center: new Vector2(0f, 21f), yawDeg: -4.5f, floors: 2,
+            new(size: new Vector2(31f, 22f), center: new Vector2(-4f, 21f), yawDeg: -4.5f, floors: 2,
                 hasGrass: false, entrance: Side.South);
 
         /// <summary>
@@ -115,7 +124,7 @@ namespace HorrorUtez.World
         /// Size confirmed by the user; position estimated from the overview.
         /// </summary>
         public static readonly Footprint Canopy =
-            new(size: new Vector2(15f, 7f), center: new Vector2(23f, 19f), yawDeg: -4.5f, floors: 1,
+            new(size: new Vector2(19f, 7f), center: new Vector2(21f, 19f), yawDeg: -4.5f, floors: 1,
                 hasWalls: false, hasGrass: false);
 
         /// <summary>MEASURED: three-sided run of 49.19 m at a 1:2.1 ratio.</summary>
@@ -205,8 +214,15 @@ namespace HorrorUtez.World
         public static float PillarThickness => PillarThicknessRaw * WorldScale;
 
         // ---- Surroundings ----------------------------------------------------
-        private const float DirtMarginRaw = 60f;
-        private const float ForestRingWidthRaw = 20f;
+        /// <summary>
+        /// How far the dirt plane runs past the concrete explanada. Was 60 m, which put a
+        /// scattered wood 60-120 m from the nearest building: hundreds of instances nobody
+        /// can reach and that only cost draw calls (the user's image 11). The map is the
+        /// building zone, so the ground now stops close and the treeline stands right at
+        /// the edge, where it actually closes the view.
+        /// </summary>
+        private const float DirtMarginRaw = 18f;
+        private const float ForestRingWidthRaw = 12f;
         private const float RoadWidthRaw = 7f;
 
         public static float DirtMargin => DirtMarginRaw * WorldScale;

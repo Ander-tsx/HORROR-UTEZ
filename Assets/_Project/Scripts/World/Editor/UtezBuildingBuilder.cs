@@ -100,6 +100,8 @@ namespace HorrorUtez.World.Editor
 
             if (LoadKit(UtezKit.CecadecInteriorPrefab) != null)
                 PlaceCecadecInteriorInOpenScene();
+            if (LoadKit(UtezKit.CecadecUpperPrefab) != null)
+                PlaceCecadecUpperInOpenScene();
             HideKitPiecesUnderCecadecLandmark();
 
             var scene = SceneManager.GetActiveScene();
@@ -315,7 +317,7 @@ namespace HorrorUtez.World.Editor
         /// SecondaryDoor), real metres: footprint-local Z range along the east wall, and height.
         /// Must match EAST_DOOR in Tools/blender/gen_cecadec_interior.py (landmark y + 22.5).
         /// </summary>
-        private static readonly Vector3 CecadecEastDoorRaw = new(-11.8f, -6.8f, 2.7f);
+        private static readonly Vector3 CecadecEastDoorRaw = new(-5.36f, -0.36f, 2.7f);
 
         /// <summary>Opens CECADEC's east wall (and its fake window band) behind the cross corridor's glass doors.</summary>
         private static int CutCecadecEastDoor(Transform group)
@@ -610,6 +612,63 @@ namespace HorrorUtez.World.Editor
             Selection.activeGameObject = go;
             Debug.Log($"[UTEZ] CECADEC interior placed behind the north entrance; {cut} east wall/window " +
                       "pieces cut for the cross corridor's glass doors.");
+        }
+
+        private const string UpperName = "CECADEC_Upper";
+
+        /// <summary>
+        /// Puts the intermediate floor and the upper storey's corridor into the OPEN scene.
+        /// Same pose as the ground-floor interior — both landmarks are authored around the
+        /// main door threshold and carry their own height — so the two stack by construction.
+        /// Hides the kit's own slab for that storey, which would sit inside the landmark.
+        /// Replaces a previous copy. Undoable.
+        /// </summary>
+        [MenuItem("HORROR-UTEZ/Place CECADEC Upper Floor In Open Scene")]
+        public static void PlaceCecadecUpperInOpenScene()
+        {
+            var upper = LoadKit(UtezKit.CecadecUpperPrefab);
+            var group = GameObject.Find($"{RootName}/CECADEC_Structure");
+            if (upper == null || group == null)
+            {
+                Debug.LogError($"[UTEZ] Needs the upper prefab (HORROR-UTEZ > Rebuild Building Kit) " +
+                               $"and {RootName}/CECADEC_Structure in the open scene.");
+                return;
+            }
+
+            var old = group.transform.Find(UpperName);
+            if (old != null)
+                Undo.DestroyObjectImmediate(old.gameObject);
+
+            var fp = UtezDimensions.Cecadec;
+            var (pos, rot) = EntrancePose(fp, fp.Entrance);
+            pos += Vector3.up * (InteriorLiftRaw * UtezDimensions.WorldScale);
+            var go = UtezKit.Place(upper, group.transform, pos, rot,
+                Vector3.one * UtezDimensions.WorldScale, UpperName);
+            Undo.RegisterCreatedObjectUndo(go, "Place CECADEC Upper Floor");
+            int hidden = HideKitUpperSlab(group.transform);
+            EditorSceneManager.MarkSceneDirty(SceneManager.GetActiveScene());
+            Selection.activeGameObject = go;
+            Debug.Log($"[UTEZ] CECADEC upper floor placed; {hidden} generic slab pieces hidden under it.");
+        }
+
+        /// <summary>
+        /// The kit tiles a plain slab for every upper storey (BuildInteriorFloors). The
+        /// upper landmark brings its own floor, ceiling and structure, so that slab is
+        /// deactivated rather than deleted: rebuilding the kit brings it straight back.
+        /// </summary>
+        private static int HideKitUpperSlab(Transform group)
+        {
+            int hidden = 0;
+            for (int floor = 1; floor < UtezDimensions.Cecadec.Floors; floor++)
+            {
+                var slab = group.Find($"Floor_{floor}");
+                if (slab == null || !slab.gameObject.activeSelf)
+                    continue;
+                Undo.RecordObject(slab.gameObject, "Hide kit slab");
+                slab.gameObject.SetActive(false);
+                hidden++;
+            }
+            return hidden;
         }
 
         /// <summary>

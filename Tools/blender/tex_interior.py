@@ -178,3 +178,103 @@ def light_panel(n=64):
     """Emissive back plate of the parabolic troffers: tired fluorescent tubes, a little
     green, not office white."""
     return np.broadcast_to(rgb(226, 238, 206), (n, n, 3)).copy()
+
+
+# ---- Toilets, tables and the plenum (2026-09-16) -------------------------------------
+# Added for the ground-floor toilets (user's plan, plano-usuario-bano.png), the waiting
+# tables of the cross corridor (mesas-entrada2-*.png) and the intermediate floor between
+# storeys. Same rule as above: colour is the photo's ratio to the white plaster.
+
+def _glazed_tile(n, metres, cell, base, grout, seed, variation, grout_w=0.0035):
+    """Glazed ceramic wall tile: flatter and shinier than the floor tile, thin grout,
+    a soft highlight gradient across each tile instead of the floor's speckle."""
+    ppm = n / metres
+    rows = (np.arange(n)[:, None] + 0.5) / ppm
+    cols = (np.arange(n)[None, :] + 0.5) / ppm
+    count = int(round(metres / cell))
+    ti = (np.floor(rows / cell).astype(int)) % count
+    tj = (np.floor(cols / cell).astype(int)) % count
+    rng = np.random.default_rng(seed)
+    jitter = 1.0 + rng.uniform(-variation, variation, (count, count))
+    col = np.broadcast_to(base, (n, n, 3)).copy() * jitter[ti, tj][..., None]
+    fr = rows % cell
+    fc = cols % cell
+    # Glaze sheen: brighter towards the top-left of every tile, the way a fired tile
+    # catches the corridor light.
+    sheen = (1.0 - fr / cell) * 0.5 + (1.0 - fc / cell) * 0.5
+    col *= 1.0 + (sheen - 0.5)[..., None] * 0.05
+    col *= 1.0 + spectral_noise(n, seed + 1, 2.2)[..., None] * 0.012
+    dist = np.minimum(np.minimum(fr, cell - fr), np.minimum(fc, cell - fc))
+    g = np.clip(1.0 - dist / grout_w, 0, 1)
+    edge = np.clip(1.0 - dist / (grout_w * 3.0), 0, 1) * 0.10
+    col *= (1.0 - edge)[..., None]
+    return mix(col, grout, g * 0.92)
+
+
+def tile_wall(n=1024, metres=2.0):
+    """20 cm white glazed tile of the toilet walls, grey-beige grout."""
+    return _glazed_tile(n, metres, 0.20, rgb(230, 229, 223), rgb(176, 172, 164), 601, 0.018)
+
+
+def tile_counter(n=512, metres=1.6):
+    """20 cm tile over the concrete washbasin slab: the same body, a warmer sand tone."""
+    return _glazed_tile(n, metres, 0.20, rgb(206, 196, 178), rgb(158, 150, 138), 611, 0.03)
+
+
+def porcelain(n=128):
+    """Vitreous china of the basins, urinals and pans: near-white, faintly blue, worn."""
+    col = np.broadcast_to(rgb(238, 238, 236), (n, n, 3)).copy()
+    col *= 1.0 + spectral_noise(n, 621, 2.6)[..., None] * 0.012
+    stain = np.clip(spectral_noise(n, 622, 1.2) - 1.7, 0, None)
+    return mix(col, rgb(196, 192, 176), np.clip(stain, 0, 0.35))
+
+
+def paint_grey(n=256):
+    """Grey enamel on the plywood urinal screens: brush drag along V, knocks at the edges."""
+    col = np.broadcast_to(rgb(146, 148, 146), (n, n, 3)).copy()
+    brush = spectral_noise(n, 631, 1.0, aniso=(0.08, 1.0))
+    col *= 1.0 + brush[..., None] * 0.05
+    chips = np.clip(spectral_noise(n, 632, 2.4) - 2.0, 0, None)
+    return mix(col, rgb(120, 104, 84), np.clip(chips, 0, 0.5))
+
+
+def mirror(n=128):
+    """Wall mirror over the basins. No reflection probe in the PSX graph, so the map is
+    the room's own average: a cold grey with a slow vertical gradient and old silvering
+    blooms at the bottom edge."""
+    grad = np.linspace(1.06, 0.92, n)[:, None]
+    col = np.broadcast_to(rgb(150, 156, 160), (n, n, 3)).copy() * grad[..., None]
+    col *= 1.0 + spectral_noise(n, 641, 3.0)[..., None] * 0.01
+    rot = np.clip(spectral_noise(n, 642, 1.6) - 1.5, 0, None)
+    rot = rot * np.clip(1.4 - np.linspace(0.0, 1.0, n)[:, None] * 2.4, 0, 1)
+    return mix(col, rgb(108, 104, 96), np.clip(rot, 0, 0.6))
+
+
+def wood_desk(n=512):
+    """Dark mahogany laminate of the waiting tables (mesas-entrada2-b.png): red-brown,
+    straight grain along U, the sun-bleached patch the photo shows on the top."""
+    base = np.broadcast_to(rgb(96, 46, 36), (n, n, 3)).copy()
+    grain = spectral_noise(n, 651, 1.8, aniso=(1.0, 0.06))
+    base *= 1.0 + grain[..., None] * 0.14
+    figure = spectral_noise(n, 652, 2.6, aniso=(1.0, 0.30))
+    base *= 1.0 + figure[..., None] * 0.06
+    bleach = np.clip(spectral_noise(n, 653, 3.2) - 1.4, 0, None)
+    return mix(base, rgb(134, 78, 58), np.clip(bleach, 0, 0.45))
+
+
+def concrete_raw(n=1024, metres=2.0):
+    """Board-marked structural concrete: the deck and soffit of the intermediate floor
+    between storeys, never painted and never seen by anyone who works here."""
+    col = np.broadcast_to(rgb(154, 150, 143), (n, n, 3)).copy()
+    col *= 1.0 + spectral_noise(n, 661, 1.4)[..., None] * 0.07
+    col *= 1.0 + spectral_noise(n, 662, -0.4)[..., None] * 0.03
+    # Form-board joints every 20 cm along V, with the darker bleed either side.
+    ppm = n / metres
+    rows = (np.arange(n)[:, None] + 0.5) / ppm
+    fr = rows % 0.20
+    joint = np.clip(1.0 - np.minimum(fr, 0.20 - fr) / 0.004, 0, 1)
+    bleed = np.clip(1.0 - np.minimum(fr, 0.20 - fr) / 0.020, 0, 1) * 0.10
+    col *= (1.0 - np.broadcast_to(bleed, (n, n)))[..., None]
+    laitance = np.clip(spectral_noise(n, 663, 2.2) - 1.3, 0, None)
+    col = mix(col, rgb(184, 180, 172), np.clip(laitance, 0, 0.5))
+    return mix(col, rgb(112, 108, 102), np.broadcast_to(joint, (n, n)) * 0.7)

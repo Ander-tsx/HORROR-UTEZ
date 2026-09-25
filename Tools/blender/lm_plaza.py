@@ -143,3 +143,74 @@ def garden(col):
         rock.blob((x, y, terrace_z(x, y) + s * 0.2), s, "Kit_Rock", n)
         out.append(make_object(f"Rock_{n}", rock, col))
     return out
+
+
+# ---- North-west edge of the map (2026-09-16) -----------------------------------------
+# The user's image 10: standing in the plaza and looking north-west you saw the garden's
+# hill stop and the skybox behind it, because nothing filled the 9 m gap between the
+# garden wall's north end (x = -12.2) and CDS's west end (x = -3.4). This closes it: the
+# stone wall turns east to meet CDS, and the ground carries on rising north and west so
+# the map ends in a hillside instead of an edge.
+
+EDGE_Y0 = 17.6                   # the plaza's north edge, where the new ground starts
+EDGE = dict(x0=-34.0, y1=36.0)
+# CDS's west wall in this frame, after the building moved 4 m west (UtezDimensions.Cds):
+# it runs from its south-west corner north-north-east, so the hill's east edge has to
+# follow that line instead of a straight x, or the ground cuts through the building.
+CDS_SW = (-8.931, 21.453)
+CDS_WEST_SLOPE = 0.14945         # dx per dy along that wall
+# Negative on purpose: the ground runs 0.15 m *under* the wall's outer face. Stopping
+# short of it left a sliver of skybox between the hillside and CDS's corner, and 0.15 m is
+# well inside the 0.4 m wall (UtezDimensions.WallThicknessRaw), so nothing reaches the
+# rooms behind it.
+EDGE_CLEAR = -0.15
+
+EDGE_ROCKS = ((-15.0, 21.0, 1.2), (-19.5, 19.5, 0.9), (-13.5, 26.0, 1.4), (-24.0, 23.0, 1.6),
+              (-17.5, 31.0, 1.1), (-28.5, 28.0, 1.8), (-10.6, 23.5, 0.8), (-22.0, 33.5, 1.3))
+# Trees on the hillside. Kept to depth 1 and a small crown: this is background planting
+# that only has to hide the map's edge, and a full-depth tree costs about 1 k triangles.
+EDGE_TREES = ((-16.5, 23.5, 11.0), (-21.0, 27.5, 12.5), (-13.0, 29.5, 10.0),
+              (-26.5, 21.5, 11.5), (-15.5, 33.5, 12.0), (-24.0, 32.0, 10.5))
+
+
+def edge_east(y):
+    """East limit of the hillside: CDS's west wall, less the clearance."""
+    return CDS_SW[0] + CDS_WEST_SLOPE * (y - CDS_SW[1]) - EDGE_CLEAR
+
+
+def edge_z(x, y):
+    """Ground of the north-west edge: plaza level at CDS's corner, climbing away north
+    and west. Matches lm_plaza's own terrace where the two meet, behind the garden wall."""
+    n = max(0.0, y - EDGE_Y0)
+    w = max(0.0, WALL_X - x)
+    h = LOW_Z + 3.4 * (1.0 - math.exp(-n / 6.5)) + 2.6 * (1.0 - math.exp(-w / 6.0))
+    return h + 0.22 * math.sin(x * 0.7 + y * 0.35) * math.cos(y * 0.6)
+
+
+def north_edge(col):
+    out = []
+    wall = MeshBuilder(["Kit_Stone"])
+    # East along the gap to CDS's south-west corner, then a short return north to hide
+    # the seam where this ground meets the garden's terrace.
+    wall.box((WALL_X - WALL_HALF, EDGE_Y0, 0.0), (edge_east(EDGE_Y0 + 0.2), EDGE_Y0 + 2 * WALL_HALF,
+             WALL_TOP), "Kit_Stone")
+    wall.box((WALL_X - WALL_HALF, EDGE_Y0, 0.0), (WALL_X + WALL_HALF, EDGE_Y0 + 4.0, WALL_TOP),
+             "Kit_Stone")
+    out.append(make_object("Garden_NorthWall", wall, col))
+
+    mb = MeshBuilder(["Kit_Grass"])
+    nx, ny = 14, 12
+    def vert(i, j):
+        y = EDGE_Y0 + (EDGE["y1"] - EDGE_Y0) * j / ny
+        x = EDGE["x0"] + (edge_east(y) - EDGE["x0"]) * i / nx
+        return (x, y, edge_z(x, y))
+    for j in range(ny):
+        for i in range(nx):
+            mb.face([vert(i, j), vert(i + 1, j), vert(i + 1, j + 1), vert(i, j + 1)], "Kit_Grass")
+    out.append(make_object("Garden_NorthTerrace", mb, col))
+
+    for n, (x, y, s) in enumerate(EDGE_ROCKS, start=1):
+        rock = MeshBuilder(["Kit_Rock"])
+        rock.blob((x, y, edge_z(x, y) + s * 0.2), s, "Kit_Rock", 200 + n)
+        out.append(make_object(f"Rock_North{n}", rock, col))
+    return out

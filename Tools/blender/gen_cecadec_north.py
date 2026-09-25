@@ -37,6 +37,7 @@ sys.dont_write_bytecode = True
 import bpy  # noqa: E402
 
 import geolib  # noqa: E402
+import lm_aud  # noqa: E402
 import lm_cds  # noqa: E402
 import lm_east  # noqa: E402
 import lm_entrance  # noqa: E402
@@ -44,7 +45,7 @@ import lm_plants  # noqa: E402
 import lm_plaza  # noqa: E402
 import lm_props  # noqa: E402
 
-for _m in (geolib, lm_entrance, lm_plaza, lm_plants, lm_props, lm_cds, lm_east):
+for _m in (geolib, lm_entrance, lm_plaza, lm_plants, lm_props, lm_cds, lm_east, lm_aud):
     importlib.reload(_m)
 
 from geolib import make_empty  # noqa: E402
@@ -79,6 +80,8 @@ MATERIALS = {
     "Kit_Palm": ("T_Palm.png", 1.0, 1.0),
     "Kit_PalmTrunk": ("T_PalmTrunk.png", 1.0, 1.0),
     "Kit_Letters": ("T_Letters.png", 1.0, 1.0),
+    # CDS south facade v2 and the auditorium (docs/map/reference/cds-south/, 2026-09-16).
+    "Kit_Metal_Grey": ("T_Metal_Grey.png", 1.0, 1.0),
 }
 
 HIGH = lm_plaza.HIGH_Z
@@ -144,6 +147,18 @@ def u_props(col):
     R.generator(col, -11.6, 0.35, HIGH)
 
 
+def u_north_edge(col):
+    """North-west edge of the map (user's image 10): the closing wall, the hillside that
+    carries on north and west, its rocks and its trees. The hillside's east edge follows
+    CDS's west wall, so it no longer cuts through the building."""
+    lm_plaza.north_edge(col)
+    # Six trees on the hill, at depth 1 with a small crown: the dense wood behind them is
+    # the Unity forest pass (PSX_Tree, far cheaper), these only break the skyline.
+    for i, (x, y, h) in enumerate(lm_plaza.EDGE_TREES, 1):
+        P.tree(col, f"Tree_North{i}", x, y, lm_plaza.edge_z(x, y), height=h, fork=2.4,
+               crown=2.8, seed=230 + i, depth=1)
+
+
 def u_probes(col):
     make_empty("Probe_East", (10.0, 0.0, 0.0), col, 1.0)
     make_empty("Probe_North", (0.0, 10.0, 0.0), col, 1.0)
@@ -162,6 +177,10 @@ UNITS = {
     "props": ("Props", u_props),
     "cds_facade": ("CDS", lm_cds.facade),
     "cds_front": ("CDS", lm_cds.front),
+    "auditorium": ("Auditorium", lm_aud.auditorium),
+    "canopy_walk": ("Auditorium", lm_aud.canopy_walk),
+    "east_ground": ("Auditorium", lm_aud.east_ground),
+    "north_edge": ("NorthEdge", u_north_edge),
     "east_facade": ("EastFacade", lm_east.facade),
     "east_garden": ("EastGarden", lm_east.garden),
     "probes": ("Probes", u_probes),
@@ -256,6 +275,13 @@ VIEWS = {
     "photo34_to_cds": ((-0.5, 3.5, 1.6), (4.0, 18.5, 3.2), 20),
     "photo33_to_cds_west": ((-9.5, 4.0, 1.6), (6.0, 17.5, 3.4), 20),
     "photo35_ne_corner": ((20.0, 11.5, 1.6), (8.5, -8.0, 4.6), 20),
+    # docs/map/reference/cds-south/, 2026-09-16: shot from the main door towards CDS,
+    # then swinging east to the auditorium.
+    "cds1_oblique": ((1.0, 4.0, 1.60), (12.0, 17.0, 3.0), 20),
+    "cds2_front": ((5.5, 2.0, 1.60), (8.0, 18.0, 3.6), 20),
+    "cds3_auditorium": ((9.0, 6.5, 1.60), (26.5, 11.0, 2.2), 20),
+    "cds4_corner": ((11.5, 4.0, 1.60), (26.8, 4.0, 2.2), 20),
+    "cds_walkway": ((16.0, 12.0, 1.60), (33.0, 21.0, 2.6), 22),
 }
 
 

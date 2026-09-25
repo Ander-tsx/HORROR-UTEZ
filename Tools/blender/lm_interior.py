@@ -133,13 +133,17 @@ def transom(col, name, wall, s0, s1, z0=PLASTER_TOP, lite=0.75, glass="Kit_Glass
     return [_obj(col, name + "_TransomFrame", frame), _obj(col, name + "_TransomPane", panes)]
 
 
-def pillar(col, name, wall, s, width=PILLAR_W, proud=PILLAR_PROUD):
-    """Structural column standing proud of the corridor face, skirting wrapped round it."""
+def pillar(col, name, wall, s, width=PILLAR_W, proud=PILLAR_PROUD, skirt=BASE_T):
+    """Structural column standing proud of the corridor face, skirting wrapped round it.
+
+    `skirt` is how far the black skirting stands proud of the column itself. The two
+    columns by the toilets carry a plinth rather than a skirting board (the user widened
+    those two by hand in the .blend on 2026-09-15); everything else uses the board."""
     a, b = s - width / 2, s + width / 2
     out = [_box_obj(col, name, wall, a, b, -proud, PART_T, 0.0, CEIL, "Kit_Wall_White")]
-    e = BASE_T
+    e, f = BASE_T, skirt
     mb = MeshBuilder(["Kit_Frame"])
-    wall.plan(mb, [(a - e, 0.0), (a - e, -proud - e), (b + e, -proud - e), (b + e, 0.0),
+    wall.plan(mb, [(a - e, 0.0), (a - e, -proud - f), (b + e, -proud - f), (b + e, 0.0),
                    (b, 0.0), (b, -proud), (a, -proud), (a, 0.0)], 0.0, BASE_H, "Kit_Frame")
     out.append(_obj(col, name + "_Skirting", mb))
     return out
