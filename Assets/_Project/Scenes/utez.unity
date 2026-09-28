@@ -51606,6 +51606,7 @@ Transform:
   - {fileID: 1587589724}
   - {fileID: 1047137457}
   - {fileID: 1959321035}
+  - {fileID: 1469196392}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &721640613
@@ -51749,7 +51750,7 @@ MonoBehaviour:
   runSpeed: 5.2
   acceleration: 12
   standingHeight: 1.7
-  eyeHeight: 1.58
+  eyeHeight: 1.575
   pitchMin: -80
   pitchMax: 80
   crouchHeightFactor: 0.55
@@ -110102,6 +110103,72 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 6176396911746747185, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
   m_PrefabInstance: {fileID: 1468080144}
   m_PrefabAsset: {fileID: 0}
+--- !u!1001 &1469196391
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 721640612}
+    m_Modifications:
+    - target: {fileID: 7585307538264146, guid: 2a832449a5b34424a876178ff08e3abf, type: 3}
+      propertyPath: controller
+      value: 
+      objectReference: {fileID: 721640616}
+    - target: {fileID: 1839255843962287400, guid: 2a832449a5b34424a876178ff08e3abf, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1839255843962287400, guid: 2a832449a5b34424a876178ff08e3abf, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1839255843962287400, guid: 2a832449a5b34424a876178ff08e3abf, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -0.12
+      objectReference: {fileID: 0}
+    - target: {fileID: 1839255843962287400, guid: 2a832449a5b34424a876178ff08e3abf, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 1839255843962287400, guid: 2a832449a5b34424a876178ff08e3abf, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1839255843962287400, guid: 2a832449a5b34424a876178ff08e3abf, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1839255843962287400, guid: 2a832449a5b34424a876178ff08e3abf, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1839255843962287400, guid: 2a832449a5b34424a876178ff08e3abf, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1839255843962287400, guid: 2a832449a5b34424a876178ff08e3abf, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1839255843962287400, guid: 2a832449a5b34424a876178ff08e3abf, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 5495050849326755231, guid: 2a832449a5b34424a876178ff08e3abf, type: 3}
+      propertyPath: m_Name
+      value: Body
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 2a832449a5b34424a876178ff08e3abf, type: 3}
+--- !u!4 &1469196392 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 1839255843962287400, guid: 2a832449a5b34424a876178ff08e3abf, type: 3}
+  m_PrefabInstance: {fileID: 1469196391}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &1470388217
 GameObject:
   m_ObjectHideFlags: 0
@@ -146838,15 +146905,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e3193c9a0fe814d30a9a4305b2f9a88b, type: 3}
   m_Name: 
   m_EditorClassIdentifier: HorrorUtez.Player::HorrorUtez.Player.PlayerBody
-  controller: {fileID: 721640616}
-  strideLength: 1.5
-  walkLegSwing: 26
-  runLegSwing: 42
-  walkArmSwing: 18
-  runArmSwing: 38
-  blendSpeed: 8
-  headPitchShare: 0.7
-  headPitchLimit: 55
 --- !u!1 &1960331507
 GameObject:
   m_ObjectHideFlags: 0
