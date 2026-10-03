@@ -1,0 +1,6 @@
+{
+  "name": "HorrorUtez.Remake.Editor",
+  "rootNamespace": "HorrorUtez.Remake.Editor",
+  "references": ["HorrorUtez.Remake", "HorrorUtez.World", "HorrorUtez.Rendering", "Unity.RenderPipelines.Universal.Runtime", "Unity.RenderPipelines.Core.Runtime"],
+  "includePlatforms": ["Editor"]
+}

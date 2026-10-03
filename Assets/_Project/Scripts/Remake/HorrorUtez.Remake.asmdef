@@ -1,0 +1,5 @@
+{
+  "name": "HorrorUtez.Remake",
+  "rootNamespace": "HorrorUtez.Remake",
+  "references": ["HorrorUtez.Core", "HorrorUtez.World", "HorrorUtez.Rendering", "Unity.InputSystem", "UnityEngine.UI", "Unity.RenderPipelines.Universal.Runtime", "Unity.RenderPipelines.Core.Runtime"]
+}

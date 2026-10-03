@@ -8,7 +8,12 @@ Juego de terror en primera persona ambientado en la UTEZ (Universidad Tecnológi
 
 ## Estado
 
-Fase 0 — bases del repositorio y modelado del terreno del campus.
+En la rama `remake` hay un prototipo cooperativo en desarrollo. Abre
+`Assets/_Project/Scenes/remake.unity` en Unity 6000.6.3f1 y pulsa Play.
+Los últimos cambios todavía requieren compilación y validación en Windows.
+
+Para continuar con Codex o Claude Code, lee [AGENTS.md](AGENTS.md),
+[CLAUDE.md](CLAUDE.md) y [el relevo completo](Documentation/Remake/HANDOFF.md).
 
 ## Estructura
 

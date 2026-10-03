@@ -23,6 +23,8 @@ namespace HorrorUtez.Rendering
         /// islands; everything between them is guesswork.
         /// </summary>
         Penumbra = 2,
+        /// <summary>Readable low-poly salvage: modern light, restrained retro texture.</summary>
+        Salvage = 3,
     }
 
     /// <summary>Every number a style sets, in one place.</summary>
@@ -118,10 +120,21 @@ namespace HorrorUtez.Rendering
             },
         };
 
-        public static int Count => All.Length;
+        private static readonly PsxStyleData SalvagePreset = new()
+        {
+            Label = "Turno nocturno", PixelHeight = 720f, ColorLevels = 64f,
+            Dither = .14f, Warp = 0, Aberration = .0005f, Scanlines = .025f,
+            Vignette = .3f, Grain = .025f, SnapOverride = -1, TexelScale = .85f,
+            AlbedoLevels = 0, AffineOverride = -1, FogDensityScale = .7f,
+            FogTint = new Color(.65f,.9f,.82f), FogStart = 7, FogNoise = .04f,
+            MoonScale = 1.4f, AmbientScale = 1.5f, PostExposure = .6f,
+            Contrast = 9, Saturation = -8, ColorFilter = new Color(.92f,1,.96f),
+            Temperature = -6, BloomIntensity = .4f,
+        };
+        public static int Count => All.Length + 1;
 
         public static PsxStyleData Get(PsxVisualStyle style) =>
-            All[Mathf.Clamp((int)style, 0, All.Length - 1)];
+            style == PsxVisualStyle.Salvage ? SalvagePreset : All[Mathf.Clamp((int)style, 0, All.Length - 1)];
 
         public static PsxStyleData Current => Get(PsxLook.Style);
     }

@@ -70,7 +70,7 @@ crashlytics-build.properties
 # ---------------------------------------------------------------------------
 # Private to the team (not published)
 # ---------------------------------------------------------------------------
-/CLAUDE.md
+# Shared agent handoff is versioned; personal legacy docs remain excluded.
 /docs/
 
 # Personal reference photos for the player character (only the processed textures are committed)

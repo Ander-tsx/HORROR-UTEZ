@@ -19,6 +19,7 @@ namespace HorrorUtez.World
     /// </summary>
     public sealed class WeatherSystem : MonoBehaviour
     {
+        public void Follow(Transform target) { player = target; }
         [Header("Scene references")]
         [SerializeField] private Volume volume;
         [SerializeField] private Light sun;

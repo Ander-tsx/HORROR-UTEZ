@@ -6,6 +6,6 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/_Project/Scenes/utez.unity
-    guid: 96677b948511846fe82b9112ba74bdad
+    path: Assets/_Project/Scenes/remake.unity
+    guid: ef055a8bee6d06444bb3be952e42ee36
   m_configObjects: {}
