@@ -32,3 +32,28 @@ Faltan planos adicionales: usar geometría existente e imaginar detalles compati
 La última generación agregó teclados/puertos, piezas de microscopios, ventilación,
 detalles de impresora/UPS, tablas/rieles/cabina del camión, cuidador y dedos humanos.
 Blender terminó sin errores; aún falta validar importación y apariencia en Unity.
+
+## Kit v2 (2026-10-03, segunda pasada)
+
+Ejecutar desde la raíz, en este orden (`$B` = Blender de Steam):
+
+```powershell
+& $B -b --factory-startup --python Tools/blender/gen_remake_textures.py   # 51 texturas -> Art/Remake/Textures
+& $B -b --factory-startup --python Tools/blender/gen_remake_lab.py        # 26 piezas -> Art/Remake/Resources/Lab
+& $B -b --factory-startup --python Tools/blender/gen_remake_props.py      # botín, camión, velador, gigante
+& $B -b Assets/_Project/Art/Characters/Player/Source~/PlayerCharacter.blend --python Tools/blender/gen_player_body_v3.py
+& $B -b --factory-startup --python Tools/audio/gen_remake_audio.py        # 37 WAV -> Art/Remake/Resources/Audio
+```
+
+- `remake_kit.py`: se modela en coordenadas de Unity. `to_blender` es una reflexión `(x, z, y)` que cancela la
+  del importador FBX; las caras se invierten para conservar el lado visible y las UV ajustadas (pantallas,
+  pizarrón, pósters) se calculan en espacio Unity. Se verificó en Unity con el centro del velador (+x, lado del
+  trapeador) y textos legibles en el tour. Ya no hay giros de 180° en tiempo de ejecución.
+- Nombres de material = nombres de textura. RemakeBuild crea un material PSX/Lit por textura.
+- Personajes enemigos por segmentos (Pelvis, Spine, Chest, Neck, Head, UpperArm/LowerArm/Hand, UpperLeg/
+  LowerLeg/Foot `_L/_R`), cada objeto con origen en su articulación; `RemakeBody` los anima.
+- Jugador: las fotos de la cara no están en este equipo (`Tools/character/source` falta), así que
+  `gen_player_body_v3.py` abre el `.blend` guardado, conserva cabeza, textura y rig, y sólo reemplaza el cuerpo
+  (polo, jeans, tenis, manos con dedos, mochila, reloj) con pesos deterministas por pieza. Usa los mismos 7
+  materiales que remapea el `.meta` del FBX. RemakeBuild sincroniza el prefab desempacado con el FBX.
+- Fuentes del HUD: VT323 y Creepster (Google Fonts, OFL) en `Resources/Fonts` con sus licencias.

@@ -1,7 +1,9 @@
 param(
     [string]$Unity = 'C:\Program Files\Unity\Hub\Editor\6000.6.3f1\Editor\Unity.exe',
     [switch]$Isolated,
-    [switch]$PrepareOnly
+    [switch]$PrepareOnly,
+    # Run any static editor method instead of building, e.g. HorrorUtez.Remake.Editor.RemakeDiagnostics.Probe
+    [string]$Method
 )
 $ErrorActionPreference = 'Stop'
 $projectRoot = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../..'))
@@ -10,20 +12,30 @@ $buildProject = $projectRoot
 if ($Isolated) {
     $buildProject = Join-Path $projectRoot 'Builds/Remake/ValidationProject'
     foreach ($folder in @('Assets', 'Packages', 'ProjectSettings')) {
-        robocopy (Join-Path $projectRoot $folder) (Join-Path $buildProject $folder) /E /NFL /NDL /NJH /NJS /R:1 /W:1 | Out-Null
+        robocopy (Join-Path $projectRoot $folder) (Join-Path $buildProject $folder) /MIR /NFL /NDL /NJH /NJS /R:1 /W:1 | Out-Null
         if ($LASTEXITCODE -ge 8) { throw "Copy failed: $folder" }
     }
 }
 New-Item -ItemType Directory -Force (Join-Path $projectRoot 'Library') | Out-Null
-$method = if ($PrepareOnly) { 'HorrorUtez.Remake.Editor.RemakeBuild.Prepare' } else { 'HorrorUtez.Remake.Editor.RemakeBuild.PrepareAndBuild' }
-$log = Join-Path $projectRoot 'Library/remake-build.log'
-$arguments = '-batchmode -nographics -quit -projectPath "' + $buildProject + '" -executeMethod ' + $method + ' -logFile "' + $log + '"'
+$executeMethod = if ($Method) { $Method } elseif ($PrepareOnly) { 'HorrorUtez.Remake.Editor.RemakeBuild.Prepare' } else { 'HorrorUtez.Remake.Editor.RemakeBuild.PrepareAndBuild' }
+$log = Join-Path $projectRoot $(if ($Method) { 'Library/remake-method.log' } else { 'Library/remake-build.log' })
+$arguments = '-batchmode -nographics -quit -projectPath "' + $buildProject + '" -executeMethod ' + $executeMethod + ' -logFile "' + $log + '"'
 $job = Start-Process -FilePath $Unity -ArgumentList $arguments -WindowStyle Hidden -PassThru
 $job.WaitForExit()
 if ($job.ExitCode -ne 0) { throw "Unity failed ($($job.ExitCode)). See $log" }
-if ($Isolated -and !$PrepareOnly) {
+if ($Isolated -and !$PrepareOnly -and !$Method) {
     robocopy (Join-Path $buildProject 'Builds/Remake/Windows') (Join-Path $projectRoot 'Builds/Remake/Windows') /E /NFL /NDL /NJH /NJS /R:1 /W:1 | Out-Null
     if ($LASTEXITCODE -ge 8) { throw 'Copying Windows build failed.' }
+}
+# Bring back what Unity generated in the isolated copy (.meta GUIDs, PSX materials, the prepared scene and the
+# synced player prefab) so the real project opens with the same references. /XO never overwrites newer sources.
+if ($Isolated -and !$Method) {
+    foreach ($folder in @('Assets/_Project/Art/Remake', 'Assets/_Project/Art/Characters/Player', 'Assets/_Project/Prefabs/Player')) {
+        robocopy (Join-Path $buildProject $folder) (Join-Path $projectRoot $folder) /E /XO /NFL /NDL /NJH /NJS /R:1 /W:1 | Out-Null
+        if ($LASTEXITCODE -ge 8) { throw "Sync back failed: $folder" }
+    }
+    robocopy (Join-Path $buildProject 'Assets/_Project/Scenes') (Join-Path $projectRoot 'Assets/_Project/Scenes') remake.unity remake.unity.meta /XO /NFL /NDL /NJH /NJS /R:1 /W:1 | Out-Null
+    if ($LASTEXITCODE -ge 8) { throw 'Sync back failed: remake scene' }
 }
 # Robocopy returns 1-7 on success; do not leak them as this script's exit code.
 $global:LASTEXITCODE = 0

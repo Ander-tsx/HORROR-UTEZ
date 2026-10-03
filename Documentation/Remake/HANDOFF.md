@@ -127,6 +127,15 @@ Smoke solo 29/29 and host/client pass; real-input feel is NOT yet reviewed by th
 Next candidates: R.E.P.O.-style enemies (stun, throwable, multiple archetypes), grabbing
 tumbling players, shop/upgrades (stamina, range, speed), HUD polish, truck departure scene.
 
+**Second pass (same evening, user request: full player model, more detailed models, ambience, music, horror HUD
+fonts, dressed compuaulas with mostly broken PCs and few valuables, a huge procedural humanoid enemy that fits
+inside the ground floor, smaller players, scarier, more R.E.P.O. features).** Done and smoke-tested: new art kit
+and textures (all models regenerated), detailed player body on the existing rig/face, dressed CECADEC ground
+floor, El Rector giant with procedural IK animation and crawl posture, synthesized music/SFX with adaptive
+music, horror HUD, upgrade shop, ID-card revive, stuns, spectator, smaller students, finer navigation.
+Not done yet: grabbing tumbling teammates, more enemy types, R.E.P.O. items (health packs, weapons, map),
+animated truck departure, upper floor dressing, CDS/auditorium interiors, listening tests for audio.
+
 ## Known limitations / next priorities
 
 1. Finish clean Windows solo and multi-process host/client validation; actual microphones,

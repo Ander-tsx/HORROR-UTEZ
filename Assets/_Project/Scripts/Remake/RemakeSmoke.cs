@@ -25,7 +25,7 @@ namespace HorrorUtez.Remake
             while(!game.Started && Time.realtimeSinceStartup<until)yield return null;
             Assert(game.Started,"session starts");
             yield return new WaitForSeconds(2);
-            Assert(game.Loot.Count==11,"university loot and cart spawn");
+            Assert(game.Loot.Count==18,"university loot, cart and ID cards spawn");
             Assert(game.Player.transform.position.y<1,"student stands on campus floor");
             Assert(game.Player.View!=null && game.Player.View.enabled,"first person camera");
             if(!game.Authority)
@@ -38,7 +38,7 @@ namespace HorrorUtez.Remake
                 game.Hud.GrabHeld=false;yield return new WaitForSeconds(.5f);
                 Assert(game.Local.held==-1,"client release acknowledged by host");
                 Assert(!hadError,"client has no runtime errors");
-                Debug.Log("[RemakeSmoke] CLIENT COMPLETE");yield return new WaitForSeconds(15);Application.Quit(0);yield break;
+                Debug.Log("[RemakeSmoke] CLIENT COMPLETE");yield return new WaitForSeconds(4);Application.Quit(0);yield break;
             }
             if(game.Online)
             {
@@ -62,7 +62,11 @@ namespace HorrorUtez.Remake
             Assert(game.Local.held==-1,"opening pause while gripping drops cargo");
             game.Hud.TogglePause();game.Hud.GrabHeld=false;yield return new WaitForSeconds(.15f);
             // Lift capacity: the 36 kg UPS stays on the floor for one student and rises with a second one.
+            // Done in the open by the truck so furniture in the electrical room cannot interfere with the physics check.
             var ups=game.Loot[4];
+            ups.Body.position=new Vector3(6,.5f,-3.5f);ups.Body.rotation=Quaternion.identity;
+            ups.Body.linearVelocity=Vector3.zero;ups.Body.angularVelocity=Vector3.zero;Physics.SyncTransforms();
+            yield return new WaitForSeconds(.6f);
             game.Player.Teleport(ups.transform.position+new Vector3(0,0,-1.4f),-10);
             yield return new WaitForSeconds(.3f);
             float floor=ups.transform.position.y;game.Hud.GrabHeld=true;game.Request("grab",4);
@@ -102,6 +106,16 @@ namespace HorrorUtez.Remake
             Assert(scope.Value==0 && !scope.gameObject.activeSelf,"broken gear shatters");
             scope.ResetLoot();
             Assert(scope.gameObject.activeSelf && scope.Value==scope.BaseValue,"new day restores broken gear");
+            // R.E.P.O.-style revive: a fallen student's ID card carried into the truck brings them back.
+            game.Students[97]=new StudentState{id=97,name="Smoke card",position=game.TruckPosition+new Vector3(-6,0.1f,-6)};
+            game.Hurt(97,200);
+            RemakeLoot card=null;foreach(RemakeLoot l in game.Loot)if(l.Kind==RemakeLoot.CredentialKind&&l.Owner==97)card=l;
+            Assert(card!=null && card.gameObject.activeSelf,"fallen student drops an ID card");
+            yield return new WaitForSeconds(.3f);
+            card.Body.position=game.TruckPosition+new Vector3(0,1.0f,-1.5f);card.Body.linearVelocity=Vector3.zero;
+            yield return new WaitForSeconds(1.2f);
+            Assert(game.Students[97].alive && !card.gameObject.activeSelf,"ID card in the truck revives the student");
+            game.Students.Remove(97);
             // Full bounds are required: an object straddling the cargo boundary must not count.
             var first=game.Loot[0];first.Body.position=game.TruckPosition+new Vector3(1.3f,1.5f,-1);
             first.Body.linearVelocity=Vector3.zero;Physics.SyncTransforms();

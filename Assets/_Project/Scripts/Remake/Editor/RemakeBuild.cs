@@ -8,6 +8,8 @@ using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
+using HorrorUtez.Rendering;
+using HorrorUtez.Rendering.Editor;
 
 namespace HorrorUtez.Remake.Editor
 {
@@ -18,7 +20,24 @@ namespace HorrorUtez.Remake.Editor
             if(!assetPath.StartsWith("Assets/_Project/Art/Remake/",StringComparison.Ordinal))return;
             var model=(ModelImporter)assetImporter;model.globalScale=1;model.useFileScale=true;
             model.bakeAxisConversion=true;model.importAnimation=false;model.importCameras=false;model.importLights=false;
-            model.addCollider=false;model.isReadable=false;model.meshCompression=ModelImporterMeshCompression.Off;
+            model.addCollider=false;model.meshCompression=ModelImporterMeshCompression.Off;
+            // Lab dressing is static-batched at runtime, which needs CPU-readable meshes.
+            model.isReadable=assetPath.Contains("/Resources/Lab/");
+        }
+        private void OnPreprocessTexture()
+        {
+            if(!assetPath.StartsWith("Assets/_Project/Art/Remake/Textures/",StringComparison.Ordinal))return;
+            var texture=(TextureImporter)assetImporter;texture.filterMode=FilterMode.Point;texture.mipmapEnabled=true;
+            texture.textureCompression=TextureImporterCompression.Uncompressed;texture.wrapMode=TextureWrapMode.Repeat;texture.sRGBTexture=true;
+        }
+        private void OnPreprocessAudio()
+        {
+            if(!assetPath.StartsWith("Assets/_Project/Art/Remake/Resources/Audio/",StringComparison.Ordinal))return;
+            var audio=(AudioImporter)assetImporter;var settings=audio.defaultSampleSettings;
+            bool music=Path.GetFileName(assetPath).StartsWith("music_")||Path.GetFileName(assetPath).StartsWith("amb_");
+            settings.loadType=music?AudioClipLoadType.CompressedInMemory:AudioClipLoadType.DecompressOnLoad;
+            settings.compressionFormat=AudioCompressionFormat.Vorbis;settings.quality=music?.6f:.8f;
+            audio.defaultSampleSettings=settings;audio.forceToMono=true;
         }
         private void OnPostprocessModel(GameObject root)
         {
@@ -64,8 +83,22 @@ namespace HorrorUtez.Remake.Editor
                 {mat.EnableKeyword("_EMISSION");mat.SetColor("_EmissionColor",colors[i]*1.5f);}
                 EditorUtility.SetDirty(mat);
             }
+            // One PSX/Lit material per generated texture (Tools/blender/gen_remake_textures.py); names match the
+            // material slots in every remake FBX, which RemakeModelImporter remaps to these assets.
+            foreach(string png in Directory.GetFiles(Art+"Textures","*.png"))
+            {
+                string name=Path.GetFileNameWithoutExtension(png);
+                string texturePath=png.Replace(Path.DirectorySeparatorChar,'/');
+                AssetDatabase.ImportAsset(texturePath,ImportAssetOptions.ForceUpdate);
+                string path=Art+"Materials/"+name+".mat";
+                var mat=AssetDatabase.LoadAssetAtPath<Material>(path);
+                if(mat==null){mat=new Material(PsxMaterialDefaults.LitShader);AssetDatabase.CreateAsset(mat,path);}
+                if(mat.shader!=PsxMaterialDefaults.LitShader)mat.shader=PsxMaterialDefaults.LitShader;
+                mat.SetTexture(PsxShaderProperties.MainTex,AssetDatabase.LoadAssetAtPath<Texture2D>(texturePath));
+                PsxMaterialDefaults.Apply(mat,SurfaceKind(name),false);
+            }
             AssetDatabase.SaveAssets();
-            foreach(string path in Directory.GetFiles(Art,"*.fbx"))AssetDatabase.ImportAsset(path,ImportAssetOptions.ForceUpdate);
+            foreach(string path in Directory.GetFiles(Art,"*.fbx",SearchOption.AllDirectories))AssetDatabase.ImportAsset(path.Replace(Path.DirectorySeparatorChar,'/'),ImportAssetOptions.ForceUpdate);
             // Failed .blend imports produce empty assets. Repair them once Blender is available.
             foreach(string path in Directory.GetFiles("Assets/_Project/Art/Environment","*.blend",SearchOption.AllDirectories))
             {
@@ -73,6 +106,7 @@ namespace HorrorUtez.Remake.Editor
                 if(!AssetDatabase.LoadAllAssetsAtPath(assetPath).OfType<Mesh>().Any())AssetDatabase.ImportAsset(assetPath,ImportAssetOptions.ForceUpdate);
                 if(!AssetDatabase.LoadAllAssetsAtPath(assetPath).OfType<Mesh>().Any())throw new Exception("Blender import failed: "+assetPath);
             }
+            SyncPlayerPrefab();
             var scene=EditorSceneManager.OpenScene("Assets/_Project/Scenes/utez.unity");
             EditorSceneManager.SaveScene(scene,Scene,true);
             scene=EditorSceneManager.OpenScene(Scene);
@@ -86,8 +120,9 @@ namespace HorrorUtez.Remake.Editor
                 if(script.GetType().Name=="PauseMenu"||script.GetType().Name=="PauseController")script.enabled=false;
             var root=new GameObject("REMAKE · Turno nocturno");var game=root.AddComponent<RemakeGame>();
             game.StudentModel=AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Project/Prefabs/Player/PlayerCharacter.prefab");
-            game.TruckModel=Model("Truck");game.EnemyModel=Model("Caretaker");
-            game.LootModels=new[]{Model("Laptop"),Model("Projector"),Model("Microscope"),Model("Workstation"),Model("UPS"),Model("Printer"),Model("Cart")};
+            game.TruckModel=Model("Truck");game.EnemyModel=Model("Caretaker");game.GiantModel=Model("Giant");
+            game.LootModels=new[]{Model("Laptop"),Model("Projector"),Model("Microscope"),Model("Workstation"),Model("UPS"),Model("Printer"),Model("Cart"),Model("Oscilloscope"),Model("Router")};
+            game.ScreenMaterials=new[]{"Screen_Dead","Screen_Cracked","Screen_BSOD","Screen_Terminal","Screen_Static"}.Select(n=>AssetDatabase.LoadAssetAtPath<Material>(Art+"Materials/"+n+".mat")).ToArray();
             Material Mat(string n)=>AssetDatabase.LoadAssetAtPath<Material>(Art+"Materials/"+n+".mat");
             game.PropMaterial=Mat("Steel");game.SkinMaterial=Mat("Skin");game.SleeveMaterial=Mat("Oxblood");game.SignalMaterial=Mat("Amber");
             var tagAsset=new SerializedObject(AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/TagManager.asset")[0]);
@@ -120,7 +155,7 @@ namespace HorrorUtez.Remake.Editor
             EditorBuildSettings.scenes=new[]{new EditorBuildSettingsScene(Scene,true)};
             AssetDatabase.SaveAssets();
             Debug.Log("[RemakeBuild] Scene ready: "+Scene+". URP + Windows + Android controls.");
-            foreach(string name in new[]{"Truck","Laptop","Caretaker"})
+            foreach(string name in new[]{"Truck","Laptop","Caretaker","Giant"})
             {
                 var probe=UnityEngine.Object.Instantiate(Model(name));
                 var bounds=new Bounds(probe.transform.position,Vector3.zero);
@@ -130,6 +165,45 @@ namespace HorrorUtez.Remake.Editor
                     if(child.name=="Cab"||child.name=="CargoFloor"||child.name=="Windshield")Debug.Log("[RemakeBuild] "+child.name+" world "+child.position);
                 UnityEngine.Object.DestroyImmediate(probe);
             }
+        }
+        // The player prefab is an unpacked copy of PlayerCharacter.fbx with its own SkinnedMeshRenderers. When the
+        // body mesh is regenerated (Tools/blender/gen_player_body_v3.py) its submesh and bone order can change, so
+        // copy materials, bones (matched by name) and bounds from the freshly imported FBX.
+        [MenuItem("HORROR-UTEZ/Remake/Sync player prefab with FBX")]
+        public static void SyncPlayerPrefab()
+        {
+            const string prefabPath="Assets/_Project/Prefabs/Player/PlayerCharacter.prefab";
+            const string fbxPath="Assets/_Project/Art/Characters/Player/PlayerCharacter.fbx";
+            AssetDatabase.ImportAsset(fbxPath,ImportAssetOptions.ForceUpdate);
+            var fbx=AssetDatabase.LoadAssetAtPath<GameObject>(fbxPath);
+            if(fbx==null||!File.Exists(prefabPath)){Debug.LogWarning("[RemakeBuild] Player prefab or FBX missing.");return;}
+            GameObject root=PrefabUtility.LoadPrefabContents(prefabPath);
+            try
+            {
+                Transform Find(Transform t,string name){if(t.name==name)return t;foreach(Transform c in t){Transform f=Find(c,name);if(f!=null)return f;}return null;}
+                foreach(SkinnedMeshRenderer target in root.GetComponentsInChildren<SkinnedMeshRenderer>(true))
+                {
+                    SkinnedMeshRenderer source=fbx.GetComponentsInChildren<SkinnedMeshRenderer>(true).FirstOrDefault(s=>s.name==target.name||s.sharedMesh==target.sharedMesh);
+                    if(source==null)continue;
+                    target.sharedMesh=source.sharedMesh;target.sharedMaterials=source.sharedMaterials;
+                    target.bones=source.bones.Select(b=>b==null?null:Find(root.transform,b.name)).ToArray();
+                    if(source.rootBone!=null)target.rootBone=Find(root.transform,source.rootBone.name);
+                    target.localBounds=source.localBounds;
+                    Debug.Log("[RemakeBuild] Synced "+target.name+": "+target.sharedMaterials.Length+" materials, "+target.bones.Length+" bones");
+                }
+                PrefabUtility.SaveAsPrefabAsset(root,prefabPath);
+            }
+            finally{PrefabUtility.UnloadPrefabContents(root);}
+        }
+        private static PsxSurfaceKind SurfaceKind(string name)
+        {
+            if(name.StartsWith("LED_")||name=="Eye_Glow"||name=="Screen_BSOD"||name=="Screen_Terminal"||name=="Screen_Static")return PsxSurfaceKind.Emissive;
+            if(name.StartsWith("Screen_"))return PsxSurfaceKind.Gloss;
+            if(name=="Chrome"||name=="Metal_Brushed")return PsxSurfaceKind.Metal;
+            if(name.StartsWith("Glass"))return PsxSurfaceKind.Glass;
+            if(name=="Whiteboard"||name.StartsWith("Poster")||name.StartsWith("Sign_")||name=="Paper"||name=="Keyboard"||name=="Caution_Tape")return PsxSurfaceKind.Text;
+            if(name.StartsWith("Plastic")||name.StartsWith("Laminate")||name.StartsWith("Truck")||name=="Metal_Painted"||name=="Sneaker")return PsxSurfaceKind.Satin;
+            return PsxSurfaceKind.Matte;
         }
         private static GameObject Model(string name)
         {

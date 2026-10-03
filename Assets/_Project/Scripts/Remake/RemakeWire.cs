@@ -14,17 +14,21 @@ namespace HorrorUtez.Remake
     [Serializable] public sealed class StudentState
     {
         public int id, held = -1, health = 100, strength, credits;
+        // R.E.P.O.-style upgrades bought between days (0..3 each); lost when a student is stranded.
+        public int stamina, range, speed, vitality, jumps;
+        public int MaxHealth => 100 + vitality * 20;
         public string name;
         public Vector3 position, aim = Vector3.forward;
-        public float yaw, pitch, reach = 1.2f, eye = 1.55f;
+        public float yaw, pitch, reach = 1.2f, eye = 1.38f;
         public bool alive = true, torch = true, escaped, tumble;
         // Grab point in the held object's local space and its orientation relative to the student's camera.
-        public Vector3 grabLocal;
+        public Vector3 grabLocal, knock;
+        public int hurtCount;
         public Quaternion hold = Quaternion.identity;
     }
     [Serializable] public sealed class LootState
     {
-        public int id, value;
+        public int id, value, owner = -1;
         public Vector3 position;
         public Quaternion rotation;
     }
@@ -39,6 +43,7 @@ namespace HorrorUtez.Remake
         public StudentState[] students;
         public LootState[] loot;
         public Vector3[] enemies;
+        public int[] enemyFlags;
         public bool[] doors;
     }
 

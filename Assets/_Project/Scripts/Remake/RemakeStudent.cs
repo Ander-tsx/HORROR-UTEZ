@@ -13,10 +13,16 @@ namespace HorrorUtez.Remake
         // Feel modelled on R.E.P.O.'s PlayerController (studied, independently written): friction-smoothed
         // velocity, sprint ramp that drains energy, crouch-slide after sprinting, coyote/jump buffers,
         // heavier gravity and weighted landings.
-        public const float MinReach = .75f, MaxReach = 1.9f, EnergyMax = 40;
+        public const float MinReach = .75f, MaxReach = 1.9f, BaseEnergy = 40;
+        // Upgrades (StudentState) raise these caps the same way on the host and the owner.
+        public static float ReachCap(StudentState s) => MaxReach + .25f * (s?.range ?? 0);
+        public float EnergyMax => BaseEnergy + 10 * (game?.Local?.stamina ?? 0);
+        private float SprintCap => SprintSpeed + .45f * (game?.Local?.speed ?? 0);
         private const float WalkSpeed = 2.6f, SprintSpeed = 5.4f, CrouchSpeed = 1.3f, Friction = 10, AirFriction = 2.2f;
         private const float SprintRamp = 1.4f, SprintDrain = 4.5f, EnergyRecharge = 3, Gravity = 18, JumpSpeed = 5.6f;
-        private const float StandHeight = 1.7f, CrouchHeight = 1.05f, StandEye = 1.55f, CrouchEye = .95f, SlideTime = .85f;
+        // Students are a little under real size (1.5 m) so the campus and the giant loom larger.
+        private const float StandHeight = 1.5f, CrouchHeight = .92f, StandEye = 1.38f, CrouchEye = .82f, SlideTime = .85f;
+        public const float AvatarScale = .88f;
 
         public Camera View => rig?.View;
         public float Yaw { get; private set; }
@@ -25,7 +31,7 @@ namespace HorrorUtez.Remake
         public Quaternion Hold { get; private set; } = Quaternion.identity;
         public float EyeHeight { get; private set; } = StandEye;
         public float Speed { get; private set; }
-        public float Energy { get; private set; } = EnergyMax;
+        public float Energy { get; private set; } = BaseEnergy;
         public float Stamina => Energy / EnergyMax * 100;
         public bool Running { get; private set; }
         public bool Crouching { get; private set; }
@@ -46,6 +52,8 @@ namespace HorrorUtez.Remake
         private Light torch;
         private Animator animator;
         private Vector3 visualScale = Vector3.one, previous, planar, slideVelocity, aimedPoint, pullPoint;
+        private int airJumps, spectateIndex;
+        public string Spectating { get; private set; }
         private float vertical, sprintLerp, sprintedTimer, rechargeDelay, crouchTimer, slideTimer, groundBuffer, jumpBuffer, jumpCooldown;
         private float fallSpeed, nextRemoteStep, scanAt, nextScare, pullTimer;
         private bool wasGrounded = true, previousGrip;
@@ -69,7 +77,7 @@ namespace HorrorUtez.Remake
             if (local)
             {
                 controller = gameObject.AddComponent<CharacterController>(); controller.height = StandHeight;
-                controller.radius = .27f; controller.center = Vector3.up*.85f; controller.stepOffset = .32f; controller.slopeLimit = 48;
+                controller.radius = .25f; controller.center = Vector3.up*(StandHeight*.5f); controller.stepOffset = .3f; controller.slopeLimit = 48;
                 eyes = new GameObject("Eyes").transform; eyes.SetParent(transform, false); eyes.localPosition = Vector3.up*StandEye;
                 rig = new RemakeCameraRig(eyes); rig.Step = Footstep;
                 View.nearClipPlane=.04f; View.farClipPlane=180; View.fieldOfView=rig.BaseFov;
@@ -81,7 +89,7 @@ namespace HorrorUtez.Remake
             }
             else if(game.StudentModel != null)
             {
-                visual = Instantiate(game.StudentModel, transform); visualScale=visual.transform.localScale;
+                visual = Instantiate(game.StudentModel, transform); visual.transform.localScale*=AvatarScale; visualScale=visual.transform.localScale;
                 foreach (MonoBehaviour behaviour in visual.GetComponentsInChildren<MonoBehaviour>()) behaviour.enabled=false;
                 animator = visual.GetComponentInChildren<Animator>();
                 if(animator != null) animator.applyRootMotion=false;
@@ -223,7 +231,7 @@ namespace HorrorUtez.Remake
                 Yaw+=look.x*GameSettings.LookSensitivity;
                 Pitch=Mathf.Clamp(Pitch-look.y*GameSettings.LookSensitivity,-70,80);
             }
-            if(holding && !Rotating && scroll != 0)Reach=Mathf.Clamp(Reach+Mathf.Sign(scroll)*.2f,MinReach,MaxReach);
+            if(holding && !Rotating && scroll != 0)Reach=Mathf.Clamp(Reach+Mathf.Sign(scroll)*.2f,MinReach,ReachCap(game.Local));
             ScanEnemies(dt);
             transform.rotation=Quaternion.Euler(0,Yaw,0);
             bool grounded=true;
@@ -232,19 +240,12 @@ namespace HorrorUtez.Remake
                 if(game.Local.health<lastHealth)
                 {
                     rig.Hit(Mathf.Clamp01((lastHealth-game.Local.health)/30f));
-                    // A caretaker blow knocks the student over, like R.E.P.O.'s forced tumble.
-                    RemakeEnemy hitter=null; float closest=3.5f;
-                    foreach(RemakeEnemy enemy in game.Enemies)
+                    // Enemy blows carry a launch velocity from the host and knock the student over (R.E.P.O.-style tumble).
+                    Vector3 knock=game.Local.knock;
+                    if(knock.sqrMagnitude>.01f)
                     {
-                        float d=Vector3.Distance(enemy.transform.position,transform.position);
-                        if(d<closest){closest=d;hitter=enemy;}
-                    }
-                    if(hitter!=null)
-                    {
-                        Vector3 away=transform.position-hitter.transform.position; away.y=0;
-                        if(away.sqrMagnitude<.01f)away=-transform.forward;
-                        if(Tumbling)tumbleBody.AddForce(away.normalized*6.5f+Vector3.up*3.5f,ForceMode.VelocityChange);
-                        else StartTumble(away.normalized*6.5f+Vector3.up*3.5f,1.2f);
+                        if(Tumbling)tumbleBody.AddForce(knock,ForceMode.VelocityChange);
+                        else StartTumble(knock,1.2f);
                         tumbleLock=Mathf.Max(tumbleLock,1.2f);
                     }
                 }
@@ -262,7 +263,7 @@ namespace HorrorUtez.Remake
                     // Grab exactly where the ray hit and keep the object's orientation relative to the camera.
                     Quaternion cam=Quaternion.Euler(Pitch,Yaw,0);
                     Hold=Quaternion.Inverse(cam)*AimedLoot.transform.rotation;
-                    Reach=Mathf.Clamp(Vector3.Distance(EyePosition,aimedPoint),MinReach,MaxReach);
+                    Reach=Mathf.Clamp(Vector3.Distance(EyePosition,aimedPoint),MinReach,ReachCap(game.Local));
                     game.Request("grab",AimedLoot.Id,AimedLoot.transform.InverseTransformPoint(aimedPoint),Hold);
                     nextGrabAttempt=Time.unscaledTime+.15f;
                 }
@@ -278,8 +279,32 @@ namespace HorrorUtez.Remake
             {
                 if(Tumbling)EndTumble();
                 Speed=0; torch.enabled=false; Running=false; Sliding=false;
-                // The fallen student can look around and coordinate rescue over the HUD.
-                EyeHeight=Mathf.Lerp(EyeHeight,.38f,dt*4); eyes.localPosition=Vector3.up*EyeHeight;
+                // Fallen students spectate a living teammate (click to switch), like R.E.P.O.'s spectator camera,
+                // until someone carries their ID card into the truck.
+                StudentState watch=null; int alive=0;
+                foreach(StudentState s in game.Students.Values) if(s.alive && s.id!=game.LocalId) alive++;
+                if(alive>0)
+                {
+                    bool next=(mouse!=null && mouse.leftButton.wasPressedThisFrame) || jump;
+                    if(next)spectateIndex++;
+                    int k=0, pick=spectateIndex%alive;
+                    foreach(StudentState s in game.Students.Values) if(s.alive && s.id!=game.LocalId){ if(k==pick)watch=s; k++; }
+                }
+                Transform target=watch!=null ? game.Avatar(watch.id) : null;
+                Spectating=target!=null ? watch.name : null;
+                if(target!=null)
+                {
+                    controller.enabled=false;
+                    Vector3 focus=target.position+Vector3.up*1.1f;
+                    Vector3 cam=focus-Quaternion.Euler(0,watch.yaw,0)*Vector3.forward*2.6f+Vector3.up*.7f;
+                    EyeHeight=Mathf.Lerp(EyeHeight,1.2f,dt*4); eyes.localPosition=Vector3.up*EyeHeight;
+                    transform.position=Vector3.Lerp(transform.position,cam-Vector3.up*EyeHeight,1-Mathf.Exp(-6*dt));
+                    Vector3 d=focus-(transform.position+Vector3.up*EyeHeight);
+                    Yaw=Mathf.LerpAngle(Yaw,Mathf.Atan2(d.x,d.z)*Mathf.Rad2Deg,1-Mathf.Exp(-8*dt));
+                    Pitch=Mathf.Lerp(Pitch,-Mathf.Atan2(d.y,new Vector2(d.x,d.z).magnitude)*Mathf.Rad2Deg,1-Mathf.Exp(-8*dt));
+                    transform.rotation=Quaternion.Euler(0,Yaw,0);
+                }
+                else { EyeHeight=Mathf.Lerp(EyeHeight,.38f,dt*4); eyes.localPosition=Vector3.up*EyeHeight; }
             }
             lastHealth=game.Local.health;
             rig.Tick(Yaw,Pitch,grounded,Speed,Running,sprintLerp,Crouching,move.x,dt);
@@ -309,6 +334,7 @@ namespace HorrorUtez.Remake
         public void Tumble(Vector3 velocity) { if(!Tumbling && controller!=null)StartTumble(velocity,0); }
         public void GetUp() { if(Tumbling)EndTumble(); }
         public void Shake(float degrees,float seconds) { rig?.Shake(degrees,seconds); }
+        public void Aim(float yaw,float pitch) { Yaw=yaw; Pitch=Mathf.Clamp(pitch,-70,80); transform.rotation=Quaternion.Euler(0,Yaw,0); if(rig!=null)rig.Aim.rotation=Quaternion.Euler(Pitch,Yaw,0); }
         private bool TumbleUpdate(Vector2 move,bool getUp,float dt)
         {
             tumbleLock-=dt;
@@ -379,7 +405,7 @@ namespace HorrorUtez.Remake
                 Sliding=true; slideTimer=SlideTime; slideVelocity=planar*1.15f; Energy-=2; sprintedTimer=0;
                 rig.Shake(.8f,.2f); Footstep(1); game.Noise(transform.position,12);
             }
-            float speed=Running ? Mathf.Lerp(WalkSpeed,SprintSpeed,sprintLerp) : Crouching ? CrouchSpeed : WalkSpeed;
+            float speed=Running ? Mathf.Lerp(WalkSpeed,SprintCap,sprintLerp) : Crouching ? CrouchSpeed : WalkSpeed;
             Vector3 target=wish*speed;
             if(Sliding)
             {
@@ -389,9 +415,13 @@ namespace HorrorUtez.Remake
             planar=Vector3.Lerp(planar,target,1-Mathf.Exp(-(grounded ? (Sliding ? 3 : Friction) : AirFriction)*dt));
 
             if(grounded && vertical<0)vertical=-2;
-            if(jumpBuffer>0 && groundBuffer>0 && jumpCooldown<=0 && !Crawling)
+            if(grounded)airJumps=game.Local.jumps;
+            bool airJump=jumpBuffer>0 && groundBuffer<=0 && airJumps>0 && jumpCooldown<=0 && !Crawling;
+            if((jumpBuffer>0 && groundBuffer>0 && jumpCooldown<=0 && !Crawling) || airJump)
             {
-                vertical=JumpSpeed; jumpBuffer=0; groundBuffer=0; jumpCooldown=.2f; rig.Jump(); Sliding=false;
+                // Extra jumps are an upgrade, as in R.E.P.O.: a weaker kick in mid air.
+                if(airJump){airJumps--;vertical=JumpSpeed*.85f;rig.Shake(.6f,.15f);} else vertical=JumpSpeed;
+                jumpBuffer=0; groundBuffer=0; jumpCooldown=.2f; rig.Jump(); Sliding=false;
             }
             else if(!grounded)vertical-=Gravity*dt;
             if(!grounded)fallSpeed=Mathf.Max(fallSpeed,-vertical);

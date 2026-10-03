@@ -10,8 +10,11 @@ namespace HorrorUtez.Remake
 {
     public sealed class RemakeGame : MonoBehaviour
     {
-        public GameObject StudentModel, TruckModel, EnemyModel;
+        public GameObject StudentModel, TruckModel, EnemyModel, GiantModel;
         public GameObject[] LootModels;
+        public Material[] ScreenMaterials;
+        public RemakeAudio Audio { get; private set; }
+        public RemakeDressing Dressing { get; private set; }
         public Material PropMaterial, SkinMaterial, SleeveMaterial, SignalMaterial;
         public readonly Dictionary<int, StudentState> Students = new Dictionary<int, StudentState>();
         public readonly List<RemakeLoot> Loot = new List<RemakeLoot>();
@@ -61,6 +64,8 @@ namespace HorrorUtez.Remake
                 .ThenBy(d => d.transform.position.z).ThenBy(d => d.name).ToArray();
             // Open corridor leaves before baking the ground-floor navigation grid.
             foreach (HingedDoor door in doors) door.Open();
+            Audio = gameObject.AddComponent<RemakeAudio>(); Audio.Setup(this);
+            Dressing = new RemakeDressing(this); Dressing.Build();
             BuildTruck(); BuildLoot(); BuildStaging();
             var view = new GameObject("Remake menu camera");
             menuCamera = view.AddComponent<Camera>();
@@ -80,7 +85,7 @@ namespace HorrorUtez.Remake
             if (joinAt >= 0 && joinAt + 1 < args.Length) Join(args[joinAt + 1], "Prueba cliente");
             if (args.Contains("-remakeSolo")) Begin(false, "Estudiante");
             if (args.Contains("-remakeSmoke")) gameObject.AddComponent<RemakeSmoke>().Setup(this);
-            if (args.Contains("-remakeCapture")) gameObject.AddComponent<RemakeCapture>().Setup(this);
+            if (args.Contains("-remakeCapture") || args.Contains("-remakeTour")) gameObject.AddComponent<RemakeCapture>().Setup(this, args.Contains("-remakeTour"));
         }
         public void Begin(bool host, string name)
         {
@@ -144,11 +149,18 @@ namespace HorrorUtez.Remake
             if (Enemies.Count > 0) return;
             for (int i = 0; i < 2; i++)
             {
-                var go = new GameObject("El velador " + i);
+                var go = new GameObject("El velador " + i) { layer = 9 };
                 var enemy = go.AddComponent<RemakeEnemy>();
-                enemy.Setup(this, new Vector3(i == 0 ? -12 : 22, 0.1f, i == 0 ? 22 : -35), EnemyModel);
+                enemy.Setup(this, EnemyKind.Caretaker, new Vector3(i == 0 ? -12 : 22, 0.1f, i == 0 ? 22 : -35), EnemyModel);
                 Enemies.Add(enemy);
             }
+            // El Rector: a giant that wakes after a while at the far end of the campus.
+            var giant = new GameObject("El Rector") { layer = 9 };
+            var rector = giant.AddComponent<RemakeEnemy>();
+            rector.Setup(this, EnemyKind.Giant, new Vector3(26, 0.1f, -58), GiantModel);
+            Enemies.Add(rector);
+            foreach (Transform t in giant.GetComponentsInChildren<Transform>()) t.gameObject.layer = 9;
+            foreach (RemakeEnemy e in Enemies) foreach (Transform t in e.GetComponentsInChildren<Transform>()) t.gameObject.layer = 9;
         }
         private void Update()
         {
@@ -163,7 +175,7 @@ namespace HorrorUtez.Remake
             }
             if (Authority && Time.time > nextCargoCheck)
             {
-                nextCargoCheck = Time.time + 0.2f; Cargo = ComputeCargo();
+                nextCargoCheck = Time.time + 0.2f; Cargo = ComputeCargo(); ReviveFromCards();
                 if (Phase == 2)
                 {
                     if (Cargo < Quota || !Students.Values.Any(s => s.alive && InTruck(s.position)))
@@ -188,7 +200,7 @@ namespace HorrorUtez.Remake
             }
             if (Authority && Online && Time.unscaledTime > nextSnapshot)
             { nextSnapshot = Time.unscaledTime + 0.075f; Wire?.Broadcast(JsonUtility.ToJson(Snapshot())); }
-            SyncAvatars(); UpdatePopups();
+            SyncAvatars(); UpdatePopups(); Dressing?.Tick();
             if (truckDisplay != null) truckDisplay.text = "$" + Cargo + " / $" + Quota + "\n" + (Cargo >= Quota ? "CARGA LISTA" : "RECUPERAR EQUIPO");
         }
         private void PumpNetwork()
@@ -236,7 +248,7 @@ namespace HorrorUtez.Remake
                 if (Vector3.Distance(state.position, message.position) > 9 * elapsed + 1.5f || Mathf.Abs(message.position.x) > 90 || Mathf.Abs(message.position.z) > 130) return;
                 float moved = Vector3.Distance(state.position, message.position);
                 state.position = message.position; state.aim = message.aim.normalized; state.yaw = message.yaw;
-                state.pitch = Mathf.Clamp(message.pitch, -80, 80); state.reach = Mathf.Clamp(message.reach, RemakeStudent.MinReach, RemakeStudent.MaxReach); state.torch = message.flag;
+                state.pitch = Mathf.Clamp(message.pitch, -80, 80); state.reach = Mathf.Clamp(message.reach, RemakeStudent.MinReach, RemakeStudent.ReachCap(state)); state.torch = message.flag;
                 state.eye = Mathf.Clamp(message.eye, 0.35f, 1.6f); state.tumble = message.tumble; if (ValidRotation(message.rotation)) state.hold = Normalize(message.rotation);
                 lastPose[peer] = Time.time;
                 if (moved > 0.03f) Noise(state.position, moved / elapsed > 3.5f ? 18 : 6);
@@ -259,18 +271,20 @@ namespace HorrorUtez.Remake
         {
             if (message.type == "welcome") { LocalId = message.id; return; }
             if (message.type == "voice") { Voice.Receive(message.id, message.audio); return; }
-            if (message.type == "sound") { SoundAt(impact, message.position, 0.4f); return; }
+            if (message.type == "sound") { Audio?.Play(string.IsNullOrEmpty(message.text) ? "impact_plastic" : message.text, message.position, message.reach > 0 ? message.reach : .5f); return; }
             if (message.type != "state" || message.students == null || message.loot == null) return;
             bool newDay = pendingDay != message.day;
             pendingDay = Day = message.day; Quota = message.quota; Cargo = message.cargo;
             Phase = message.phase; Seconds = message.seconds; Notice = message.text;
+            bool wasDown = Local != null && !Local.alive;
             Students.Clear(); foreach (StudentState state in message.students) Students[state.id] = state;
             if (!Students.ContainsKey(LocalId)) return;
+            if (wasDown && Local.alive && Player != null && !newDay) Player.Teleport(Local.position);
             foreach (LootState state in message.loot)
                 if (state.id >= 0 && state.id < Loot.Count) Loot[state.id].Apply(state);
             SpawnEnemies();
             if (message.enemies != null)
-                for (int i = 0; i < Mathf.Min(message.enemies.Length, Enemies.Count); i++) Enemies[i].Apply(message.enemies[i]);
+                for (int i = 0; i < Mathf.Min(message.enemies.Length, Enemies.Count); i++) Enemies[i].Apply(message.enemies[i], message.enemyFlags != null && i < message.enemyFlags.Length ? message.enemyFlags[i] : 0);
             if (message.doors != null)
                 for (int i = 0; i < Mathf.Min(message.doors.Length, doors.Length); i++)
                     if (message.doors[i]) doors[i].Open(); else doors[i].Close();
@@ -285,8 +299,8 @@ namespace HorrorUtez.Remake
         {
             type = "state", day = Day, quota = Quota, cargo = Cargo, phase = Phase, seconds = Seconds, text = Notice,
             students = Students.Values.ToArray(),
-            loot = Loot.Select(l => new LootState { id = l.Id, value = l.Value, position = l.transform.position, rotation = l.transform.rotation }).ToArray(),
-            enemies = Enemies.Select(e => e.transform.position).ToArray(), doors = doors.Select(d => d.IsOpen).ToArray()
+            loot = Loot.Select(l => new LootState { id = l.Id, value = l.Value, owner = l.Owner, position = l.transform.position, rotation = l.transform.rotation }).ToArray(),
+            enemies = Enemies.Select(e => e.transform.position).ToArray(), enemyFlags = Enemies.Select(e => e.Flags).ToArray(), doors = doors.Select(d => d.IsOpen).ToArray()
         };
         public void Request(string action, int item = -1) => Request(action, item, Vector3.zero, default);
         public void Request(string action, int item, Vector3 point, Quaternion hold)
@@ -298,8 +312,13 @@ namespace HorrorUtez.Remake
         {
             if (!Students.TryGetValue(id, out StudentState state)) return;
             if (message.type == "next" && id == 0 && (Phase == 3 || Phase == 4)) { NextDay(Phase == 4); return; }
-            if (message.type == "upgrade" && Phase == 3 && state.escaped && state.credits >= 80 && state.strength < 3)
-            { state.credits -= 80; state.strength++; Tell(state.name + " compró fuerza de agarre."); return; }
+            if (message.type == "upgrade" && Phase == 3 && state.escaped)
+            {
+                int kind = Mathf.Clamp(message.item, 0, UpgradeNames.Length - 1), cost = UpgradeCost(state, kind);
+                if (UpgradeLevel(state, kind) < 3 && state.credits >= cost)
+                { state.credits -= cost; SetUpgrade(state, kind, UpgradeLevel(state, kind) + 1); Tell(state.name + " compró " + UpgradeNames[kind] + "."); }
+                return;
+            }
             if (!state.alive || Phase != 1) return;
             if (message.type == "drop") { state.held = -1; return; }
             if (message.type == "grab" && message.item >= 0 && message.item < Loot.Count)
@@ -328,6 +347,34 @@ namespace HorrorUtez.Remake
                 SoundAt(success, TruckPosition, 0.8f);
             }
         }
+        // R.E.P.O.-style upgrade shop between days. Each line goes to level 3; prices rise per level.
+        public static readonly string[] UpgradeNames = { "FUERZA", "ENERGÍA", "ALCANCE", "VELOCIDAD", "SALUD", "SALTO EXTRA" };
+        public static readonly string[] UpgradeInfo = { "Levantas más peso", "+10 de energía", "Brazos más largos", "Corres más rápido", "+20 de salud máxima", "Un salto en el aire" };
+        public static int UpgradeLevel(StudentState s, int kind) => kind switch { 0 => s.strength, 1 => s.stamina, 2 => s.range, 3 => s.speed, 4 => s.vitality, _ => s.jumps };
+        public static int UpgradeCost(StudentState s, int kind) => 60 + UpgradeLevel(s, kind) * 45 + (kind == 0 ? 20 : 0);
+        private static void SetUpgrade(StudentState s, int kind, int level)
+        {
+            switch (kind) { case 0: s.strength = level; break; case 1: s.stamina = level; break; case 2: s.range = level; break;
+                case 3: s.speed = level; break; case 4: s.vitality = level; s.health = s.MaxHealth; break; default: s.jumps = level; break; }
+        }
+        private static void ClearUpgrades(StudentState s) { s.strength = s.stamina = s.range = s.speed = s.vitality = s.jumps = 0; }
+        private void ReviveFromCards()
+        {
+            foreach (RemakeLoot card in Loot)
+            {
+                if (card.Kind != RemakeLoot.CredentialKind || card.Owner < 0 || Students.Values.Any(s => s.held == card.Id)) continue;
+                if (card.Body.linearVelocity.sqrMagnitude > 2.25f || !CargoContains(card.Bounds)) continue;
+                if (Students.TryGetValue(card.Owner, out StudentState state) && !state.alive && (Phase == 1 || Phase == 2))
+                {
+                    state.alive = true; state.health = Mathf.Max(30, state.MaxHealth / 3); state.position = TruckPosition + new Vector3(0, .9f, -1.6f);
+                    lastPose[state.id] = Time.time;
+                    if (state.id == LocalId && Player != null) Player.Teleport(state.position);
+                    Tell(state.name + " volvió en sí dentro del camión.");
+                    Audio?.Play("music_extract", TruckPosition, .6f);
+                }
+                card.Hide();
+            }
+        }
         public int DoorId(HingedDoor door) => Array.IndexOf(doors, door);
         public bool InTruck(Vector3 position)
         {
@@ -341,13 +388,22 @@ namespace HorrorUtez.Remake
         }
         public int ComputeCargo() => Loot.Where(l => l.Value > 0 && !Students.Values.Any(s => s.held == l.Id)
             && l.Body.linearVelocity.sqrMagnitude < 2.25f && CargoContains(l.Bounds)).Sum(l => l.Value);
-        public void Hurt(int id, int damage)
+        public void Hurt(int id, int damage) => Hurt(id, damage, Vector3.zero);
+        // knock: launch velocity the victim's own client applies as a tumble (enemy blows, giant throws).
+        public void Hurt(int id, int damage, Vector3 knock)
         {
             if (!Authority || Phase != 1 || !Students.TryGetValue(id, out StudentState state) || !state.alive) return;
-            state.health = Mathf.Max(0, state.health - damage);
+            state.health = Mathf.Max(0, state.health - damage); state.knock = knock; state.hurtCount++;
+            Audio?.Play("hit_player", state.position, .9f);
             if (state.health == 0)
-            { state.alive = false; state.held = -1; Tell(state.name + " cayó. Si alguien escapa, revivirá mañana sin mejoras."); }
-            SoundAt(alarm, state.position, 0.35f);
+            {
+                state.alive = false; state.held = -1;
+                // Like R.E.P.O.'s heads: the fallen student's ID card drops where they fell; carrying it into the truck revives them.
+                RemakeLoot card = Loot.FirstOrDefault(l => l.Kind == RemakeLoot.CredentialKind && l.Owner < 0);
+                if (card != null) card.Drop(id, state.name, state.position + Vector3.up * .6f);
+                Tell(state.name + " cayó. Lleva su credencial al camión para revivirlo.");
+                Audio?.Play("death_sting", state.position, 1, 40);
+            }
         }
         private void FinishDay()
         {
@@ -356,7 +412,7 @@ namespace HorrorUtez.Remake
             {
                 state.escaped = state.alive && InTruck(state.position); state.held = -1;
                 if (state.escaped) { survivors++; state.credits += 100 + Mathf.Max(0, Cargo - Quota) / 8; }
-                else { state.strength = 0; state.credits = 0; }
+                else { ClearUpgrades(state); state.credits = 0; }
             }
             Tell("Cuota saldada. " + survivors + " estudiante(s) escaparon. El resto revive mañana sin mejoras.");
             SoundAt(success, TruckPosition, 0.9f);
@@ -372,11 +428,12 @@ namespace HorrorUtez.Remake
             deadline = Time.time + 480; Seconds = 480; Cargo = 0;
             foreach (StudentState state in Students.Values)
             {
-                if (restart) { state.credits = 0; state.strength = 0; }
-                state.health = 100; state.alive = true; state.escaped = false; state.held = -1;
+                if (restart) { state.credits = 0; ClearUpgrades(state); }
+                state.health = state.MaxHealth; state.alive = true; state.escaped = false; state.held = -1;
                 state.position = SpawnPoint(state.id); lastPose[state.id] = Time.time;
             }
             foreach (RemakeLoot item in Loot) item.ResetLoot();
+            foreach (RemakeLoot card in Loot) if (card.Kind == RemakeLoot.CredentialKind) card.Hide();
             foreach (RemakeEnemy enemy in Enemies) enemy.ResetEnemy();
             Player.Teleport(Local.position); Hud.ShowGame();
             Tell("Día " + Day + ". Recupera equipo por $" + Quota + ".");
@@ -423,10 +480,19 @@ namespace HorrorUtez.Remake
             }
         }
         public void Noise(Vector3 point, float radius) { foreach (RemakeEnemy enemy in Enemies) enemy.Hear(point, radius); }
-        public void PlayImpact(Vector3 point, float volume)
+        public void PlayImpact(Vector3 point, float volume, string clip = "impact_plastic")
         {
-            SoundAt(impact, point, volume);
-            if (Online) Wire?.Broadcast(JsonUtility.ToJson(new WireMessage { type = "sound", position = point }));
+            Audio?.Play(clip, point, volume);
+            if (Online) Wire?.Broadcast(JsonUtility.ToJson(new WireMessage { type = "sound", position = point, text = clip, reach = volume }));
+        }
+        // Patrols: caretakers walk the plaza; the giant also prowls CECADEC's ground floor.
+        private static readonly Vector3[] OutdoorPatrol = { new Vector3(-8, 0, 1), new Vector3(6, 0, -8), new Vector3(-12, 0, 18), new Vector3(18, 0, 8),
+            new Vector3(22, 0, -30), new Vector3(-20, 0, -40), new Vector3(10, 0, -55) };
+        public Vector3 PatrolPoint(bool indoors)
+        {
+            if (indoors && Dressing != null && Dressing.Patrol.Count > 0 && UnityEngine.Random.value < .6f)
+                return Dressing.Patrol[UnityEngine.Random.Range(0, Dressing.Patrol.Count)];
+            return OutdoorPatrol[UnityEngine.Random.Range(0, indoors ? OutdoorPatrol.Length : 4)];
         }
         private static void SoundAt(AudioClip clip, Vector3 point, float volume) => AudioSource.PlayClipAtPoint(clip, point, volume);
         public void SendVoice(string audio)
@@ -456,8 +522,7 @@ namespace HorrorUtez.Remake
             var truck = new GameObject("Camión · única extracción"); truck.transform.position = TruckPosition;
             if (TruckModel != null)
             {
-                GameObject model = Instantiate(TruckModel, truck.transform);
-                model.transform.localRotation = Quaternion.Euler(0,180,0) * model.transform.localRotation;
+                Instantiate(TruckModel, truck.transform);
             }
             // Separate, invisible primitive collision shell: hollow and mobile friendly.
             void CollisionBox(string name, Vector3 p, Vector3 size)
@@ -489,33 +554,36 @@ namespace HorrorUtez.Remake
         }
         private void BuildLoot()
         {
-            string[] names = { "Laptop del laboratorio", "Proyector de aula", "Microscopio", "Estación de trabajo", "UPS de servidores", "Impresora de servicios", "Carrito de mantenimiento" };
-            int[] values = { 420, 560, 780, 840, 1100, 620, 0 };
-            float[] mass = { 4, 8, 12, 24, 36, 18, 16 };
+            string[] names = { "Laptop del laboratorio", "Proyector de aula", "Microscopio", "Estación de trabajo", "UPS de servidores",
+                "Impresora de servicios", "Carrito de mantenimiento", "Osciloscopio", "Switch de red" };
+            int[] values = { 420, 560, 780, 840, 1100, 620, 0, 690, 380 };
+            float[] mass = { 4, 8, 12, 24, 36, 18, 16, 7, 3 };
             Vector3[] sizes = { new Vector3(.66f,.43f,.46f), new Vector3(.61f,.27f,.5f), new Vector3(.45f,.85f,.39f),
-                new Vector3(.49f,.91f,.59f), new Vector3(.53f,.66f,.61f), new Vector3(.77f,.67f,.78f), new Vector3(1.4f,.53f,1.7f) };
-            // First haul is reachable in the plaza; further valuables lead into CECADEC/CDS.
-            Vector3[] points = { new Vector3(4,.5f,-6), new Vector3(1,.5f,-5), new Vector3(-4,.6f,-3), new Vector3(-7,.7f,-1),
-                new Vector3(-11,.55f,5), new Vector3(6,.6f,8), new Vector3(-3,.6f,-15), new Vector3(2,.6f,-22),
-                new Vector3(-9,.7f,16), new Vector3(6,.6f,19), new Vector3(8,.6f,-7) };
-            int[] kinds = { 0,1,2,3,4,5,0,2,1,3,6 };
+                new Vector3(.49f,.91f,.59f), new Vector3(.53f,.66f,.61f), new Vector3(.77f,.67f,.78f), new Vector3(1.4f,.53f,1.7f),
+                new Vector3(.44f,.26f,.4f), new Vector3(.46f,.08f,.34f) };
+            // The first haul sits in the plaza; the rest is hidden in CECADEC's wrecked compuaulas.
+            Vector3 Spot(string key, Vector3 fallback) => Dressing != null && Dressing.Spots.TryGetValue(key, out Vector3 p) ? p : fallback;
+            Vector3[] points = { new Vector3(4,.5f,-6), new Vector3(1,.5f,-5), Spot("process_bench", new Vector3(-4,.6f,-3)),
+                Spot("back_room", new Vector3(-7,.7f,-1)), Spot("electrical", new Vector3(-11,.55f,5)), Spot("nw1_floor", new Vector3(6,.6f,8)),
+                Spot("cc9_teacher", new Vector3(-3,.6f,-15)), Spot("se_lab", new Vector3(2,.6f,-22)), Spot("aula2_teacher", new Vector3(-9,.7f,16)),
+                Spot("aula1_floor", new Vector3(6,.6f,19)), new Vector3(8,.6f,-7), Spot("process_bench2", new Vector3(-6,.6f,-9)),
+                Spot("storage_shelf", new Vector3(3,.6f,12)) };
+            int[] kinds = { 0,1,2,3,4,5,0,2,1,3,6,7,8 };
             for (int i = 0; i < points.Length; i++)
             {
                 int kind = kinds[i]; var go = new GameObject(names[kind]); go.layer = 10;
                 Vector3 point = points[i];
-                if (Physics.Raycast(point + Vector3.up * 2, Vector3.down, out RaycastHit ground, 4, WorldMask))
+                // Indoor spots probe from just above so the ray starts under the ceiling.
+                if (Physics.Raycast(point + Vector3.up * .9f, Vector3.down, out RaycastHit ground, 3, WorldMask, QueryTriggerInteraction.Ignore))
                     point.y = ground.point.y + sizes[kind].y * 0.5f + 0.07f;
                 go.transform.position = point;
                 if (LootModels != null && kind < LootModels.Length && LootModels[kind] != null)
                 {
-                    GameObject model = Instantiate(LootModels[kind], go.transform);
-                    model.transform.localRotation = Quaternion.Euler(0,180,0) * model.transform.localRotation;
+                    Instantiate(LootModels[kind], go.transform);
                 }
                 else Box("Placeholder", go.transform, Vector3.zero, sizes[kind], PropMaterial, false);
                 var box = go.AddComponent<BoxCollider>(); box.size = sizes[kind];
                 if (kind == 0) box.center = new Vector3(0, 0.015f, 0.04f);
-                if (kind == 2) box.center = new Vector3(0, 0.04f, 0);
-                if (kind == 5) box.center = new Vector3(0, 0.05f, -0.02f);
                 if (kind == 6)
                 {
                     box.size = new Vector3(1.3f, 0.12f, 1.65f); box.center = Vector3.zero;
@@ -540,6 +608,20 @@ namespace HorrorUtez.Remake
                 item.SetAuthority(false); Loot.Add(item);
                 if(kind==6)item.Body.constraints=RigidbodyConstraints.FreezeRotationX|RigidbodyConstraints.FreezeRotationZ;
             }
+            // One hidden ID card per possible student, created identically on every peer so loot ids stay in sync.
+            for (int c = 0; c < 5; c++)
+            {
+                var go = new GameObject("Credencial") { layer = 10 };
+                go.transform.position = new Vector3(0, -200, 0);
+                Box("Gafete", go.transform, Vector3.zero, new Vector3(.2f, .03f, .28f), SignalMaterial, false);
+                Box("Cordón", go.transform, new Vector3(0, .02f, .2f), new Vector3(.03f, .015f, .16f), PropMaterial, false);
+                go.AddComponent<BoxCollider>().size = new Vector3(.24f, .07f, .34f);
+                var glow = new GameObject("Brillo"); glow.transform.SetParent(go.transform, false); glow.transform.localPosition = Vector3.up * .25f;
+                Light light = glow.AddComponent<Light>(); light.type = LightType.Point; light.range = 2.5f; light.intensity = 2; light.color = new Color(1, .65f, .25f);
+                foreach (Transform child in go.GetComponentsInChildren<Transform>()) child.gameObject.layer = 10;
+                var card = go.AddComponent<RemakeLoot>(); card.Setup(this, Loot.Count, RemakeLoot.CredentialKind, "Credencial", 0, .6f, new Vector3(.24f, .07f, .34f));
+                card.SetAuthority(false); Loot.Add(card); card.Hide();
+            }
         }
         private void BuildStaging()
         {
@@ -551,23 +633,26 @@ namespace HorrorUtez.Remake
         }
     }
 
-    // Ground-floor navigation follows existing colliders rather than guessing through
-    // walls. The first slice intentionally leaves stairs to the players.
+    // Ground-floor navigation from the real colliders (walls, furniture). 0.7 m cells, 8-way moves
+    // without corner cutting, then line-of-sight smoothing so paths hug doorways instead of zig-zagging.
     internal sealed class NavigationGrid
     {
-        private const int Width = 55, Height = 78;
-        private const float Step = 1.4f;
+        private const int Width = 110, Height = 156;
+        private const float Step = 0.7f;
         private static readonly Vector3 Origin = new Vector3(-38, 0, -66);
         private readonly bool[] open = new bool[Width * Height];
         private readonly int[] parent = new int[Width * Height];
         private readonly Queue<int> queue = new Queue<int>();
+        private readonly List<Vector3> raw = new List<Vector3>();
+        private readonly int mask;
         public NavigationGrid(int mask)
         {
+            this.mask = mask;
             for (int z = 0; z < Height; z++) for (int x = 0; x < Width; x++)
             {
                 Vector3 p = Point(x + z * Width);
-                open[x+z*Width] = Physics.Raycast(p+Vector3.up*1.7f,Vector3.down,2,mask) &&
-                    !Physics.CheckCapsule(p+Vector3.up*.5f,p+Vector3.up*1.65f,.32f,mask,QueryTriggerInteraction.Ignore);
+                open[x+z*Width] = Physics.Raycast(p+Vector3.up*1.7f,Vector3.down,2,mask,QueryTriggerInteraction.Ignore) &&
+                    !Physics.CheckCapsule(p+Vector3.up*.45f,p+Vector3.up*1.55f,.28f,mask,QueryTriggerInteraction.Ignore);
             }
         }
         private static Vector3 Point(int i) => Origin + new Vector3(i % Width * Step, 0.08f, i / Width * Step);
@@ -576,7 +661,7 @@ namespace HorrorUtez.Remake
             int x = Mathf.Clamp(Mathf.RoundToInt((p.x-Origin.x)/Step),0,Width-1);
             int z = Mathf.Clamp(Mathf.RoundToInt((p.z-Origin.z)/Step),0,Height-1);
             int best = -1; float distance = float.MaxValue;
-            for(int dz=-3;dz<=3;dz++) for(int dx=-3;dx<=3;dx++)
+            for(int dz=-4;dz<=4;dz++) for(int dx=-4;dx<=4;dx++)
             {
                 int xx=x+dx, zz=z+dz;
                 if(xx<0||xx>=Width||zz<0||zz>=Height) continue;
@@ -590,20 +675,39 @@ namespace HorrorUtez.Remake
             route.Clear(); int from=Closest(start), to=Closest(goal); if(from<0||to<0)return;
             for(int i=0;i<parent.Length;i++)parent[i]=-1;
             queue.Clear(); queue.Enqueue(from); parent[from]=from;
-            int[] dirs={-1,1,-Width,Width};
             while(queue.Count>0)
             {
                 int current=queue.Dequeue(); if(current==to)break;
-                foreach(int delta in dirs)
+                int cx=current%Width, cz=current/Width;
+                for(int dz=-1;dz<=1;dz++) for(int dx=-1;dx<=1;dx++)
                 {
-                    int n=current+delta; if(n<0||n>=open.Length||!open[n]||parent[n]>=0)continue;
-                    if(Mathf.Abs(n%Width-current%Width)>1)continue;
+                    if(dx==0&&dz==0)continue;
+                    int nx=cx+dx, nz=cz+dz;
+                    if(nx<0||nx>=Width||nz<0||nz>=Height)continue;
+                    int n=nx+nz*Width; if(!open[n]||parent[n]>=0)continue;
+                    if(dx!=0&&dz!=0&&(!open[cx+dx+cz*Width]||!open[cx+(cz+dz)*Width]))continue;
                     parent[n]=current;queue.Enqueue(n);
                 }
             }
             if(parent[to]<0)return;
-            for(int node=to;node!=from;node=parent[node])route.Add(Point(node));
-            route.Reverse();
+            raw.Clear();
+            for(int node=to;node!=from;node=parent[node])raw.Add(Point(node));
+            raw.Reverse();
+            // String pulling: skip waypoints while the body can sweep straight to a later one.
+            Vector3 at=start;
+            int k=0;
+            while(k<raw.Count)
+            {
+                int far=k;
+                for(int j=Mathf.Min(raw.Count-1,k+14);j>k;j--)
+                    if(Clear(at,raw[j])){far=j;break;}
+                route.Add(raw[far]); at=raw[far]; k=far+1;
+            }
+        }
+        private bool Clear(Vector3 a, Vector3 b)
+        {
+            Vector3 from=new Vector3(a.x,a.y+.7f,a.z), to=new Vector3(b.x,b.y+.7f,b.z), d=to-from;
+            return d.sqrMagnitude<.01f || !Physics.SphereCast(from,.3f,d.normalized,out _,d.magnitude,mask,QueryTriggerInteraction.Ignore);
         }
     }
 }

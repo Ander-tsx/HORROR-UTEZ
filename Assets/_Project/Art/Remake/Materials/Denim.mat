@@ -1,0 +1,65 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Denim
+  m_Shader: {fileID: 4800000, guid: 12dfbe441a4dc4ac9b1c6aa70455ddde, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs:
+    - Texture2D_4450AB74:
+        m_Texture: {fileID: 2800000, guid: a2dda97d4849cad4d901f46f42f6e618, type: 3}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    - _EmissionMap:
+        m_Texture: {fileID: 0}
+        m_Scale: {x: 1, y: 1}
+        m_Offset: {x: 0, y: 0}
+    m_Ints: []
+    m_Floats:
+    - Boolean_193028D2: 1
+    - Boolean_3F1A8DAB: 0
+    - Boolean_43476D73: 1
+    - Boolean_7165A49C: 0
+    - Boolean_85059BBE: 0
+    - Boolean_8BBF99CD: 1
+    - Boolean_D258FF8E: 0
+    - Vector1_21C41D02: 64
+    - Vector1_6F288C5B: 0.15
+    - Vector1_B2CC132F: 320
+    - Vector1_B9994903: 0.3
+    - Vector1_E8746023: 32
+    - _Alpha_Clipping: 0.5
+    - _Alpha_Multiplier: 1
+    - _Cull: 2
+    - _DstBlend: 0
+    - _DstBlendAlpha: 0
+    - _PsxSnapSlide: 1
+    - _SrcBlend: 1
+    - _SrcBlendAlpha: 1
+    - _Surface: 0
+    - _Wettable: 0
+    - _ZWrite: 1
+    m_Colors:
+    - Color_2E5415DE: {r: 0.8, g: 0.8, b: 0.8, a: 1}
+    - Vector2_8044833E: {r: 1, g: 1, b: 0, a: 0}
+    - _BaseColor: {r: 1, g: 1, b: 1, a: 1}
+    - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1

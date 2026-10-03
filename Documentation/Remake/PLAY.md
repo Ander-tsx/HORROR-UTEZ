@@ -23,6 +23,7 @@ TCP 27777 debe ser accesible; no hay lobby Steam ni conexión automática por in
 | Linterna | F |
 | Voz | Activar micrófono en interfaz y mantener V |
 | Pausa / cursor | Esc |
+| Observar a un compañero (caído) | Clic o Espacio |
 
 La pausa no detiene el mundo compartido. Acomoda objetos en el camión: deben quedar
 completamente dentro, quietos y sin ser sujetados para contar. Paga la cuota y entra
@@ -33,3 +34,15 @@ Objetos pesados (UPS 36 kg) requieren dos estudiantes. Los golpes fuertes restan
 (“-$X”) y el equipo frágil se rompe por debajo del 15 % de su valor; dentro del carrito
 no se daña. Un golpe del velador te derriba. Consulta [TESTING.md](TESTING.md) para el
 estado real de validación: las pruebas automáticas pasan, la sensación en juego necesita tu revisión.
+
+## Novedades (segunda pasada)
+
+- Compuaulas de CECADEC (planta baja) amuebladas: casi todas las PCs están rotas y no valen nada. El equipo
+  valioso escondido está en el centro de cómputo CC9, Aula 1 y 2, el Lab de Procesos, el laboratorio SE, la
+  bodega, el cuarto eléctrico y la sala del fondo.
+- **El Rector**: un gigante que despierta tras un rato, camina por fuera y entra a CECADEC agachándose o
+  gateando. Las luces parpadean cuando se acerca. Lánzale equipo pesado para aturdirlo. Su golpe te lanza.
+- Si caes, tu **credencial** queda brillando donde caíste: que un compañero la lleve al camión para revivirte.
+  Mientras tanto puedes observar a tus compañeros.
+- **Tienda** al terminar el día (sólo quien escapó): fuerza, energía, alcance, velocidad, salud y salto extra.
+- Los estudiantes miden 1.5 m: el campus y el Rector se sienten más grandes.

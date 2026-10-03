@@ -10,12 +10,15 @@ the old first-person player assembly is needed in the new runtime controller.
 | `RemakeStudent.cs` | Local controller (friction-smoothed velocity, sprint ramp/energy, crouch-slide, crawl, coyote/jump buffers, landings), tumble capsule, grab point/rotate/scroll input, caretaker aim-pull; peer avatars/animation; stretchy arms |
 | `RemakeCameraRig.cs` | Layered first-person camera: smoothed aim, footstep bob (drives footsteps), turn/strafe tilt, jump/land/hit kick springs, shake, sprint/scare FOV |
 | `RemakeLoot.cs` | Grab-point spring with per-student lift cap, camera-relative orientation torque, cart steering and in-cart tally/stabilisation, fragility/durability damage tiers, shattering, replication |
-| `RemakeEnemy.cs` | Two caretakers, hearing/vision, grid paths, pursuit/attack and procedural sound utility |
+| `RemakeBody.cs` | Procedural animation for segmented enemy models: joint hierarchy from rest pose, two-bone IK legs/arms, planted stepping (biped or diagonal quadruped), stand-to-crawl posture, head tracking with twitches, arm-swipe attack |
+| `RemakeDressing.cs` | Runtime dressing of CECADEC's ground-floor rooms as wrecked compuaulas (fixed seed, identical on every peer), invisible ceiling slabs, flickering fluorescents (brown out near the giant), indoor loot spots and giant patrol points |
+| `RemakeAudio.cs` | Adaptive music (explore/chase crossfade), heartbeat, tired breathing, wind, 3D one-shot pool, loops, random distant scares, giant footfall camera shake |
+| `RemakeEnemy.cs` | Caretakers and the giant "El Rector": hearing/vision, grid paths, ceiling probe that folds the giant into a crawl, wind-up attacks with knockback, stuns from thrown gear, replicated flags |
 | `RemakeWire.cs` | TCP listener/client, framing, connection cap, bounded queues, per-peer reader/writer tasks and serializable DTOs |
 | `RemakeVoice.cs` | Opt-in microphone capture, PCM downsampling, push-to-talk, spatial streamed playback and Android permission |
-| `RemakeHud.cs` | Original menu, HUD/results/pause, EventSystem, IP/name fields, touch pads/buttons |
+| `RemakeHud.cs` | Horror-styled menu/HUD (VT323 + Creepster OFL fonts), health/energy/haul, reactive crosshair, damage and low-health overlays, fallen/spectator banner, results with the 6-line upgrade shop, touch controls |
 | `RemakeSmoke.cs` | Command-line opt-in executable integration test; never attached in normal play |
-| `RemakeCapture.cs` | Opt-in diagnostic URP render-request screenshots, even with hidden test windows |
+| `RemakeCapture.cs` | Opt-in diagnostic screenshots; `-remakeTour` captures labs, corridor, player model, truck, enemies and the awake giant outdoors and crawling indoors |
 | `Editor/RemakeBuild.cs` | FBX importer, materials, copied playable scene, serialized shaders, Windows/Android build commands |
 
 ## Authority and wire protocol
@@ -100,3 +103,26 @@ mono PCM at 8 kHz encoded as base64. Host relays and emits hearing noise. Receiv
 bounded float queues and streaming AudioClip callbacks protected by a lock. Spatial source
 follows sender, linear attenuation to 20 m; dead students are muted. No local audio files
 are recorded. Actual-device audio needs manual validation.
+
+## Second R.E.P.O./horror pass (2026-10-03, evening)
+
+- Art: `Tools/blender/remake_kit.py` authors in Unity coordinates (reflection mapping, fitted UVs computed in
+  Unity space); `gen_remake_textures.py` makes 51 pixel textures; RemakeBuild turns each into a PSX/Lit material
+  via `PsxMaterialDefaults` (kind chosen by name). `gen_remake_lab.py` = 26 lab pieces in `Resources/Lab`.
+  `gen_remake_props.py` (v2) = detailed loot (+ oscilloscope, network switch), truck and SEGMENTED caretaker/giant.
+  No runtime 180-degree flips remain. Player body: `gen_player_body_v3.py` (see BLENDER.md); RemakeBuild
+  `SyncPlayerPrefab` copies materials/bones from the FBX into the unpacked prefab.
+- Students are 1.5 m (eye 1.38 m) and peer avatars are scaled 0.88, so the campus and the giant loom larger.
+- Navigation grid: 0.7 m cells, 8-way without corner cutting, line-of-sight string pulling; furniture blocks cells.
+- Giant: 3.55 m standing, 1.45 m crawling; ceiling/doorway probe (SphereCast from 0.5 m, plus 1.4 m ahead) sets
+  the crawl factor; CharacterController height follows it. Damage 45 + knock (9 m/s + 6 up). Thrown gear stuns
+  when speed*sqrt(mass) >= 16 (caretaker 7). Enemies live on layer 9 so world probes ignore them.
+- Hurt(id, dmg, knock): knock and hurtCount ride in StudentState; the victim's own client tumbles with it.
+- Revive: five hidden ID-card loot items (kind 9, ids 13..17) exist on every peer. Death drops one at the body
+  (owner = student id, replicated in LootState.owner); a settled card inside the cargo bay revives its owner in
+  the truck with a third of max health. Fallen students spectate living teammates.
+- Upgrades (StudentState): strength, stamina (+10 energy), range (+0.25 m reach), speed (+0.45 m/s sprint),
+  vitality (+20 max HP), jumps (air jumps). Cost 60 + 45 x level (+20 strength). Stranded students lose all.
+- Audio: `Tools/audio/gen_remake_audio.py` synthesizes 37 WAVs (numpy, offline) into `Resources/Audio`.
+- BuildRemake.ps1 `-Isolated` mirrors Assets into the validation project, then copies generated .meta files,
+  materials, the prepared remake.unity and the synced player prefab back (robocopy /XO).

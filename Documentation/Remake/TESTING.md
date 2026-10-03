@@ -100,3 +100,31 @@ and hand axes/scale, test hold/release and pause while holding, and verify the P
 Then run solo and host/client smoke; manually test two through five players, disconnects,
 cooperative heavy lifting, voice, cargo quota and next-day penalties. Record actual results
 here. Do not expand testing to Android until desktop is sound or user changes priority.
+
+### 2026-10-03 second horror/R.E.P.O. pass (Claude Code)
+
+Diagnostic tour: `HORROR-UTEZ.exe -remakeSolo -remakeTour -logFile ...` writes `tour-*.png` next to the exe
+(labs, corridor, peer player model, truck, caretakers, giant idle/walking/close/crawling indoors).
+Editor probe: `BuildRemake.ps1 -Isolated -Method HorrorUtez.Remake.Editor.RemakeDiagnostics.Probe` -> `Library/remake-method.log`.
+
+Final results on the last build:
+- Isolated build exit 0, no `error CS`; prefab sync logged 6 body materials + 22 bones.
+- Solo strict smoke 31/31 PASS, exit 0 (new: 18 loot incl. 5 ID cards, ID card drop, ID card revive).
+- Host/client loopback: host ALL COMPLETE, client CLIENT COMPLETE, both exit 0.
+- Tour reviewed visually: labs dressed and readable (whiteboard/poster text correct way round), peer avatar with
+  the new body and correct materials, giant striding outdoors, under the ceiling indoors, attack hit + damage overlay.
+
+Problems found and fixed during this pass (do not re-introduce):
+- New kit models were mirrored in X (wrong mapping) -> reflection mapping + reversed winding.
+- Indoor ceilings had no colliders, so the giant walked through them -> invisible ceiling slabs.
+- Desk-floor raycasts started above desks (towers ended on desktops) -> start .45 m above the floor.
+- PowerShell `$method` shadowed `-Method` (case-insensitive) and skipped copying the exe -> renamed.
+- PowerShell Get-/Set-Content re-encoded a UTF-8 file as ANSI (mojibake) -> use bash/perl or Edit for sources.
+- Unpacked player prefab kept the old material/bone order -> RemakeBuild.SyncPlayerPrefab.
+- Lift test was fragile indoors (furniture) -> runs in the open plaza.
+- After the host failed once, the client window received stray UI clicks (menu reload, "solo"); cause not
+  identified. The client smoke now quits 4 s after completing. Watch for spurious UI input in hidden windows.
+
+NOT validated: real-input feel of the new giant/caretaker animation, audio mix by ear (all audio is synthesized
+and was never listened to by a human), shop/spectator/revive in a real two-machine session, performance of
+~480 dressing renderers + lights on weaker PCs or mobile, upper floor (not dressed; giant stays ground floor).

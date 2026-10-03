@@ -33,6 +33,10 @@ and `Documentation/Remake/TESTING.md`. The user communicates in Spanish.
 - Preserve the UTEZ campus layout; improve assets and fill missing details imaginatively.
 - Use the established Blender import conventions. Sources and references are documented.
 - Main menu must be original. A mixed modern low-poly/PSX aesthetic is desired.
+- Later requests (2026-10-03): player fully modelled (it is online), more detailed models, more ambience,
+  music and sounds, polished HUD with horror low-poly fonts, compuaulas dressed as labs (desks, mostly broken
+  and knocked-over PCs, few stealables), a very large procedural humanoid enemy that moves inside and outside
+  (ground floor only) adapting its posture, slightly smaller students, scarier overall, more R.E.P.O. features.
 
 ## Implementation discipline
 
