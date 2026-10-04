@@ -97,6 +97,19 @@ namespace HorrorUtez.Remake.Editor
                 mat.SetTexture(PsxShaderProperties.MainTex,AssetDatabase.LoadAssetAtPath<Texture2D>(texturePath));
                 PsxMaterialDefaults.Apply(mat,SurfaceKind(name),false);
             }
+            // See-through glass for the automatic east entrance (RemakeDressing): the dirty glass texture, premultiplied.
+            {
+                string path=Art+"Materials/Door_Glass.mat";
+                var source=AssetDatabase.LoadAssetAtPath<Material>(Art+"Materials/Glass_Dirty.mat");
+                var mat=AssetDatabase.LoadAssetAtPath<Material>(path);
+                if(mat==null&&source!=null){mat=new Material(source);AssetDatabase.CreateAsset(mat,path);}
+                if(mat!=null&&source!=null)
+                {
+                    mat.CopyPropertiesFromMaterial(source);PsxMaterialDefaults.Apply(mat,PsxSurfaceKind.Glass,false);
+                    PsxMaterialDefaults.SetTransparent(mat,true);mat.SetFloat("_Alpha_Multiplier",.32f);
+                    mat.SetColor(PsxShaderProperties.BaseColor,new Color(.7f,.88f,1f,.32f));EditorUtility.SetDirty(mat);
+                }
+            }
             AssetDatabase.SaveAssets();
             foreach(string path in Directory.GetFiles(Art,"*.fbx",SearchOption.AllDirectories))AssetDatabase.ImportAsset(path.Replace(Path.DirectorySeparatorChar,'/'),ImportAssetOptions.ForceUpdate);
             // Failed .blend imports produce empty assets. Repair them once Blender is available.
@@ -122,6 +135,7 @@ namespace HorrorUtez.Remake.Editor
             game.StudentModel=AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Project/Prefabs/Player/PlayerCharacter.prefab");
             game.TruckModel=Model("Truck");game.EnemyModel=Model("Caretaker");game.GiantModel=Model("Giant");
             game.LootModels=new[]{Model("Laptop"),Model("Projector"),Model("Microscope"),Model("Workstation"),Model("UPS"),Model("Printer"),Model("Cart"),Model("Oscilloscope"),Model("Router")};
+            game.DoorGlass=Mat("Door_Glass");game.DoorMetal=Mat("Metal_Brushed");
             game.ScreenMaterials=new[]{"Screen_Dead","Screen_Cracked","Screen_BSOD","Screen_Terminal","Screen_Static"}.Select(n=>AssetDatabase.LoadAssetAtPath<Material>(Art+"Materials/"+n+".mat")).ToArray();
             Material Mat(string n)=>AssetDatabase.LoadAssetAtPath<Material>(Art+"Materials/"+n+".mat");
             game.PropMaterial=Mat("Steel");game.SkinMaterial=Mat("Skin");game.SleeveMaterial=Mat("Oxblood");game.SignalMaterial=Mat("Amber");

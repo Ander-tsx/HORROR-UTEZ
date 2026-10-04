@@ -13,6 +13,8 @@ namespace HorrorUtez.Remake
         public GameObject StudentModel, TruckModel, EnemyModel, GiantModel;
         public GameObject[] LootModels;
         public Material[] ScreenMaterials;
+        public Material DoorGlass, DoorMetal;
+        public readonly List<Vector3> GiantRoute = new List<Vector3>();
         public RemakeAudio Audio { get; private set; }
         public RemakeDressing Dressing { get; private set; }
         public Material PropMaterial, SkinMaterial, SleeveMaterial, SignalMaterial;
@@ -20,6 +22,7 @@ namespace HorrorUtez.Remake
         public readonly List<RemakeLoot> Loot = new List<RemakeLoot>();
         public readonly List<RemakeEnemy> Enemies = new List<RemakeEnemy>();
         public bool Authority { get; private set; } = true;
+        public bool Automated { get; private set; }
         public bool Started { get; private set; }
         public bool Online { get; private set; }
         public int LocalId { get; private set; }
@@ -40,6 +43,7 @@ namespace HorrorUtez.Remake
         private readonly Dictionary<int, RemakeStudent> avatars = new Dictionary<int, RemakeStudent>();
         private readonly Dictionary<int, float> lastPose = new Dictionary<int, float>();
         private HingedDoor[] doors;
+        private readonly List<Bounds> doorways = new List<Bounds>();
         private float finishAt, deadline, nextSnapshot, nextCargoCheck, nextPose, nextStepNoise;
         private int pendingDay;
         private Camera menuCamera;
@@ -62,10 +66,12 @@ namespace HorrorUtez.Remake
             alarm = RemakeSound.Tone("warning", 95, 0.6f, 0.5f);
             doors = FindObjectsByType<HingedDoor>(FindObjectsSortMode.None).OrderBy(d => d.transform.position.x)
                 .ThenBy(d => d.transform.position.z).ThenBy(d => d.name).ToArray();
-            // Open corridor leaves before baking the ground-floor navigation grid.
+            // Closed leaves are exactly their doorways: remember them so the navigation grid can carve the openings.
+            foreach (HingedDoor door in doors) if (door.TryGetComponent(out Collider leaf)) doorways.Add(leaf.bounds);
             foreach (HingedDoor door in doors) door.Open();
             Audio = gameObject.AddComponent<RemakeAudio>(); Audio.Setup(this);
             Dressing = new RemakeDressing(this); Dressing.Build();
+            if (Dressing.Ready) { GiantRoute.AddRange(Dressing.GiantRoute()); doorways.AddRange(Dressing.ExtraDoorways); }
             BuildTruck(); BuildLoot(); BuildStaging();
             var view = new GameObject("Remake menu camera");
             menuCamera = view.AddComponent<Camera>();
@@ -80,12 +86,15 @@ namespace HorrorUtez.Remake
             Hud = gameObject.AddComponent<RemakeHud>(); Hud.Setup(this);
             Cursor.lockState = CursorLockMode.None; Cursor.visible = true;
             string[] args = Environment.GetCommandLineArgs();
+            Automated = args.Contains("-remakeSmoke") || args.Contains("-remakeTour") || args.Contains("-remakeWatchGiant") || args.Contains("-remakeCapture");
+            if (Automated) foreach (UnityEngine.EventSystems.EventSystem es in FindObjectsByType<UnityEngine.EventSystems.EventSystem>(FindObjectsInactive.Include)) es.enabled = false;
             if (args.Contains("-remakeHost")) Begin(true, "Prueba host");
             int joinAt = Array.IndexOf(args, "-remakeJoin");
             if (joinAt >= 0 && joinAt + 1 < args.Length) Join(args[joinAt + 1], "Prueba cliente");
             if (args.Contains("-remakeSolo")) Begin(false, "Estudiante");
             if (args.Contains("-remakeSmoke")) gameObject.AddComponent<RemakeSmoke>().Setup(this);
             if (args.Contains("-remakeCapture") || args.Contains("-remakeTour")) gameObject.AddComponent<RemakeCapture>().Setup(this, args.Contains("-remakeTour"));
+            if (args.Contains("-remakeWatchGiant")) gameObject.AddComponent<RemakeCapture>().Watch(this);
         }
         public void Begin(bool host, string name)
         {
@@ -157,7 +166,7 @@ namespace HorrorUtez.Remake
             // El Rector: a giant that wakes after a while at the far end of the campus.
             var giant = new GameObject("El Rector") { layer = 9 };
             var rector = giant.AddComponent<RemakeEnemy>();
-            rector.Setup(this, EnemyKind.Giant, new Vector3(26, 0.1f, -58), GiantModel);
+            rector.Setup(this, EnemyKind.Giant, GiantRoute.Count > 11 ? GiantRoute[11] + Vector3.up * .1f : new Vector3(26, 0.1f, -58), GiantModel);
             Enemies.Add(rector);
             foreach (Transform t in giant.GetComponentsInChildren<Transform>()) t.gameObject.layer = 9;
             foreach (RemakeEnemy e in Enemies) foreach (Transform t in e.GetComponentsInChildren<Transform>()) t.gameObject.layer = 9;
@@ -166,7 +175,7 @@ namespace HorrorUtez.Remake
         {
             PumpNetwork();
             if (!Started) return;
-            if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame) Hud.TogglePause();
+            if (!Automated && Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame) Hud.TogglePause();
             if (Authority && Phase == 1)
             {
                 Seconds = Mathf.Max(0, Mathf.CeilToInt(deadline - Time.time));
@@ -376,6 +385,14 @@ namespace HorrorUtez.Remake
             }
         }
         public int DoorId(HingedDoor door) => Array.IndexOf(doors, door);
+        // HingedDoor.Awake resets every leaf to closed, so the "doors start open" pass has to run after all Awakes.
+        private void Start() { foreach (HingedDoor door in doors) door.Open(); }
+        // Enemies shove doors open in front of them (host only; door states replicate in snapshots).
+        public void OpenDoorsNear(Vector3 point, float radius)
+        {
+            if (!Authority) return;
+            foreach (HingedDoor door in doors) if (!door.IsOpen && Vector3.Distance(door.transform.position, point) < radius) { door.Open(); Audio?.Play("door_creak", door.transform.position, .8f); }
+        }
         public bool InTruck(Vector3 position)
         {
             Vector3 p = position - TruckPosition;
@@ -502,9 +519,41 @@ namespace HorrorUtez.Remake
             if (Authority) { Wire?.Broadcast(JsonUtility.ToJson(message)); Noise(Local.position, 18); }
             else Wire?.Send(0, JsonUtility.ToJson(message));
         }
+        public Texture2D NavigationMap(List<Vector3> trail) { if (navigation == null) { navigation = new NavigationGrid(WorldMask, doorways); PruneGiantRoute(); } return navigation.Map(GiantRoute, trail, new Vector2(-38, -66), new Vector2(39, 43), 4); }
+        public Texture2D NavigationMap(List<Vector3> trail, Vector2 min, Vector2 max, int scale)
+        {
+            if (navigation == null) { navigation = new NavigationGrid(WorldMask, doorways); PruneGiantRoute(); }
+            var marks = new List<Vector3>(); foreach (HingedDoor door in doors) marks.Add(door.transform.position);
+            if (Dressing != null) foreach (Vector3 room in Dressing.RoomCentres.Values) marks.Add(room + Vector3.right * .01f);
+            return navigation.Map(GiantRoute, trail, min, max, scale, marks);
+        }
+        // Drops route waypoints that are unreachable or only reachable by an absurd detour (raised planters and kerbs
+        // split the campus), so the giant's loop stays connected whatever the authored layout does.
+        private void PruneGiantRoute()
+        {
+            var leg = new List<Vector3>();
+            int i = 0;
+            while (i < GiantRoute.Count && GiantRoute.Count > 4)
+            {
+                int next = (i + 1) % GiantRoute.Count;
+                Vector3 a = GiantRoute[i], b = GiantRoute[next];
+                navigation.Find(a, b, leg);
+                float length = 0; Vector3 at = a; foreach (Vector3 q in leg) { length += Vector3.Distance(at, q); at = q; }
+                bool reached = leg.Count > 0 && Vector3.Distance(leg[leg.Count - 1], b) < 2.5f;
+                if (!reached || length > Vector3.Distance(a, b) * 2.2f + 15)
+                {
+                    Debug.Log("[Remake] Giant route: dropped waypoint " + b.ToString("F0") + (reached ? " (detour " + length.ToString("F0") + " m)" : " (unreachable)"));
+                    GiantRoute.RemoveAt(next);
+                    if (next < i) i--;
+                    continue;
+                }
+                i++;
+            }
+            Debug.Log("[Remake] Giant route: " + GiantRoute.Count + " waypoints");
+        }
         public void FindPath(Vector3 start, Vector3 goal, List<Vector3> route)
         {
-            if (navigation == null) navigation = new NavigationGrid(WorldMask);
+            if (navigation == null) { navigation = new NavigationGrid(WorldMask, doorways); PruneGiantRoute(); }
             navigation.Find(start, goal, route);
         }
         private void OnDestroy() { Wire?.Dispose(); Time.timeScale = 1; Cursor.lockState = CursorLockMode.None; Cursor.visible = true; }
@@ -633,35 +682,73 @@ namespace HorrorUtez.Remake
         }
     }
 
-    // Ground-floor navigation from the real colliders (walls, furniture). 0.7 m cells, 8-way moves
+    // Ground-floor navigation from the real colliders (walls, furniture). 0.4 m cells (doorways are 0.9 m), 8-way moves
     // without corner cutting, then line-of-sight smoothing so paths hug doorways instead of zig-zagging.
     internal sealed class NavigationGrid
     {
-        private const int Width = 110, Height = 156;
-        private const float Step = 0.7f;
+        private const int Width = 193, Height = 273;
+        private const float Step = 0.4f;
         private static readonly Vector3 Origin = new Vector3(-38, 0, -66);
         private readonly bool[] open = new bool[Width * Height];
         private readonly int[] parent = new int[Width * Height];
         private readonly Queue<int> queue = new Queue<int>();
         private readonly List<Vector3> raw = new List<Vector3>();
         private readonly int mask;
-        public NavigationGrid(int mask)
+        public NavigationGrid(int mask, List<Bounds> doorways)
         {
             this.mask = mask;
             for (int z = 0; z < Height; z++) for (int x = 0; x < Width; x++)
             {
                 Vector3 p = Point(x + z * Width);
                 open[x+z*Width] = Physics.Raycast(p+Vector3.up*1.7f,Vector3.down,2,mask,QueryTriggerInteraction.Ignore) &&
-                    !Physics.CheckCapsule(p+Vector3.up*.45f,p+Vector3.up*1.55f,.28f,mask,QueryTriggerInteraction.Ignore);
+                    !Physics.CheckCapsule(p+Vector3.up*.45f,p+Vector3.up*1.55f,.25f,mask,QueryTriggerInteraction.Ignore);
+            }
+            // A 0.9 m doorway rarely contains a cell centre with full capsule clearance: carve every ground-floor
+            // doorway (its closed leaf) and a strip through the wall on both sides so open doors connect rooms.
+            if (doorways == null) return;
+            foreach (Bounds door in doorways)
+            {
+                if (door.center.y > 2.2f) continue;
+                bool thinX = door.size.x < door.size.z;
+                Vector3 grow = thinX ? new Vector3(.75f, 0, -.08f) : new Vector3(-.08f, 0, .75f);
+                Bounds carve = new Bounds(new Vector3(door.center.x, .5f, door.center.z), new Vector3(door.size.x + grow.x * 2, 4, door.size.z + grow.z * 2));
+                for (int z = 0; z < Height; z++) for (int x = 0; x < Width; x++)
+                {
+                    Vector3 p = Point(x + z * Width);
+                    if (carve.Contains(new Vector3(p.x, .5f, p.z)) && Physics.Raycast(p + Vector3.up * 1.7f, Vector3.down, 2, mask, QueryTriggerInteraction.Ignore))
+                        open[x + z * Width] = true;
+                }
             }
         }
         private static Vector3 Point(int i) => Origin + new Vector3(i % Width * Step, 0.08f, i / Width * Step);
+        // Diagnostics: top-down PNG of open cells, the giant's route (red) and a trail of positions (blue).
+        public Texture2D Map(List<Vector3> route, List<Vector3> trail, Vector2 min, Vector2 max, int s, List<Vector3> marks = null)
+        {
+            int x0 = Mathf.Clamp(Mathf.FloorToInt((min.x - Origin.x) / Step), 0, Width - 1), x1 = Mathf.Clamp(Mathf.CeilToInt((max.x - Origin.x) / Step), 0, Width - 1);
+            int z0 = Mathf.Clamp(Mathf.FloorToInt((min.y - Origin.z) / Step), 0, Height - 1), z1 = Mathf.Clamp(Mathf.CeilToInt((max.y - Origin.z) / Step), 0, Height - 1);
+            var tex = new Texture2D((x1 - x0 + 1) * s, (z1 - z0 + 1) * s, TextureFormat.RGB24, false);
+            for (int z = z0; z <= z1; z++) for (int x = x0; x <= x1; x++)
+            {
+                Color c = open[x + z * Width] ? new Color(.55f, .55f, .55f) : new Color(.08f, .08f, .1f);
+                for (int dy = 0; dy < s; dy++) for (int dx = 0; dx < s; dx++) tex.SetPixel((x - x0) * s + dx, (z - z0) * s + dy, c);
+            }
+            void Dot(Vector3 p, Color c, int r)
+            {
+                int cx = Mathf.RoundToInt((p.x - Origin.x) / Step * s) - x0 * s, cz = Mathf.RoundToInt((p.z - Origin.z) / Step * s) - z0 * s;
+                for (int dy = -r; dy <= r; dy++) for (int dx = -r; dx <= r; dx++) tex.SetPixel(cx + dx, cz + dy, c);
+            }
+            if (trail != null) foreach (Vector3 p in trail) Dot(p, new Color(.2f, .5f, 1f), 1);
+            if (route != null) for (int i = 0; i < route.Count; i++) Dot(route[i], i == 0 ? Color.yellow : Color.red, 3);
+            if (marks != null) foreach (Vector3 p in marks) Dot(p, Color.green, 2);
+            tex.Apply();
+            return tex;
+        }
         private int Closest(Vector3 p)
         {
             int x = Mathf.Clamp(Mathf.RoundToInt((p.x-Origin.x)/Step),0,Width-1);
             int z = Mathf.Clamp(Mathf.RoundToInt((p.z-Origin.z)/Step),0,Height-1);
             int best = -1; float distance = float.MaxValue;
-            for(int dz=-4;dz<=4;dz++) for(int dx=-4;dx<=4;dx++)
+            for(int dz=-7;dz<=7;dz++) for(int dx=-7;dx<=7;dx++)
             {
                 int xx=x+dx, zz=z+dz;
                 if(xx<0||xx>=Width||zz<0||zz>=Height) continue;
@@ -699,7 +786,7 @@ namespace HorrorUtez.Remake
             while(k<raw.Count)
             {
                 int far=k;
-                for(int j=Mathf.Min(raw.Count-1,k+14);j>k;j--)
+                for(int j=Mathf.Min(raw.Count-1,k+24);j>k;j--)
                     if(Clear(at,raw[j])){far=j;break;}
                 route.Add(raw[far]); at=raw[far]; k=far+1;
             }
@@ -707,7 +794,7 @@ namespace HorrorUtez.Remake
         private bool Clear(Vector3 a, Vector3 b)
         {
             Vector3 from=new Vector3(a.x,a.y+.7f,a.z), to=new Vector3(b.x,b.y+.7f,b.z), d=to-from;
-            return d.sqrMagnitude<.01f || !Physics.SphereCast(from,.3f,d.normalized,out _,d.magnitude,mask,QueryTriggerInteraction.Ignore);
+            return d.sqrMagnitude<.01f || !Physics.SphereCast(from,.24f,d.normalized,out _,d.magnitude,mask,QueryTriggerInteraction.Ignore);
         }
     }
 }

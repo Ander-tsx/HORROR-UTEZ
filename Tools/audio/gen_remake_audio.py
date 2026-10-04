@@ -460,7 +460,19 @@ def metal_bang():
     return reverb(metal_hit(2, 95, 21) + sine(np.linspace(90, 40, int(2 * SR)), 2) * decay(int(2 * SR), 0.2), 3.5, 0.6)
 
 
+def door_slide():
+    sec = 1.4
+    n = int(sec * SR)
+    t = t_axis(sec)
+    motor = sine(95 + 25 * np.sin(np.pi * t / sec), sec) * 0.35 + np.sign(sine(190, sec)) * 0.04
+    hiss = bandpass(noise(sec), 1800, 1.0) * 0.4
+    clunk = np.zeros(n)
+    place(clunk, lp(noise(0.12), 900) * decay(int(0.12 * SR), 0.02), sec - 0.18)
+    return (motor + hiss) * np.sin(np.pi * np.clip(t / sec, 0, 1)) ** 0.6 + clunk
+
+
 SOUNDS = {
+    "door_slide": door_slide,
     "music_explore": music_explore, "music_chase": music_chase, "music_extract": music_extract, "music_fail": music_fail,
     "amb_wind": amb_wind, "amb_fluoro": amb_fluoro,
     "giant_breath": giant_breath, "giant_groan": giant_groan, "giant_scream": giant_scream, "giant_step": giant_step,

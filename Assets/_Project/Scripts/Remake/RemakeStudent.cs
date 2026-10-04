@@ -189,7 +189,8 @@ namespace HorrorUtez.Remake
                 rig.Tick(Yaw,Pitch,true,0,false,0,Crouching,0,dt);
                 return;
             }
-            var keyboard=Keyboard.current; var mouse=Mouse.current; var pad=Gamepad.current;
+            // Automated runs (smoke, tour, watch) ignore real devices so someone using the PC cannot steer the test.
+            var keyboard=game.Automated ? null : Keyboard.current; var mouse=game.Automated ? null : Mouse.current; var pad=game.Automated ? null : Gamepad.current;
             Vector2 move=game.Hud.MoveInput;
             Vector2 look=game.Hud.ConsumeLook();
             bool run=game.Hud.RunHeld, jump=game.Hud.ConsumeJump(), grab=game.Hud.GrabHeld, interact=game.Hud.ConsumeInteract();

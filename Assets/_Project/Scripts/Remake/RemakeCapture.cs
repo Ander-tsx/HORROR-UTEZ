@@ -1,4 +1,4 @@
-using System.Collections;
+﻿using System.Collections;
 using System.IO;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -9,6 +9,46 @@ namespace HorrorUtez.Remake
     public sealed class RemakeCapture : MonoBehaviour
     {
         public void Setup(RemakeGame game, bool tour = false) => StartCoroutine(tour ? Tour(game) : Capture(game));
+        // -remakeWatchGiant: the student waits safely inside the truck while the giant patrols at 3x speed;
+        // logs its state, waypoint and position so the route can be checked from the log.
+        public void Watch(RemakeGame game) => StartCoroutine(WatchGiant(game));
+        private IEnumerator WatchGiant(RemakeGame game)
+        {
+            while(!game.Started)yield return null;
+            yield return new WaitForSeconds(1);
+            RemakeEnemy giant=null;foreach(RemakeEnemy e in game.Enemies){if(e.Kind==EnemyKind.Giant)giant=e;else e.Rest(9999);}
+            var leg=new System.Collections.Generic.List<Vector3>();
+            for(int i=0;i<game.GiantRoute.Count;i++)
+            {
+                Vector3 a=game.GiantRoute[i],b=game.GiantRoute[(i+1)%game.GiantRoute.Count];
+                game.FindPath(a,b,leg);float len=0;Vector3 at=a;foreach(Vector3 q in leg){len+=Vector3.Distance(at,q);at=q;}
+                Debug.Log("[Watch] leg "+i+" "+a.ToString("F0")+" -> "+b.ToString("F0")+" path "+len.ToString("F0")+" m, straight "+Vector3.Distance(a,b).ToString("F0")+" m");
+            }
+            foreach(HorrorUtez.World.HingedDoor d in Object.FindObjectsByType<HorrorUtez.World.HingedDoor>(FindObjectsInactive.Include))
+                Debug.Log("[Watch] door "+d.name+" at "+d.transform.position.ToString("F1")+" open "+d.IsOpen);
+            foreach(var room in game.Dressing.RoomCentres)
+            {
+                game.FindPath(game.Dressing.Corridor,room.Value,leg);float len=0;Vector3 at=game.Dressing.Corridor;foreach(Vector3 q in leg){len+=Vector3.Distance(at,q);at=q;}
+                bool ok=leg.Count>0&&Vector3.Distance(leg[leg.Count-1],room.Value)<3.5f;
+                Debug.Log("[Watch] room "+room.Key+" reachable "+ok+" path "+len.ToString("F0")+" m straight "+Vector3.Distance(game.Dressing.Corridor,room.Value).ToString("F0"));
+            }
+            game.Player.Teleport(game.TruckPosition+new Vector3(0,.9f,-1.5f));
+            giant.Wake();Time.timeScale=3;
+            var visited=new System.Collections.Generic.HashSet<string>();
+            var trail=new System.Collections.Generic.List<Vector3>();
+            for(float t=0;t<180;t+=3)
+            {
+                yield return new WaitForSecondsRealtime(1);
+                Vector3 p=giant.transform.position;trail.Add(p);visited.Add(giant.State.Substring(giant.State.LastIndexOf(' ')+1));
+                Debug.Log("[Watch] t="+(t).ToString("F0")+" "+giant.State+" pos "+p.ToString("F1")+" crawl "+giant.Crawl.ToString("F2")+" | student "+game.Player.transform.position.ToString("F1")+" phase "+game.Phase);
+            }
+            Time.timeScale=1;
+            Debug.Log("[Watch] waypoints visited: "+string.Join(",",visited));
+            string dir=Path.GetFullPath(Path.Combine(Application.dataPath,".."));
+            File.WriteAllBytes(Path.Combine(dir,"nav-map.png"),game.NavigationMap(trail).EncodeToPNG());
+            File.WriteAllBytes(Path.Combine(dir,"nav-cecadec.png"),game.NavigationMap(trail,new Vector2(-16,-58),new Vector2(18,-6),10).EncodeToPNG());
+            Application.Quit(0);
+        }
         private IEnumerator Capture(RemakeGame game)
         {
             yield return new WaitForSeconds(3);
@@ -37,6 +77,13 @@ namespace HorrorUtez.Remake
                 shots.Add(("corridor",W(0,-1.5f),W(0,-20,1.2f)));
                 shots.Add(("process_lab",W(3.0f,-33.0f),W(7.5f,-28.8f,.9f)));
                 shots.Add(("back_room",W(0,-38.8f),W(-6,-43.5f,.8f)));
+            }
+            if(game.Dressing!=null && game.Dressing.Ready)
+            {
+                Vector3 door=game.Dressing.EastDoor, outward=Vector3.ProjectOnPlane(door-game.Dressing.Corridor,Vector3.up).normalized;
+                Vector3 side=Vector3.Cross(Vector3.up,outward);
+                shots.Add(("east_door_out",door+outward*7+side*2.5f+Vector3.up*1.38f,door+Vector3.up*1.3f));
+                shots.Add(("east_door_in",door-outward*4.5f-side*1.5f+Vector3.up*1.38f,door+Vector3.up*1.2f));
             }
             Vector3 friend=game.Students[77].position;
             shots.Add(("player_model",friend+new Vector3(.9f,1.38f,-2.6f),friend+Vector3.up*.8f));

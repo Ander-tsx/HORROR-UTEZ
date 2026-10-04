@@ -106,6 +106,40 @@ namespace HorrorUtez.Remake
             Assert(scope.Value==0 && !scope.gameObject.activeSelf,"broken gear shatters");
             scope.ResetLoot();
             Assert(scope.gameObject.activeSelf && scope.Value==scope.BaseValue,"new day restores broken gear");
+            // El Rector: its route is navigable end to end, it chases a visible student, and the east glass door works.
+            RemakeEnemy giant=null;foreach(RemakeEnemy e in game.Enemies){e.Rest(600);if(e.Kind==EnemyKind.Giant)giant=e;}
+            var leg=new System.Collections.Generic.List<Vector3>();int broken=0;
+            for(int i=0;i<game.GiantRoute.Count;i++)
+            {
+                Vector3 a=game.GiantRoute[i],b=game.GiantRoute[(i+1)%game.GiantRoute.Count];
+                game.FindPath(a,b,leg);
+                if(leg.Count==0||Vector3.Distance(leg[leg.Count-1],b)>2.5f){broken++;Debug.Log("[RemakeSmoke] route leg "+i+" unreachable "+a+" -> "+b);}
+            }
+            Assert(game.GiantRoute.Count>=12 && broken==0,"giant route is navigable end to end ("+game.GiantRoute.Count+" waypoints)");
+            string closed="";
+            foreach(var room in game.Dressing.RoomCentres)
+            {
+                game.FindPath(game.Dressing.Corridor,room.Value,leg);
+                if(leg.Count==0||Vector3.Distance(leg[leg.Count-1],room.Value)>3.5f)closed+=room.Key+" ";
+            }
+            Assert(closed=="","every dressed room is reachable from the corridor "+closed);
+            Vector3 open=new Vector3(6,0.1f,-3.5f);
+            game.Player.Teleport(open);game.Player.Aim(90,0);
+            giant.DebugPlace(open+new Vector3(-15,0,1));giant.Wake();game.Player.Aim(-90,0);
+            float startGap=Vector3.Distance(giant.transform.position,game.Player.transform.position);
+            yield return new WaitForSeconds(3f);
+            float gap=Vector3.Distance(giant.transform.position,game.Player.transform.position);
+            Assert(giant.Chasing && startGap-gap>4,"giant chases a visible student ("+giant.State+", gap "+startGap.ToString("F1")+" -> "+gap.ToString("F1")+")");
+            giant.Rest(600);giant.DebugPlace(game.GiantRoute.Count>11?game.GiantRoute[11]:open+new Vector3(40,0,0));
+            game.Local.health=100;game.Local.alive=true;yield return new WaitForSeconds(1.5f);
+            if(game.Player.Tumbling)game.Player.GetUp();
+            Vector3 door=game.Dressing.EastDoor;Vector3 outward=Vector3.ProjectOnPlane(door-game.Dressing.Corridor,Vector3.up).normalized;
+            Vector3 outside=door+outward*3,inside=door-outward*2.5f;
+            game.Player.Teleport(outside+Vector3.up*.05f);yield return new WaitForSeconds(2f);
+            Vector3 eye=Vector3.up*1.1f;
+            Assert(!Physics.Raycast(outside+eye,(inside-outside).normalized,Vector3.Distance(outside,inside),~(1<<9),QueryTriggerInteraction.Ignore),"east glass door opens and is passable");
+            game.FindPath(outside,game.Dressing.Corridor,leg);
+            Assert(leg.Count>0 && Vector3.Distance(leg[leg.Count-1],game.Dressing.Corridor)<2.5f,"navigation reaches the corridor through the glass door");
             // R.E.P.O.-style revive: a fallen student's ID card carried into the truck brings them back.
             game.Students[97]=new StudentState{id=97,name="Smoke card",position=game.TruckPosition+new Vector3(-6,0.1f,-6)};
             game.Hurt(97,200);

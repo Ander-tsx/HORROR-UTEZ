@@ -69248,74 +69248,6 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 980308070}
   m_Mesh: {fileID: -1025917107600667536, guid: 14457644e02c94d8fb5a8244f1231ccb, type: 3}
---- !u!1 &981325750
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 981325752}
-  - component: {fileID: 981325751}
-  m_Layer: 0
-  m_Name: "REMAKE \xB7 Turno nocturno"
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &981325751
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 981325750}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 97bdf72ff0a9b3541a44a5b104629f6f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: HorrorUtez.Remake::HorrorUtez.Remake.RemakeGame
-  StudentModel: {fileID: 5495050849326755231, guid: 2a832449a5b34424a876178ff08e3abf, type: 3}
-  TruckModel: {fileID: 919132149155446097, guid: a10830efe65df6c4690133d30d4e6652, type: 3}
-  EnemyModel: {fileID: 919132149155446097, guid: 1d94094bf21f4aa40b976456c0f6bab2, type: 3}
-  GiantModel: {fileID: 919132149155446097, guid: e88355b4f4daf5544a5d4e1aacc43470, type: 3}
-  LootModels:
-  - {fileID: 919132149155446097, guid: 08bb0f68501f52146a592a2b667f5d02, type: 3}
-  - {fileID: 919132149155446097, guid: e56eae58833a194498b269264cb7b29d, type: 3}
-  - {fileID: 919132149155446097, guid: 407cb3bf094bc814ca025734daa6cb78, type: 3}
-  - {fileID: 919132149155446097, guid: 08455470be556984ba44207f982a5d8e, type: 3}
-  - {fileID: 919132149155446097, guid: 2adcc0d4e7c61e7478f7bf3e1d7bc8f0, type: 3}
-  - {fileID: 919132149155446097, guid: c009f13e602a5794dbcf232b2dfac04f, type: 3}
-  - {fileID: 919132149155446097, guid: 3a8a54450ac9fa641a0824a0abb24cc4, type: 3}
-  - {fileID: 919132149155446097, guid: dcd13c42b4176ed43bcb2ce92e5def99, type: 3}
-  - {fileID: 919132149155446097, guid: b9fccff21761ab24aa6919539b0e8ce8, type: 3}
-  ScreenMaterials:
-  - {fileID: 2100000, guid: f4fe12160219b5446a27dace30fd9d2d, type: 2}
-  - {fileID: 2100000, guid: a986820ef9355cd4f845f9f3b7edae15, type: 2}
-  - {fileID: 2100000, guid: 53a394eb9eb832445b3df5b853092455, type: 2}
-  - {fileID: 2100000, guid: 3c8658d653b4e5e48b872223538a89db, type: 2}
-  - {fileID: 2100000, guid: 4b66628734e37ef478de1012d9b438da, type: 2}
-  PropMaterial: {fileID: 2100000, guid: e9b2d9939cb21744f8564290ddea6eae, type: 2}
-  SkinMaterial: {fileID: 2100000, guid: 60e7e4d8368701e469a3495309db2a92, type: 2}
-  SleeveMaterial: {fileID: 2100000, guid: 1c0907fb2a5822b4ca96abbfe5551b62, type: 2}
-  SignalMaterial: {fileID: 2100000, guid: 16e7c6778e968bb43bec381e239c9695, type: 2}
---- !u!4 &981325752
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 981325750}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &981921128
 GameObject:
   m_ObjectHideFlags: 0
@@ -79668,6 +79600,76 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1112521770}
   m_Mesh: {fileID: 10206, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1 &1115643952
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1115643954}
+  - component: {fileID: 1115643953}
+  m_Layer: 0
+  m_Name: "REMAKE \xB7 Turno nocturno"
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1115643953
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1115643952}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 97bdf72ff0a9b3541a44a5b104629f6f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: HorrorUtez.Remake::HorrorUtez.Remake.RemakeGame
+  StudentModel: {fileID: 5495050849326755231, guid: 2a832449a5b34424a876178ff08e3abf, type: 3}
+  TruckModel: {fileID: 919132149155446097, guid: a10830efe65df6c4690133d30d4e6652, type: 3}
+  EnemyModel: {fileID: 919132149155446097, guid: 1d94094bf21f4aa40b976456c0f6bab2, type: 3}
+  GiantModel: {fileID: 919132149155446097, guid: e88355b4f4daf5544a5d4e1aacc43470, type: 3}
+  LootModels:
+  - {fileID: 919132149155446097, guid: 08bb0f68501f52146a592a2b667f5d02, type: 3}
+  - {fileID: 919132149155446097, guid: e56eae58833a194498b269264cb7b29d, type: 3}
+  - {fileID: 919132149155446097, guid: 407cb3bf094bc814ca025734daa6cb78, type: 3}
+  - {fileID: 919132149155446097, guid: 08455470be556984ba44207f982a5d8e, type: 3}
+  - {fileID: 919132149155446097, guid: 2adcc0d4e7c61e7478f7bf3e1d7bc8f0, type: 3}
+  - {fileID: 919132149155446097, guid: c009f13e602a5794dbcf232b2dfac04f, type: 3}
+  - {fileID: 919132149155446097, guid: 3a8a54450ac9fa641a0824a0abb24cc4, type: 3}
+  - {fileID: 919132149155446097, guid: dcd13c42b4176ed43bcb2ce92e5def99, type: 3}
+  - {fileID: 919132149155446097, guid: b9fccff21761ab24aa6919539b0e8ce8, type: 3}
+  ScreenMaterials:
+  - {fileID: 2100000, guid: f4fe12160219b5446a27dace30fd9d2d, type: 2}
+  - {fileID: 2100000, guid: a986820ef9355cd4f845f9f3b7edae15, type: 2}
+  - {fileID: 2100000, guid: 53a394eb9eb832445b3df5b853092455, type: 2}
+  - {fileID: 2100000, guid: 3c8658d653b4e5e48b872223538a89db, type: 2}
+  - {fileID: 2100000, guid: 4b66628734e37ef478de1012d9b438da, type: 2}
+  DoorGlass: {fileID: 2100000, guid: a7c57e8d38d32934883d8202dfb49410, type: 2}
+  DoorMetal: {fileID: 2100000, guid: 1af8a979e15d80e4a92d70ace7c8e322, type: 2}
+  PropMaterial: {fileID: 2100000, guid: e9b2d9939cb21744f8564290ddea6eae, type: 2}
+  SkinMaterial: {fileID: 2100000, guid: 60e7e4d8368701e469a3495309db2a92, type: 2}
+  SleeveMaterial: {fileID: 2100000, guid: 1c0907fb2a5822b4ca96abbfe5551b62, type: 2}
+  SignalMaterial: {fileID: 2100000, guid: 16e7c6778e968bb43bec381e239c9695, type: 2}
+--- !u!4 &1115643954
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1115643952}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1116415317
 GameObject:
   m_ObjectHideFlags: 0
@@ -156878,4 +156880,4 @@ SceneRoots:
   - {fileID: 42152399}
   - {fileID: 1565395567}
   - {fileID: 1507824009}
-  - {fileID: 981325752}
+  - {fileID: 1115643954}

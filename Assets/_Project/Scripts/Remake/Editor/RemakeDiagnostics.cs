@@ -8,6 +8,24 @@ namespace HorrorUtez.Remake.Editor
     // Batch-mode probes used while authoring runtime dressing: logs where landmark pieces really are.
     public static class RemakeDiagnostics
     {
+        // Lists every renderer/collider around CECADEC's east doorway (interior-local x 7..15, z -21..-30).
+        public static void ProbeEastDoor()
+        {
+            EditorSceneManager.OpenScene("Assets/_Project/Scenes/remake.unity");
+            Transform interior = Resources.FindObjectsOfTypeAll<Transform>().FirstOrDefault(t => t.name == "CECADEC_Interior" && t.gameObject.scene.IsValid());
+            if (interior == null) { Debug.Log("[Probe] no interior"); return; }
+            Vector3 a = interior.TransformPoint(new Vector3(8.5f, 0, -27.5f)), b = interior.TransformPoint(new Vector3(16, 4.5f, -35.5f));
+            var box = new Bounds((a + b) / 2, Vector3.zero); box.Encapsulate(a); box.Encapsulate(b);
+            box.Expand(new Vector3(0.2f, 0, 0.2f));
+            Debug.Log("[Probe] east door box " + box);
+            string Path(Transform t) { string p = t.name; while (t.parent != null) { t = t.parent; p = t.name + "/" + p; } return p; }
+            foreach (Renderer r in Object.FindObjectsByType<Renderer>(FindObjectsInactive.Include))
+                if (r.bounds.Intersects(box)) Debug.Log("[Probe] R " + Path(r.transform) + " bounds " + r.bounds.center.ToString("F2") + " size " + r.bounds.size.ToString("F2")
+                    + " local " + interior.InverseTransformPoint(r.bounds.center).ToString("F2") + " active " + r.gameObject.activeInHierarchy);
+            foreach (Collider c in Object.FindObjectsByType<Collider>(FindObjectsInactive.Include))
+                if (c.bounds.Intersects(box)) Debug.Log("[Probe] C " + c.GetType().Name + " " + Path(c.transform) + " bounds " + c.bounds.center.ToString("F2") + " size " + c.bounds.size.ToString("F2")
+                    + " local " + interior.InverseTransformPoint(c.bounds.center).ToString("F2") + " enabled " + c.enabled);
+        }
         public static void Probe()
         {
             EditorSceneManager.OpenScene("Assets/_Project/Scenes/remake.unity");

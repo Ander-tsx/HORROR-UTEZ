@@ -174,3 +174,9 @@ testing them. Continue the missing gameplay/content only after this baseline is 
 - [Blender and map references](BLENDER.md)
 - [Running and testing](TESTING.md)
 - [Player guide](PLAY.md)
+
+**Giant routine / east door pass (2026-10-03 night).** See TESTING.md. The giant now loops plaza -> CECADEC
+(north door, corridor, CC9, back room, Lab de Procesos) -> out of the new east glass door -> east side ->
+auditorium -> canopy -> CDS -> plaza, hunts a student every ~1 min, chases on sight/proximity with 8 s memory.
+All dressed rooms are reachable; doors really start open now. Remaining: west/south outdoor coverage (planters),
+CC9 doorway is tight for the giant, interior tour framing of the glass door.

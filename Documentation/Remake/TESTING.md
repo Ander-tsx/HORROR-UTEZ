@@ -128,3 +128,24 @@ Problems found and fixed during this pass (do not re-introduce):
 NOT validated: real-input feel of the new giant/caretaker animation, audio mix by ear (all audio is synthesized
 and was never listened to by a human), shop/spectator/revive in a real two-machine session, performance of
 ~480 dressing renderers + lights on weaker PCs or mobile, upper floor (not dressed; giant stays ground floor).
+
+### 2026-10-03 night: giant routine, chase and east glass door (Claude Code)
+
+User report: the east paving ended at a wall, the giant had no routine and never chased them.
+Root causes found with new diagnostics (`-remakeWatchGiant` logs state/route legs/room reachability and writes
+`nav-map.png` + `nav-cecadec.png` next to the exe):
+- Paving_EastDoor (entrance landmark) sits ~6.4 m south of the v3 corridor door: it led to solid wall.
+- HingedDoor.Awake ran after RemakeGame.Awake and closed every door again -> most rooms were sealed for the
+  navigation (and closed for players until pressed E). Doors now open in RemakeGame.Start.
+- 0.7 m grid cells could not fit 0.9 m doorways; NW rooms (sliding fronts) and the back room had no opening at all.
+- The giant woke at 70 s, wandered random points, saw with one ray, had no memory; stuck detection was fooled by
+  oscillation and by long detours.
+- Automated test windows received the human user's mouse/keyboard (player left the truck, phantom "REINTENTAR").
+Fixes: big automatic glass door at the paving (facade walls trimmed, lining rebuilt), Lab de Procesos re-laid as a
+lane, NW sliding panels opened, back-room doorway cut, doorway carving in a 0.4 m grid, enemies open doors,
+giant route (18 connected waypoints after automatic pruning of detours), patrol/investigate/hunt/chase with
+memory, net-displacement unstick, multi-sample ceiling probe, automated runs ignore real input.
+Results: solo smoke 36/36 PASS (new: route navigable, all 9 rooms reachable, giant chases a visible student
+15.0 m -> 2.3 m in 3 s, glass door opens/passable, navigation crosses it); host/client both exit 0; watch run:
+full loop with one momentary stuck at the CC9 doorway (recovers by skipping). West/south outdoor legs are pruned
+because raised planters/kerbs split the campus for the navigation grid.
