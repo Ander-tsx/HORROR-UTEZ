@@ -47,8 +47,7 @@ anti-cheat. TCP is reliable but can suffer head-of-line stalls under poor networ
 Layers 9 = students, 10 = loot. World probes exclude both so held objects don't hide walls.
 R.E.P.O. reference (2026-10-03): PlayerController, Camera{Aim,Bob,Tilt,Jump,Zoom}, PhysGrabber,
 PhysGrabObject, PhysGrabCart, PlayerTumble and PhysGrabObjectImpactDetector were decompiled into
-ignored `Library/Tooling/RepoStudy` and used as behavioural reference only. Algorithms/tuning were
-re-implemented; no decompiled code or R.E.P.O. assets are in the project.
+ignored `Library/Tooling/RepoStudy` and used to model these systems.
 
 Grab: the client sends the hit point in object-local space (`grabLocal`) and the object's rotation
 relative to the camera (`hold`); poses carry `hold`, eye height, reach and tumble. Host pulls the

@@ -149,3 +149,15 @@ Results: solo smoke 36/36 PASS (new: route navigable, all 9 rooms reachable, gia
 15.0 m -> 2.3 m in 3 s, glass door opens/passable, navigation crosses it); host/client both exit 0; watch run:
 full loop with one momentary stuck at the CC9 doorway (recovers by skipping). West/south outdoor legs are pruned
 because raised planters/kerbs split the campus for the navigation grid.
+
+### 2026-10-03 late: Windows + macOS release builds (Claude Code)
+
+- Installed Mac Build Support (Mono) via `Unity Hub.exe -- --headless install-modules --version 6000.6.3f1 -m mac-mono`.
+- `BuildRemake.ps1 -Isolated -Mac`: both builds succeed (Windows ~168 MB, macOS universal x64ARM64 ~182 MB);
+  builds are now release (no development flag). Zipped to `Builds/Remake/Release/` (Mac zip keeps exec bits).
+- Release Windows solo smoke: 36/36 PASS.
+- First host/client run: client FAILED "session starts" because the user's open editor was in Play hosting on
+  27777 (host fell back to local play, client joined the user's session). Added `-remakePort N`; rerun on
+  27877: host ALL COMPLETE, client CLIENT COMPLETE, both exit 0.
+- macOS app inspected only (bundle, ad-hoc `_CodeSignature`, bundle id `mx.utez.horror.remake`, min macOS 12,
+  `NSMicrophoneUsageDescription`). NOT run on a Mac. Real two-machine play NOT yet tested.

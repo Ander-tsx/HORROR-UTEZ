@@ -1,182 +1,104 @@
-# Remake handoff — 2026-10-03
+# Remake handoff — 2026-10-03 (end of the Claude Code session; next session: Codex)
 
-## What the user requested
+The user communicates in Spanish. Their last words: "va tomando forma pero aún le falta mucho trabajo".
+Read [AGENTS.md](../../AGENTS.md) first, then this file, [ARCHITECTURE.md](ARCHITECTURE.md),
+[TESTING.md](TESTING.md), [BLENDER.md](BLENDER.md) and [PLAY.md](PLAY.md).
 
-A personal/school, R.E.P.O.-inspired cooperative horror game at UTEZ. Mandatory URP,
-Windows/mobile, five students with player-hosted multiplayer. Original main menu.
-The only extraction is a moving truck: arrange fragile, valuable university equipment
-inside it and board to leave. Grabbing should stretch human arms comically. At least one
-survivor and a paid quota allow the next day; dead/stranded players revive without upgrades.
-Keep measured campus geometry, improve presentation with recovered photos. The user
-authorized studying/decompiling their installed R.E.P.O. and requested durable docs for
-both Codex and Claude Code. They later prioritized desktop and deferred Android testing.
+## 1. Where things are
 
-## Correct checkout / a problem already diagnosed
+- Checkout: `C:\Users\andre\Software\Projects\HORROR-UTEZ`, branch `remake` (nothing pushed; `main` untouched).
+  A DIFFERENT old checkout lives at `C:\Users\andre\Software\HORROR-UTEZ` on `main`. Unity Hub currently lists
+  only the correct one.
+- Unity `6000.6.3f1` (URP) at `C:\Program Files\Unity\Hub\Editor\6000.6.3f1`. Installed modules: Windows,
+  WebGL and (new this session) **Mac Build Support (Mono)**. No Android module.
+- Blender: `C:\Program Files (x86)\Steam\steamapps\common\Blender\blender.exe` (its bundled Python has numpy;
+  the shell's `python` is only a Store alias). Blender is also handy for running Python scripts (e.g. zipping).
+- Playable scene: `Assets/_Project/Scenes/remake.unity`. Almost everything (truck, loot, students, enemies,
+  classroom dressing, glass door, HUD, menu) is BUILT AT RUNTIME when Play starts. The scene view outside Play
+  looks like the original campus; that is expected, not "the old version".
+- Original hand-authored campus: `Assets/_Project/Scenes/utez.unity`. Never regenerate/overwrite it.
+- Git identity is not configured globally on this PC. Commits so far used
+  `git -c user.name="Ander-tsx" -c user.email="andres.one.dev@gmail.com" commit ...`.
 
-Worktree: `C:\Users\andre\Software\Projects\HORROR-UTEZ`, branch `remake`.
-Another checkout: `C:\Users\andre\Software\HORROR-UTEZ`, branch `main`.
-Unity Hub was opening the SECOND path, which explained why the user saw the old version.
-Verified from Hub's `logs/info-log.json`, Git in both paths, and actual scene existence.
-The correct editor was subsequently launched with `RemakeBuild.OpenPlayable`.
+## 2. What the user wants (cumulative)
 
-Do not change branches in the wrong checkout or modify the user's old copy to mask this.
-Hub is a launcher: its listing does not substitute for checking `git branch --show-current`
-and the Unity process's `-projectPath`.
+A personal/school cooperative horror game inspired by R.E.P.O., set on the real UTEZ campus:
+- 1–5 students, player-hosted (host-authoritative TCP). Windows and macOS executables now; mobile later.
+- Only extraction: a moving truck. Load fragile valuable university equipment into its cargo bay, everyone
+  aboard leaves. Quota + at least one survivor = next day; the fallen revive without upgrades.
+- Grabbing with comically stretching human arms (hold to grab, release drops).
+- Measured UTEZ geometry preserved, presentation improved, original menu, low-poly/PSX horror look.
+- Player fully modelled (online), detailed models, ambience/music/SFX, horror HUD fonts.
+- Classrooms are compuaulas: desks, mostly broken/knocked-over PCs, few stealables.
+- A huge procedural humanoid enemy ("El Rector") moving inside and outside (ground floor) adapting posture,
+  with a patrol routine through the whole university, entering/leaving buildings and chasing players.
+- The east concrete entrance must be a big glass door (done).
+- Smaller students, scarier overall, and "all the R.E.P.O. features still missing" (see section 5).
 
-## Current playable slice
+## 3. What exists and works (automated evidence in TESTING.md)
 
-Scene: `Assets/_Project/Scenes/remake.unity` (copy of authored `utez.unity`). The original
-campus scene is preserved. A `RemakeGame` root builds gameplay when entering Play mode.
+- Menu (solo / host / join by IP / microphone), horror HUD (VT323 + Creepster fonts), pause, results, shop.
+- R.E.P.O.-style controller: energy sprint, slide, crawl, jump buffers, landings, tumble (Q); layered camera
+  rig (aim smoothing, bob, tilt, kick, shake, FOV).
+- Grab physics: grab point spring, rotate (R), wheel distance, cooperative lift (UPS needs two), cart steering,
+  fragility/durability damage with "-$X" popups and shattering, stuns by thrown objects.
+- Truck with ramp, cargo tally, quota, departure countdown, day progression, upgrades (reach, energy, sprint,
+  extra jumps), ID-card revive at the truck, spectator for the fallen.
+- Dressed CECADEC ground floor: 9 rooms (compuaulas, Lab de Procesos, back room), ceiling colliders, flickering
+  lights that brown out near the giant. Fixed seed (`RemakeDressing.cs`).
+- El Rector: procedural IK body, crouch/crawl under ceilings, route loop (plaza -> CECADEC north door -> corridor
+  -> CC9 -> back room -> Lab de Procesos -> east glass door -> east side -> auditorium -> canopy -> CDS -> plaza),
+  hunts a student every 55–85 s, chases on sight (34 m) or proximity (7 m) with 8 s memory, opens doors.
+  Two smaller caretaker enemies. Navigation: 0.4 m grid, doorway carving, string pulling (`RemakeGame.cs`).
+- Synthesized audio (38 sounds + adaptive music), proximity push-to-talk voice (8 kHz PCM).
+- Builds: `Tools/unity/BuildRemake.ps1 -Isolated -Mac` builds release Windows + macOS (universal x64/ARM64,
+  Mono, unsigned). Zips were produced in `Builds/Remake/Release/` (not in Git).
 
-- Original Spanish menu, solo/host/join by IP, HUD, health/stamina and touch controls.
-- Physics grab with spring forces and stretchy visible arms; cooperative force accumulates.
-- Eleven recoverable entities: laptops, projectors, microscopes, workstation towers, UPS,
-  printer and maintenance cart. Impact speed reduces remaining value.
-- Hollow truck with ramp, collision shell and quota screen. Only fully contained, released,
-  settled valuables count. Extraction requires a survivor physically inside the box.
-- Five-second departure, results, grip upgrades, next day, death/stranding penalties.
-- Two original caretaker enemies: sight/hearing, collision-derived ground-floor paths,
-  pursuit and damage. Noise comes from movement, impacts and proximity voice transmission.
-- Player-hosted, five-player TCP networking: host owns physics, loot values, health, doors,
-  extraction and upgrades. Clients move locally and receive authoritative state snapshots.
-- Push-to-talk 8 kHz mono proximity voice, opt-in microphone, Android permission handling.
-- Latest source selects the previous `RetroPixel` PSX preset. The additional `Salvage`
-  preset remains available in code. This latest change has not been validated.
-- Original Blender-made salvage models, truck and enemy; existing human model for peers.
+Last validation (this session, release builds): solo smoke 36/36 PASS; loopback host/client on port 27877 both
+exit 0. The macOS app was built and inspected (bundle, plist, microphone description) but NEVER run on a Mac.
 
-This is NOT a complete migration of every R.E.P.O. system. See limitations below.
+## 4. Not validated / known problems
 
-## R.E.P.O. study: be precise
+- Never tested by a human with real input on two machines; microphones, internet play, 3–5 players untested.
+- macOS app untested on hardware; Gatekeeper workaround documented in PLAY.md.
+- Audio was never listened to by a human; the mix may be bad.
+- Giant: west/south outdoor legs are pruned (raised planters/kerbs split the navigation grid); CC9 doorway is
+  tight (momentary stuck, recovers); upper floor not navigable.
+- Upper floor, CDS and auditorium interiors are not dressed.
+- Performance with ~480 dressing renderers + lights on weak PCs is unmeasured.
+- Networking is prototype quality: TCP JSON snapshots, no prediction/interpolation tuning, no relay/NAT
+  traversal, no host migration, raw PCM voice. Internet needs TCP 27777 forwarded or a LAN VPN.
+- Progression lives in memory only (no save files).
+- If the user's editor is in Play hosting, it holds port 27777: automated tests must pass `-remakePort 27877`
+  (an earlier run accidentally joined the user's live session).
 
-Installed game: `C:\Program Files (x86)\Steam\steamapps\common\REPO`.
-Its `REPO_Data/Managed` has C# game assemblies, Photon PUN/Voice and Facepunch Steamworks.
-ILSpy command-line 9.1 was installed locally using Unity's bundled .NET 8 SDK:
-`Library/Tooling/ilspy/ilspycmd.exe`.
+## 5. Suggested next work (ask the user which first)
 
-Decompiled classes currently studied: `PhysGrabber`, `PhysGrabObjectImpactDetector`,
-`ExtractionPoint`, `PlayerVoiceChat`. Output: `Library/Tooling/RepoStudy/<class>`;
-type inventory: `Library/Tooling/repo-types.txt`. These are local, ignored artifacts.
-Behavior references: physical target/distance constraints, spring/damping, mass and
-collaborative grip, impacts/fragility/value, quota state and voice proximity.
+1. Fix whatever the user reports from the first real two-player session (this has priority).
+2. Giant coverage of the west/south campus (fix the grid splits, or ramps/route changes) and widen CC9 for it.
+3. More R.E.P.O.-like content: grabbing tumbling teammates, more enemy archetypes, items (health packs, map,
+   throwables/weapons), animated truck departure, more valuables with distinct handling.
+4. Dress upper floor / other buildings; enemy stair traversal.
+5. Network polish (interpolation, compression, Opus-like voice codec), save files, Android build.
 
-NO decompiled code, textures, sounds, enemy assets or Photon services were transplanted
-into this slice. The user asked about this explicitly and was told that truth. New systems
-are independently implemented; new models are generated by our Blender script.
-Further R.E.P.O. study/migration remains a substantial next phase, not something completed.
+## 6. How to work here (short)
 
-## Tooling and environment
+- Never build with the user's open editor. Use `Tools/unity/BuildRemake.ps1 -Isolated` (mirrors into
+  `Builds/Remake/ValidationProject`, builds, copies the exe back and syncs generated `.meta`/materials/scene).
+  `-Mac` adds the macOS app; `-Method <Namespace.Class.Method>` runs an editor diagnostic.
+- Test flags on the exe: `-remakeSolo -remakeSmoke`, `-remakeHost -remakeSmoke -remakePort 27877`,
+  `-remakeJoin 127.0.0.1 -remakeSmoke -remakePort 27877`, `-remakeTour` (screenshots), `-remakeWatchGiant`
+  (giant log + nav-map.png). Logs go where `-logFile` points (we use `Library/remake-*.log`).
+- Art is generated by scripts in `Tools/blender/` (kit, textures, lab, props, player body) and audio by
+  `Tools/audio/gen_remake_audio.py`. Kit authoring is in Unity coordinates; see BLENDER.md for the mapping.
+- Don't edit sources with PowerShell Get-/Set-Content (re-encodes UTF-8). Commit `.meta` files; keep builds,
+  caches and `Library/Tooling` out of Git.
+- Record real results (including failures) in TESTING.md and update this file at the end of the session.
 
-- Installed Unity: `6000.6.3f1` (the original repo named `6000.6.0f1`). Unity upgraded the
-  project/packages on first import. Keep the manifest and lockfile coherent.
-- Actual Blender: `C:\Program Files (x86)\Steam\steamapps\common\Blender\blender.exe`.
-  It was discovered after initially unpacking the user's downloaded MSI. Direct `.blend`
-  imports originally failed; registering the Steam executable with `--register` fixed them.
-- A temporary extracted Blender/tooling cache remains under `Library/Tooling`.
-  The attempted MSI install into Program Files failed with Windows error 1303; do not
-  claim Blender was installed through MSI. Steam Blender works and is the authoritative path.
-- Android tooling downloads exist in `Library/Tooling/AndroidDownloads`. The installed
-  editor had no Android support. A portable editor copy was started under
-  `Library/Tooling/UnityAndroid`, then stopped when the user prioritized desktop.
-  No APK has been validated; do not claim Android is tested or shipped.
-- Python bundled with Steam Blender exists at `Blender/5.2/python/bin/python.exe`.
-  The shell's `python` is only a Microsoft Store alias; don't assume it is usable.
-- `Tools/unity/compile_check.py` was inherited from macOS and is not a valid Windows
-  check as-is. Use actual Unity compilation/builds.
+## History
 
-## Validation state
-
-The user stopped further feature work to request this handoff. Latest changes AFTER the
-successful isolated build include held-button grabbing/release, shorter reach, new hand
-meshes and richer salvage/truck/enemy meshes, and the restored `RetroPixel` preset.
-Blender generation completed successfully; Unity compilation, imports, visuals and runtime
-behavior for these changes remain unverified. The executable is older than current source.
-The isolated ValidationProject also contains an older snapshot; refresh it before testing.
-
-The isolated Windows build succeeded, but the parent PowerShell waited indefinitely before
-copying the output. Its waiting process was stopped and output copied manually. The script
-now uses the returned process's `WaitForExit()`; this script change needs a full rerun.
-The last smoke failure used a stale executable and reported missing PSX shaders. There is
-NO recorded clean strict smoke pass after all fixes, and NO recorded host/client smoke run.
-
-See [TESTING.md](TESTING.md) for commands and the current record. The first executable
-integration check proved the gameplay loop but revealed a voice-button initialization
-exception. It was fixed by creating `RemakeVoice` before the HUD.
-The stricter repeat revealed stripped PSX fog/screen shaders in Windows builds. The
-builder now serializes their references in renderer features (also fixed in source assets).
-Truck FBX geometry was rotated relative to authored gameplay colliders; its visual and
-new model visuals now rotate 180 degrees to match, and world text orientation was fixed.
-These issues must not be silently described as having passed before a clean rerun.
-
-**Update (later 2026-10-03, Claude Code):** the clean rerun happened. Current source builds
-in isolation (exit 0), strict solo smoke passes with no runtime errors (shader fix verified),
-and the first host/client loopback smoke passes on both processes. Pause-while-gripping
-was a real bug; fixed and covered by a new smoke assertion. A spawn-view capture shows the
-PSX look, truck orientation and hands plausibly correct; oversized world text needs review.
-Interactive feel, 3–5 players, microphones, remote machines and Android remain unvalidated.
-Details in TESTING.md.
-
-**R.E.P.O.-feel pass (same day, user asked for a much deeper R.E.P.O. migration).** More
-classes were decompiled locally for study (movement, camera stack, grabber/grab object, cart,
-tumble, impact detector). Policy agreed in conversation: decompiled code and R.E.P.O. assets
-are reference only — mechanics/tuning are re-implemented in our own code, art stays our own
-Blender/photo work. Implemented: R.E.P.O.-style controller (energy sprint, slide, crawl,
-jump buffers, landings), layered camera rig (`RemakeCameraRig.cs`), grab-point physics with
-rotate (R) and wheel distance, per-student lift caps (UPS needs two), cart steering/tally,
-tumble (Q, caretaker knockback), fragility/durability damage with "-$X" popups and shattering.
-Smoke solo 29/29 and host/client pass; real-input feel is NOT yet reviewed by the user.
-Next candidates: R.E.P.O.-style enemies (stun, throwable, multiple archetypes), grabbing
-tumbling players, shop/upgrades (stamina, range, speed), HUD polish, truck departure scene.
-
-**Second pass (same evening, user request: full player model, more detailed models, ambience, music, horror HUD
-fonts, dressed compuaulas with mostly broken PCs and few valuables, a huge procedural humanoid enemy that fits
-inside the ground floor, smaller players, scarier, more R.E.P.O. features).** Done and smoke-tested: new art kit
-and textures (all models regenerated), detailed player body on the existing rig/face, dressed CECADEC ground
-floor, El Rector giant with procedural IK animation and crawl posture, synthesized music/SFX with adaptive
-music, horror HUD, upgrade shop, ID-card revive, stuns, spectator, smaller students, finer navigation.
-Not done yet: grabbing tumbling teammates, more enemy types, R.E.P.O. items (health packs, weapons, map),
-animated truck departure, upper floor dressing, CDS/auditorium interiors, listening tests for audio.
-
-## Known limitations / next priorities
-
-1. Finish clean Windows solo and multi-process host/client validation; actual microphones,
-   real remote devices, internet routing, five-player sustained play and mobile hardware
-   need manual QA beyond simulated/loopback tests.
-2. LAN/direct IP works without service credentials. Internet requires reachable host and
-   forwarding TCP 27777; there is no relay, Steam lobby, automatic NAT traversal or host migration.
-3. TCP snapshots and raw PCM are deliberately simple prototype networking. Improve
-   prediction/jitter/voice codec/backpressure before claiming commercial network quality.
-4. Enemies navigate only the ground floor. Stair traversal, more enemy archetypes, full
-   bestiary, weapons, full inventory/shop, richer upgrades and R.E.P.O.'s whole content loop
-   are not implemented.
-5. Truck departure currently resolves with a countdown/report, rather than a fully driven
-   animated escape sequence. More campus dressing/remodeling and final character arm IK
-   remain. Stretching arm meshes are procedural, overlaid on peer character visuals.
-6. Progression is held in session memory, not save files. Exiting/reloading starts a new run.
-7. Reference photos are personal local files; do not accidentally commit the whole Downloads
-   folder or promise they are available on other machines.
-8. Pause-while-gripping now releases (fixed, smoke-covered). Still check hand prefab axes
-   in motion, renewed grab reach feel, and the oversized truck/quota world text
-   interactively (spawn capture looked plausible for orientation and hand scale). Diagnostic captures may select an older scene
-   Canvas; verify the gameplay HUD in interactive Play mode.
-
-## Recommended first task for Claude Code
-
-Read all linked docs, verify the path and branch, preserve current edits, and rebuild the
-current source using the isolated Windows workflow. Resolve compilation/import failures,
-then run strict solo and host/client checks and inspect Play mode visually. Validate the
-latest user feedback before expanding content. Update the testing record with log paths
-and actual outcomes. Do not mark Android, microphones or five-player play validated without
-testing them. Continue the missing gameplay/content only after this baseline is trustworthy.
-
-## Other documentation
-
-- [Architecture](ARCHITECTURE.md)
-- [Blender and map references](BLENDER.md)
-- [Running and testing](TESTING.md)
-- [Player guide](PLAY.md)
-
-**Giant routine / east door pass (2026-10-03 night).** See TESTING.md. The giant now loops plaza -> CECADEC
-(north door, corridor, CC9, back room, Lab de Procesos) -> out of the new east glass door -> east side ->
-auditorium -> canopy -> CDS -> plaza, hunts a student every ~1 min, chases on sight/proximity with 8 s memory.
-All dressed rooms are reachable; doors really start open now. Remaining: west/south outdoor coverage (planters),
-CC9 doorway is tight for the giant, interior tour framing of the glass door.
+Earlier sessions in short: Codex built the first playable slice (menu, grab, truck, caretakers, TCP, voice) and
+diagnosed that Unity Hub had opened the wrong checkout. Claude Code then validated it, did the R.E.P.O.-feel
+pass (controller, camera, grab, cart, tumble, damage), the horror/art pass (new kit, player body, compuaulas,
+El Rector, audio, HUD, shop, revive), the giant routine/chase + east glass door pass, and the Windows/macOS
+release builds. Per-pass test records with root causes are in TESTING.md.

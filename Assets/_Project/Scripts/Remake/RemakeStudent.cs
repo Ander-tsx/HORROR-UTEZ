@@ -10,7 +10,7 @@ namespace HorrorUtez.Remake
 {
     public sealed class RemakeStudent : MonoBehaviour
     {
-        // Feel modelled on R.E.P.O.'s PlayerController (studied, independently written): friction-smoothed
+        // Feel modelled on R.E.P.O.'s PlayerController: friction-smoothed
         // velocity, sprint ramp that drains energy, crouch-slide after sprinting, coyote/jump buffers,
         // heavier gravity and weighted landings.
         public const float MinReach = .75f, MaxReach = 1.9f, BaseEnergy = 40;

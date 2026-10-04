@@ -77,7 +77,7 @@ namespace HorrorUtez.Remake
         private void FixedUpdate()
         {
             if (game == null || !game.Authority || game.Phase != 1) return;
-            // Grip physics follow R.E.P.O.'s PhysGrabObject model (studied, independently written): a damped spring
+            // Grip physics follow R.E.P.O.'s PhysGrabObject model: a damped spring
             // pulls the exact grab point, so objects hang and swing from where they were grabbed, and a torque keeps
             // their camera-relative orientation. Each student contributes a capped lift, so heavy gear needs a team.
             bool held = false;
@@ -128,7 +128,7 @@ namespace HorrorUtez.Remake
                 safeUntil = Time.time + 2;
             }
         }
-        // Cart handling follows R.E.P.O.'s PhysGrabCart (studied, independently written): the handle is not a spring;
+        // Cart handling follows R.E.P.O.'s PhysGrabCart: the handle is not a spring;
         // the cart's velocity is steered to a point ahead of the student and it yaws so the handle faces them.
         private void Steer(StudentState student)
         {
@@ -176,7 +176,7 @@ namespace HorrorUtez.Remake
                 float needed = enemy.Kind == EnemyKind.Giant ? 16 : 7;
                 if (hit >= needed) enemy.Stun(Mathf.Clamp(hit / needed * (enemy.Kind == EnemyKind.Giant ? 1.6f : 2.5f), 1.5f, 6));
             }
-            // Damage tiers follow R.E.P.O.'s impact detector (studied, independently tuned): fragility scales the hit,
+            // Damage tiers follow R.E.P.O.'s impact detector: fragility scales the hit,
             // durability scales the loss (1/5/10% of the original value), cargo riding in a cart is protected.
             if (BaseValue <= 0 || Value <= 0 || game.Loot.Any(l => l.Kind == CartKind && l.riding.Contains(this))) return;
             float force = speed * Fragility[Kind] / 100f;

@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace HorrorUtez.Remake
 {
-    // Layered first-person camera with the feel of R.E.P.O.'s camera stack (studied, independently written):
+    // Layered first-person camera with the feel of R.E.P.O.'s camera stack:
     // smoothed aim -> footstep bob -> turn/strafe tilt -> jump/land kick + shake, plus sprint/scare FOV.
     public sealed class RemakeCameraRig
     {

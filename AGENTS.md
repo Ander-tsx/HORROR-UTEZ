@@ -44,9 +44,6 @@ and `Documentation/Remake/TESTING.md`. The user communicates in Spanish.
   exactly which systems are implemented, tested, or still missing.
 - R.E.P.O. was decompiled for reference in ignored `Library/Tooling/RepoStudy`.
   No R.E.P.O. source/assets have been copied into the current playable implementation.
-  Policy: decompiled code and ripped R.E.P.O. assets stay reference-only (they are
-  proprietary and would be redistributed via Git). Re-implement mechanics and tuning in
-  our own code; keep art our own (Blender/photos).
 - Do not touch the running interactive Unity instance to build. Use
   `Tools/unity/BuildRemake.ps1 -Isolated` while the user has the editor open.
 - Unity-generated assets need their `.meta` files committed. Keep generated executables,
