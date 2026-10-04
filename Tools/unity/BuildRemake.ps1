@@ -2,6 +2,8 @@ param(
     [string]$Unity = 'C:\Program Files\Unity\Hub\Editor\6000.6.3f1\Editor\Unity.exe',
     [switch]$Isolated,
     [switch]$PrepareOnly,
+    # Also build the macOS app (needs Mac Build Support (Mono) in this editor)
+    [switch]$Mac,
     # Run any static editor method instead of building, e.g. HorrorUtez.Remake.Editor.RemakeDiagnostics.Probe
     [string]$Method
 )
@@ -17,7 +19,7 @@ if ($Isolated) {
     }
 }
 New-Item -ItemType Directory -Force (Join-Path $projectRoot 'Library') | Out-Null
-$executeMethod = if ($Method) { $Method } elseif ($PrepareOnly) { 'HorrorUtez.Remake.Editor.RemakeBuild.Prepare' } else { 'HorrorUtez.Remake.Editor.RemakeBuild.PrepareAndBuild' }
+$executeMethod = if ($Method) { $Method } elseif ($PrepareOnly) { 'HorrorUtez.Remake.Editor.RemakeBuild.Prepare' } elseif ($Mac) { 'HorrorUtez.Remake.Editor.RemakeBuild.PrepareAndBuildAll' } else { 'HorrorUtez.Remake.Editor.RemakeBuild.PrepareAndBuild' }
 $log = Join-Path $projectRoot $(if ($Method) { 'Library/remake-method.log' } else { 'Library/remake-build.log' })
 $arguments = '-batchmode -nographics -quit -projectPath "' + $buildProject + '" -executeMethod ' + $executeMethod + ' -logFile "' + $log + '"'
 $job = Start-Process -FilePath $Unity -ArgumentList $arguments -WindowStyle Hidden -PassThru
@@ -26,6 +28,10 @@ if ($job.ExitCode -ne 0) { throw "Unity failed ($($job.ExitCode)). See $log" }
 if ($Isolated -and !$PrepareOnly -and !$Method) {
     robocopy (Join-Path $buildProject 'Builds/Remake/Windows') (Join-Path $projectRoot 'Builds/Remake/Windows') /E /NFL /NDL /NJH /NJS /R:1 /W:1 | Out-Null
     if ($LASTEXITCODE -ge 8) { throw 'Copying Windows build failed.' }
+    if ($Mac) {
+        robocopy (Join-Path $buildProject 'Builds/Remake/Mac') (Join-Path $projectRoot 'Builds/Remake/Mac') /MIR /NFL /NDL /NJH /NJS /R:1 /W:1 | Out-Null
+        if ($LASTEXITCODE -ge 8) { throw 'Copying macOS build failed.' }
+    }
 }
 # Bring back what Unity generated in the isolated copy (.meta GUIDs, PSX materials, the prepared scene and the
 # synced player prefab) so the real project opens with the same references. /XO never overwrites newer sources.

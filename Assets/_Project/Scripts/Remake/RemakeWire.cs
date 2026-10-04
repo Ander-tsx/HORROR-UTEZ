@@ -59,7 +59,14 @@ namespace HorrorUtez.Remake
             public Peer(TcpClient client) { this.client = client; client.NoDelay = true; }
             public void Dispose() { client.Close(); outgoing.CompleteAdding(); }
         }
-        public const int Port = 27777;
+        // 27777 by default; -remakePort N moves automated tests off the port a real session may be using.
+        public static int Port { get; } = PortFromArgs();
+        private static int PortFromArgs()
+        {
+            string[] args = Environment.GetCommandLineArgs();
+            int at = Array.IndexOf(args, "-remakePort");
+            return at >= 0 && at + 1 < args.Length && int.TryParse(args[at + 1], out int p) && p > 1024 && p < 65536 ? p : 27777;
+        }
         private readonly ConcurrentDictionary<int, Peer> peers = new ConcurrentDictionary<int, Peer>();
         private readonly ConcurrentQueue<Incoming> inbox = new ConcurrentQueue<Incoming>();
         private TcpListener listener;

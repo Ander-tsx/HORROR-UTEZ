@@ -46,3 +46,21 @@ estado real de validación: las pruebas automáticas pasan, la sensación en jue
   Mientras tanto puedes observar a tus compañeros.
 - **Tienda** al terminar el día (sólo quien escapó): fuerza, energía, alcance, velocidad, salud y salto extra.
 - Los estudiantes miden 1.5 m: el campus y el Rector se sienten más grandes.
+
+## Partida real de dos jugadores (Windows + Mac o dos PCs)
+
+Ejecutables: `Builds/Remake/Release/HORROR-UTEZ-Windows.zip` y `HORROR-UTEZ-Mac.zip`
+(se generan con `Tools/unity/BuildRemake.ps1 -Isolated -Mac`; la carpeta Builds no va a Git).
+
+1. Ambas máquinas en la misma red (mismo Wi-Fi/router).
+2. Anfitrión: abre el juego, escribe tu nombre y pulsa **HOSPEDAR · 5**. La primera vez Windows pregunta por el
+   firewall: permite **redes privadas**. La barra de estado muestra `ANFITRIÓN · <IP>:27777`.
+   No tengas al mismo tiempo el editor de Unity en Play hospedando: ocupa el mismo puerto.
+3. Invitado: escribe la IP del anfitrión en el campo de IP y pulsa **UNIRME**.
+4. Mac (app sin firma de Apple): descomprime, clic derecho en `HORROR-UTEZ.app` → **Abrir** → Abrir. Si macOS
+   dice que está dañada: en Terminal `xattr -cr ~/Downloads/HORROR-UTEZ.app` y vuelve a abrirla. Si el Mac hospeda,
+   acepta "permitir conexiones entrantes".
+5. Por internet: el anfitrión debe redirigir TCP 27777 en su router, o ambos usar una VPN de red local
+   (Tailscale, ZeroTier, Radmin VPN) y unirse con la IP de la VPN.
+
+Para pruebas automáticas en la misma PC usa otro puerto: `-remakePort 27877` en host y cliente.

@@ -230,10 +230,42 @@ namespace HorrorUtez.Remake.Editor
             if(!File.Exists(Scene))Prepare();
             Directory.CreateDirectory("Builds/Remake/Windows");
             BuildReport report=BuildPipeline.BuildPlayer(new BuildPlayerOptions{scenes=new[]{Scene},
-                locationPathName="Builds/Remake/Windows/HORROR-UTEZ.exe",target=BuildTarget.StandaloneWindows64,options=BuildOptions.Development});
+                locationPathName="Builds/Remake/Windows/HORROR-UTEZ.exe",target=BuildTarget.StandaloneWindows64,options=BuildOptions.None});
             if(report.summary.result!=BuildResult.Succeeded)throw new Exception("Windows build: "+report.summary.result);
             Debug.Log("[RemakeBuild] Windows ready. "+report.summary.totalSize+" bytes.");
         }
+        // macOS from Windows: Mono backend (IL2CPP cannot cross-compile to macOS), universal Intel + Apple Silicon.
+        // The app is unsigned; on the Mac it must be allowed once (see Documentation/Remake/PLAY.md).
+        [MenuItem("HORROR-UTEZ/Remake/Build macOS")]
+        public static void Mac()
+        {
+            if(!File.Exists(Scene))Prepare();
+            if(!BuildPipeline.IsBuildTargetSupported(BuildTargetGroup.Standalone,BuildTarget.StandaloneOSX))
+                throw new Exception("Install Mac Build Support (Mono) for this Unity editor.");
+            PlayerSettings.SetScriptingBackend(NamedBuildTarget.Standalone,ScriptingImplementation.Mono2x);
+            PlayerSettings.SetApplicationIdentifier(NamedBuildTarget.Standalone,"mx.utez.horror.remake");
+            // UserBuildSettings lives in the Mac module's editor assembly; set it by reflection so this file compiles without it.
+            Type settings=AppDomain.CurrentDomain.GetAssemblies().Select(a=>a.GetType("UnityEditor.OSXStandalone.UserBuildSettings")).FirstOrDefault(t=>t!=null);
+            var architecture=settings?.GetProperty("architecture");
+            if(architecture!=null)
+            {
+                object universal=Enum.GetValues(architecture.PropertyType).Cast<object>().FirstOrDefault(v=>v.ToString().Contains("ARM64")&&v.ToString().Contains("64")&&v.ToString().Length>5);
+                if(universal!=null)architecture.SetValue(null,universal);
+                Debug.Log("[RemakeBuild] macOS architecture "+architecture.GetValue(null));
+            }
+            // Voice chat asks for the microphone; macOS kills apps that do so without a usage description.
+            foreach(Type nested in typeof(PlayerSettings).GetNestedTypes())
+            {
+                var description=nested.GetProperty("microphoneUsageDescription");
+                if(description!=null&&description.CanWrite)description.SetValue(null,"Chat de voz por proximidad con los demás estudiantes.");
+            }
+            Directory.CreateDirectory("Builds/Remake/Mac");
+            BuildReport report=BuildPipeline.BuildPlayer(new BuildPlayerOptions{scenes=new[]{Scene},
+                locationPathName="Builds/Remake/Mac/HORROR-UTEZ.app",target=BuildTarget.StandaloneOSX,options=BuildOptions.None});
+            if(report.summary.result!=BuildResult.Succeeded)throw new Exception("macOS build: "+report.summary.result);
+            Debug.Log("[RemakeBuild] macOS ready. "+report.summary.totalSize+" bytes.");
+        }
+        public static void PrepareAndBuildAll(){Prepare();Windows();Mac();}
         [MenuItem("HORROR-UTEZ/Remake/Build Android")]
         public static void Android()
         {

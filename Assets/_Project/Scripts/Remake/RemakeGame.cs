@@ -107,7 +107,7 @@ namespace HorrorUtez.Remake
                 deadline = Time.time + 480;
                 foreach (RemakeLoot item in Loot) item.SetAuthority(true);
                 SpawnEnemies(); StartLocal();
-                ConnectionStatus = host ? "ANFITRIÓN · " + RemakeWire.LocalAddresses() + ":27777" : "PARTIDA LOCAL";
+                ConnectionStatus = host ? "ANFITRIÓN · " + RemakeWire.LocalAddresses() + ":" + RemakeWire.Port : "PARTIDA LOCAL";
                 Hud.ShowGame();
                 Debug.Log("[Remake] Started " + ConnectionStatus);
             }
@@ -128,7 +128,7 @@ namespace HorrorUtez.Remake
                 Wire.Dispose(); Wire = null; Authority = true; Online = false; return;
             }
             Wire.Send(0, JsonUtility.ToJson(new WireMessage { type = "hello", name = CleanName(name), day = 1 }));
-            ConnectionStatus = "CLIENTE · " + address + ":27777";
+            ConnectionStatus = "CLIENTE · " + address + ":" + RemakeWire.Port;
         }
         private static string CleanName(string name)
         {
