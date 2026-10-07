@@ -57,3 +57,11 @@ Ejecutar desde la raíz, en este orden (`$B` = Blender de Steam):
   (polo, jeans, tenis, manos con dedos, mochila, reloj) con pesos deterministas por pieza. Usa los mismos 7
   materiales que remapea el `.meta` del FBX. RemakeBuild sincroniza el prefab desempacado con el FBX.
 - Fuentes del HUD: VT323 y Creepster (Google Fonts, OFL) en `Resources/Fonts` con sus licencias.
+# Variantes del estudiante (2026-10-06)
+
+`import_human_base.py` abre el PlayerCharacter.blend original, conserva el rig/cabeza
+y adapta el humano descargado. Genera cinco shape keys en cuerpo y cabeza; exportar
+con `use_mesh_modifiers=False` y habilitar blendshapes en PsxCharacterImporter.
+La cara conserva el atlas original de Erick con proyección frontal corregida.
+`gen_student_skin_faces.py` genera los otros cuatro atlas estilizados y copia el de
+Erick en Resources/Skins. El FBX mantiene su GUID y siete materiales existentes.

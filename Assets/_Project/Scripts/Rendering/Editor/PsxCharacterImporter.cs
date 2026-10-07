@@ -49,7 +49,7 @@ namespace HorrorUtez.Rendering.Editor
             var importer = (ModelImporter)assetImporter;
             importer.globalScale = 1f;
             importer.useFileScale = true;
-            importer.importBlendShapes = false;
+            importer.importBlendShapes = character;
             importer.importCameras = false;
             importer.importLights = false;
             importer.importVisibility = false;

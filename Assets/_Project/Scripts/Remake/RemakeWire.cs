@@ -13,7 +13,7 @@ namespace HorrorUtez.Remake
 {
     [Serializable] public sealed class StudentState
     {
-        public int id, held = -1, health = 100, strength, credits;
+        public int id, held = -1, health = 100, strength, credits, skin = 1;
         // R.E.P.O.-style upgrades bought between days (0..3 each); lost when a student is stranded.
         public int stamina, range, speed, vitality, jumps;
         public int MaxHealth => 100 + vitality * 20;
@@ -35,7 +35,7 @@ namespace HorrorUtez.Remake
     [Serializable] public sealed class WireMessage
     {
         public string type, name, text, audio;
-        public int id, item = -1, day, quota, cargo, phase, seconds, credits;
+        public int id, item = -1, day, quota, cargo, phase, seconds, credits, map, seed, skin = 1;
         public Vector3 position, aim;
         public Quaternion rotation;
         public float yaw, pitch, reach, eye;

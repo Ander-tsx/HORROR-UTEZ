@@ -64,8 +64,59 @@ namespace HorrorUtez.Remake
             while(!game.Started && Time.realtimeSinceStartup<until)yield return null;
             yield return new WaitForSeconds(2);
             string directory=Path.GetFullPath(Path.Combine(Application.dataPath,".."));
+            game.Hud.ShowManual(true);yield return null;
+            Save(game.Player.View,Path.Combine(directory,"tour-manual.png"));game.Hud.ShowManual(false);
+            foreach(var enemy in game.Enemies)enemy.Rest(600);
+            Vector3 skinStage=game.TruckPosition+new Vector3(-4,.05f,-7);
+            game.Students[77]=new StudentState{id=77,name="Erick",position=skinStage,yaw=0,alive=true,torch=false,aim=Vector3.forward};
+            for(int skin=0;skin<5;skin++) {
+                game.Students[77].skin=skin;game.Students[77].name=RemakeSkins.Names[skin];
+                game.Player.Teleport(skinStage+new Vector3(.35f,0,1.8f));game.Player.Aim(190,0);
+                yield return new WaitForSeconds(.65f);
+                if(skin==1) {
+                    var avatar=game.Avatar(77);
+                    foreach(var r in avatar.GetComponentsInChildren<SkinnedMeshRenderer>())if(r.name=="PlayerHead") {
+                        var baked=new Mesh();r.BakeMesh(baked);Vector3 face=Vector3.zero;int count=0;
+                        var verts=baked.vertices;var uv=baked.uv;
+                        for(int v=0;v<verts.Length;v++)if(uv[v].x>.4f&&uv[v].x<.6f&&uv[v].y>.3f&&uv[v].y<.55f){face+=r.transform.TransformPoint(verts[v]);count++;}
+                        if(count>0)Debug.Log("[SkinQA] portrait surface relative to avatar "+avatar.InverseTransformPoint(face/count)+" head "+avatar.InverseTransformPoint(r.bounds.center)+" shapes "+r.sharedMesh.blendShapeCount);
+                        Destroy(baked);
+                    }
+                }
+                Save(game.Player.View,Path.Combine(directory,"tour-skin-"+RemakeSkins.Names[skin]+".png"));
+                if(skin==1) {
+                    game.Player.Teleport(skinStage+new Vector3(0,0,-1.1f));game.Player.Aim(0,0);
+                    yield return new WaitForSeconds(.4f);Save(game.Player.View,Path.Combine(directory,"tour-skin-Erick-opposite.png"));
+                    game.Player.Teleport(skinStage+new Vector3(0,0,1.1f));game.Player.Aim(180,0);
+                    yield return new WaitForSeconds(.4f);Save(game.Player.View,Path.Combine(directory,"tour-skin-Erick-front.png"));
+                }
+            }
+            game.Students[77].skin=1;game.Students[77].eye=.82f;
+            yield return new WaitForSeconds(.7f);Save(game.Player.View,Path.Combine(directory,"tour-skin-crouch.png"));
+            game.Students.Remove(77);
+            Vector3 handStage=game.TruckPosition+new Vector3(-6,.15f,-8);
+            foreach(int index in new[]{0,18,19,25}) {
+                var item=game.Loot[index];item.ResetLoot();item.Body.position=handStage+new Vector3(0,.65f,1.05f);item.Body.rotation=Quaternion.identity;
+                item.Body.linearVelocity=Vector3.zero;item.Body.angularVelocity=Vector3.zero;
+                game.Player.Teleport(handStage);game.Player.Aim(0,12);yield return new WaitForSeconds(.2f);
+                game.Hud.GrabHeld=true;game.Request("grab",index);yield return new WaitForSeconds(.7f);
+                Save(game.Player.View,Path.Combine(directory,"tour-grip-"+index+".png"));
+                game.Hud.GrabHeld=false;game.Request("drop");yield return new WaitForSeconds(.1f);item.ResetLoot();
+            }
+            foreach(var enemy in game.Enemies) {
+                enemy.gameObject.SetActive(true);enemy.DebugPlace(handStage+new Vector3(0,0,5));enemy.transform.forward=Vector3.back;
+                game.Player.Teleport(handStage);game.Player.Aim(0,-5);yield return new WaitForSeconds(.4f);
+                Save(game.Player.View,Path.Combine(directory,"tour-profile-"+enemy.DisplayName.ToLower()+".png"));
+                enemy.ResetEnemy();enemy.Rest(600);
+            }
             game.Students[77]=new StudentState{id=77,name="Compañero",position=game.TruckPosition+new Vector3(-4,0.05f,-7),yaw=200,alive=true,torch=true,aim=Vector3.forward};
             var shots=new System.Collections.Generic.List<(string name,Vector3 at,Vector3 look)>();
+            foreach(string building in new[]{"CDS", "Auditorium"})
+            {
+                var structure=GameObject.Find("UTEZ_Buildings/"+building+"_Structure");
+                if(structure!=null) shots.Add((building.ToLower()+"_interior",structure.transform.TransformPoint(new Vector3(0,1.38f,4)),structure.transform.TransformPoint(new Vector3(3,1,-5))));
+            }
+            shots.Add(("forest",new Vector3(32,1.38f,-8),new Vector3(48,3,-16)));
             Transform interior=null;
             foreach(Transform t in Object.FindObjectsByType<Transform>(FindObjectsInactive.Include))if(t.name=="CECADEC_Interior"){interior=t;break;}
             if(interior!=null)
@@ -133,7 +184,8 @@ namespace HorrorUtez.Remake
         public static void Save(Camera camera,string path)
         {
             if(SystemInfo.graphicsDeviceType==GraphicsDeviceType.Null)return;
-            var canvas=Object.FindAnyObjectByType<Canvas>();
+            var hud=Object.FindAnyObjectByType<RemakeHud>();
+            var canvas=hud!=null?hud.GetComponentInChildren<Canvas>():Object.FindAnyObjectByType<Canvas>();
             RenderMode oldMode=canvas!=null?canvas.renderMode:RenderMode.ScreenSpaceOverlay;
             Camera oldCamera=canvas!=null?canvas.worldCamera:null;
             if(canvas!=null){canvas.renderMode=RenderMode.ScreenSpaceCamera;canvas.worldCamera=camera;canvas.planeDistance=.5f;}

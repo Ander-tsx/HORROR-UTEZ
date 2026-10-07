@@ -81,8 +81,9 @@ namespace HorrorUtez.Remake
             Spots["process_bench"] = World(4.6f, -32.75f, 1.0f);
             Spots["process_bench2"] = World(6.8f, -32.75f, 1.0f);
             Spots["se_lab"] = World(4.6f, -37.1f, .85f);
-            Spots["electrical"] = World(-3.4f, -12.2f, .4f);
-            Spots["nw1_floor"] = World(-8.6f, -1.4f, .45f);
+            // Keep heavy equipment in open aisles, within reach of the walkable room centre.
+            Spots["electrical"] = RoomCentres["Bodega SW"] + Vector3.up * .4f;
+            Spots["nw1_floor"] = RoomCentres["Aula NW1"] + Vector3.up * .45f;
             Spots["storage_shelf"] = World(-8.9f, -29.4f, .55f);
             Spots["back_room"] = World(7.8f, -43.6f, .5f);
             if (Application.isMobilePlatform == false) StaticBatchingUtility.Combine(root.gameObject);
@@ -128,6 +129,7 @@ namespace HorrorUtez.Remake
             if (y < 0 && Physics.Raycast(p + Vector3.up * .45f, Vector3.down, out RaycastHit hit, 2, game.WorldMask, QueryTriggerInteraction.Ignore))
                 p.y = hit.point.y;
             GameObject go = Object.Instantiate(prefab, p, interior.rotation * Quaternion.Euler(0, yaw, 0) * Quaternion.Euler(tilt), root);
+            foreach (Transform child in go.GetComponentsInChildren<Transform>()) child.gameObject.layer = 11;
             if (solid)
                 foreach (MeshFilter filter in go.GetComponentsInChildren<MeshFilter>())
                 {

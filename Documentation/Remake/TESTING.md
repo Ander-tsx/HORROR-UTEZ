@@ -161,3 +161,109 @@ because raised planters/kerbs split the campus for the navigation grid.
   27877: host ALL COMPLETE, client CLIENT COMPLETE, both exit 0.
 - macOS app inspected only (bundle, ad-hoc `_CodeSignature`, bundle id `mx.utez.horror.remake`, min macOS 12,
   `NSMicrophoneUsageDescription`). NOT run on a Mac. Real two-machine play NOT yet tested.
+
+
+### 2026-10-05: authorized modules, campus expansion and fair enemies
+
+Final isolated Windows build: exit 0, no compiler errors. Interactive Unity was not used.
+Final smoke logs (Library, ignored):
+- remake-final-solo-0.log: ALL COMPLETE, exit 0; no cart, 18 loot, 11 rooms reachable,
+  giant route 27 waypoints, walls block nearby sight and melee; visible chase 15.0 -> 6.3 m.
+- remake-final-solo-1/2/3.log: SECTOR COMPLETE 1/2/3, all exit 0. Three module interiors
+  and loot access tested per map, truck quota/extraction and next day pass.
+- remake-final-host.log / remake-final-client.log: ALL COMPLETE / CLIENT COMPLETE,
+  both exit 0 on port 27877. Host authority for client grab/release passes.
+- remake-final-map-host.log / remake-final-map-client.log: SECTOR COMPLETE 2 / CLIENT
+  COMPLETE, both exit 0 on port 27878; host-selected Museum loads for the joining client.
+- remake-final-tour.log: captures of CDS, auditorium, forest and existing campus/enemies.
+  Tour exits 0. CDS, auditorium and forest captures reviewed visually; PSX filter remains active.
+
+Intermediate failures retained in logs and fixed:
+- Initial Arctic modules had closed connector variants; exporter now selects connected variants.
+- Museum Double Column contained non-trigger boxes in metadata RoomVolume descendants,
+  incorrectly sealing the interior; exporter now omits room/valuable volume subtrees.
+- CDS entrance did not match its original hinged doors; rebuilt the runtime shell opening
+  at local x -2.027782, moved office partitions clear and bridged the planter.
+- A .36 m landing step exceeded navigation .35 m limit; .30 m landing fixes connectivity.
+- Floor probes landed on chairs/desks, isolating NW1 navigation; scenery layer 11 is now
+  excluded from floor sampling but included in body clearance. Layer 8 PlayerHead preserved.
+- One diagnostic variable shadowing error and an intermediate cart cleanup compilation
+  failure were corrected before the successful final build.
+
+Unvalidated: actual human difficulty/stealth feel, audio mix, real separate-machine play,
+3-5 peers, weaker-PC forest performance, Android and new macOS output. Imported maps
+are compact static assemblies, not full original generator/gameplay reproduction.
+
+User review after delivery: imported R.E.P.O. maps have missing wall textures and
+invisible walls. Automated navigation/extraction passes did not validate visual fidelity.
+These rendering defects remain unresolved. User prioritizes the UTEZ campus over further
+work on the optional maps.
+
+### 2026-10-05: loot/day/shop/bestiary and downloaded anatomical bases
+
+Cycle implementation: 26 loot entities (five credentials), 16 valuable types, eight new
+props, protocol 3/day seed, four day conditions, five named enemy profiles/menu manual,
+moving truck extraction, additive remake_shop scene, proximity-authoritative purchases.
+
+Intermediate complete solo and loopback logs `remake-cycle-solo/host/client.log` passed.
+An early navigation initialization then regressed CDS reception reachability in
+`remake-cycle-final-host.log`; corrected by keeping deterministic room-centre candidates
+independent of the enemy route. `remake-cycle-acceptance-solo/host/client/tour.log` all
+passed (solo/host ALL COMPLETE, client CLIENT COMPLETE). One launch used incorrectly
+cased opt-in arguments and ran no tests; those diagnostic processes were stopped.
+
+Additional strict access test failed in `remake-cycle-review-solo.log`: original UPS and
+printer positions could not be approached within pickup distance. Both now use open
+room centres. `remake-cycle-access-solo.log` ALL COMPLETE: every active valuable has a
+reachable pickup location, palms contact the held collider, shop scene actually loads,
+remote purchases rejected, physical purchase, exit proximity, next-day changes, survivors
+retain upgrades, scene unload and all-dead retry restores first-day loot. No runtime errors.
+
+User rejected primitive procedural hands; that prototype is superseded by SparrowHawk's
+downloaded CC0 anatomical mesh with original weights/22 deform bones. New complete human
+base also downloaded and retargeted to the existing student avatar. No downloaded rig
+scripts executed. Final hand/body validation results follow once collected. Android,
+Mac regeneration, 3–5 humans, real network and human grip/difficulty review remain pending.
+
+Downloaded-base isolated build passed. `remake-base-final-solo/host/client/tour.log`
+all exited 0: solo/host ALL COMPLETE, client CLIENT COMPLETE (port 27879). The new hand
+check verifies TWO skinned anatomical meshes, >4,000 vertices and 22 bones each; palm
+contact, weight/cooperative lift and the full shop/extraction/day loop pass online.
+Reviewed captures: imported student body in idle animation, first-person grips on laptop,
+camera and trophy, shop strength display, and menu manual. Capture review found excessive
+hand fill lighting and a gap at the preserved photo-head neckline; reduced fill .7 -> .08
+and extended the imported neck to its head joint. These final visual adjustments are
+being rebuilt/rechecked; they do not alter networking or day/shop commands.
+
+`remake-base-polish-solo.log` ALL COMPLETE and `remake-base-polish-tour.log` exit 0.
+Visual review then adjusted the hand fill to .2 (the .08 experiment was too dark), and
+assigned the imported neck skin instead of the sleeve material. These are visual-only
+changes; final isolated output/captures are recorded below.
+
+Final delivery build: isolated Windows exit 0; `remake-base-delivery-tour.log` exits 0.
+Final student/neck and laptop-grip captures reviewed after .2 hand lighting/neck material
+corrections. `git diff --check` clean; authored `utez.unity` unchanged. No additional
+networking/physics changes after the successful solo/loopback runs above. The downloaded
+human is used for the student's body; enemy mesh resculpting from it remains future work.
+# Student skins / soft hands — 2026-10-06
+
+Initial isolated builds compiled, but `remake-soft-solo/host/client.log`,
+`remake-soft-fixed-solo.log` and `remake-soft-export-solo.log` exited 3 at the
+five blendshape assertion. The character asset postprocessor overrode import settings
+to false; fixed it to preserve character blendshapes. FBX export now also disables
+mesh modifier baking, which otherwise discards keys. These failures are retained.
+`remake-soft-rig-solo.log` ALL COMPLETE, exit 0; `remake-soft-rig-tour.log` exit 0.
+New checks: selected local skin, five face resources, body/head each with five shape
+keys and finite anatomical hand deformation under grip. Reviewed all five identities,
+Erick front/back close-ups, crouch and four grips. Fixed idle head sideways orientation
+and portrait UV placement. Menu layout/other face feature placement were polished after
+this run; final isolated/network checks are recorded below once completed.
+Human feel/appearance review and mobile performance remain pending.
+
+FINAL: isolated Windows build exit 0. `remake-skins-final-solo/host/client/tour.log`
+all exit 0; solo/host ALL COMPLETE and client CLIENT COMPLETE on loopback port 27881.
+Host used Cesar (2), client Sebas (4), solo Erick (1); selected skins and client skin
+persistence through shop/day pass. No runtime errors. `remake-skins-final-menu.log`
+exit 0, selector/manual/map buttons visually reviewed without overlap. Final face,
+crouch and grip captures reviewed. `git diff --check` clean after removing Unity's
+generated empty-name trailing space; original authored utez.unity unchanged.

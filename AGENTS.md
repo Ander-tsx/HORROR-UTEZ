@@ -40,10 +40,20 @@ and `Documentation/Remake/TESTING.md`. The user communicates in Spanish.
 
 ## Implementation discipline
 
+- Current campus slice uses protocol 3, 26 loot entities (five credentials), a separate
+  additive `remake_shop.unity` and five named enemy profiles/manual. Detailed first-person
+  hands use SparrowHawk's downloaded CC0 skinned anatomical mesh. Student body uses a
+  downloaded human base retargeted to the existing avatar. Editable originals and source
+  provenance are in `Assets/_Project/Art/Remake/Source~/DOWNLOADED_MODELS.md`. Never execute
+  embedded scripts from downloaded Blender files. Enemy resculpting from this base is pending.
+
 - Do not promise the complete R.E.P.O. migration when delivering a prototype. State
   exactly which systems are implemented, tested, or still missing.
 - R.E.P.O. was decompiled for reference in ignored `Library/Tooling/RepoStudy`.
-  No R.E.P.O. source/assets have been copied into the current playable implementation.
+  No R.E.P.O. C# source has been copied into the playable implementation. On 2026-10-05
+  the user confirmed authorization to reuse its assets/maps; selected static module geometry,
+  textures and props now live in `Assets/_Project/Art/RepoAuthorized`, with provenance.
+  Do not confuse these compact adapted layouts with a complete migration of its procedural generator.
 - Do not touch the running interactive Unity instance to build. Use
   `Tools/unity/BuildRemake.ps1 -Isolated` while the user has the editor open.
 - Unity-generated assets need their `.meta` files committed. Keep generated executables,

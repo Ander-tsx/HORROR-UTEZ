@@ -20,6 +20,8 @@ namespace HorrorUtez.World
     public sealed class WeatherSystem : MonoBehaviour
     {
         public void Follow(Transform target) { player = target; }
+        public float NightLightScale { get; set; } = 1;
+        public float FogScale { get; set; } = 1;
         [Header("Scene references")]
         [SerializeField] private Volume volume;
         [SerializeField] private Light sun;
@@ -156,18 +158,18 @@ namespace HorrorUtez.World
             if (_fog != null)
             {
                 _fog.density.overrideState = true;
-                _fog.density.value = Mathf.Lerp(clearFogDensity, stormFogDensity, t) * style.FogDensityScale;
+                _fog.density.value = Mathf.Lerp(clearFogDensity, stormFogDensity, t) * style.FogDensityScale * FogScale;
                 _fog.fogColor.overrideState = true;
                 _fog.fogColor.value = Color.Lerp(clearFogColor, stormFogColor, t) * style.FogTint;
             }
 
             if (sun != null)
-                sun.intensity = Mathf.Lerp(clearSunIntensity, stormSunIntensity, t) * style.MoonScale;
+                sun.intensity = Mathf.Lerp(clearSunIntensity, stormSunIntensity, t) * style.MoonScale * NightLightScale;
 
             // Surfaces now take their ambient from the spherical-harmonics probe (PsxLit is a
             // full URP lit shader), and editing ambientLight alone does not rebuild that probe
             // at runtime. Write both, so a storm actually darkens the shadowed faces.
-            Color ambient = Color.Lerp(clearAmbient, stormAmbient, t) * style.AmbientScale;
+            Color ambient = Color.Lerp(clearAmbient, stormAmbient, t) * style.AmbientScale * NightLightScale;
             RenderSettings.ambientLight = ambient;
             // Mostly flat, plus a lobe from straight up: faces open to the sky catch more of
             // the night blue than the undersides of eaves, which keeps forms readable.

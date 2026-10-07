@@ -219,7 +219,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -2396,7 +2396,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 82ceb3389fd9948bc823f9a28352cda0, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: HorrorUtez.World::HorrorUtez.World.LampFlicker
   baseIntensity: 120
   humDepth: 0.12
@@ -3354,7 +3354,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -3969,7 +3969,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 82ceb3389fd9948bc823f9a28352cda0, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: HorrorUtez.World::HorrorUtez.World.LampFlicker
   baseIntensity: 120
   humDepth: 0.12
@@ -4672,7 +4672,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -5708,76 +5708,6 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 81321253}
   m_Mesh: {fileID: 7835327133077404167, guid: 14457644e02c94d8fb5a8244f1231ccb, type: 3}
---- !u!1 &82277525
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 82277527}
-  - component: {fileID: 82277526}
-  m_Layer: 0
-  m_Name: "REMAKE \xB7 Turno nocturno"
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &82277526
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 82277525}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 97bdf72ff0a9b3541a44a5b104629f6f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: HorrorUtez.Remake::HorrorUtez.Remake.RemakeGame
-  StudentModel: {fileID: 5495050849326755231, guid: 2a832449a5b34424a876178ff08e3abf, type: 3}
-  TruckModel: {fileID: 919132149155446097, guid: a10830efe65df6c4690133d30d4e6652, type: 3}
-  EnemyModel: {fileID: 919132149155446097, guid: 1d94094bf21f4aa40b976456c0f6bab2, type: 3}
-  GiantModel: {fileID: 919132149155446097, guid: e88355b4f4daf5544a5d4e1aacc43470, type: 3}
-  LootModels:
-  - {fileID: 919132149155446097, guid: 08bb0f68501f52146a592a2b667f5d02, type: 3}
-  - {fileID: 919132149155446097, guid: e56eae58833a194498b269264cb7b29d, type: 3}
-  - {fileID: 919132149155446097, guid: 407cb3bf094bc814ca025734daa6cb78, type: 3}
-  - {fileID: 919132149155446097, guid: 08455470be556984ba44207f982a5d8e, type: 3}
-  - {fileID: 919132149155446097, guid: 2adcc0d4e7c61e7478f7bf3e1d7bc8f0, type: 3}
-  - {fileID: 919132149155446097, guid: c009f13e602a5794dbcf232b2dfac04f, type: 3}
-  - {fileID: 919132149155446097, guid: 3a8a54450ac9fa641a0824a0abb24cc4, type: 3}
-  - {fileID: 919132149155446097, guid: dcd13c42b4176ed43bcb2ce92e5def99, type: 3}
-  - {fileID: 919132149155446097, guid: b9fccff21761ab24aa6919539b0e8ce8, type: 3}
-  ScreenMaterials:
-  - {fileID: 2100000, guid: f4fe12160219b5446a27dace30fd9d2d, type: 2}
-  - {fileID: 2100000, guid: a986820ef9355cd4f845f9f3b7edae15, type: 2}
-  - {fileID: 2100000, guid: 53a394eb9eb832445b3df5b853092455, type: 2}
-  - {fileID: 2100000, guid: 3c8658d653b4e5e48b872223538a89db, type: 2}
-  - {fileID: 2100000, guid: 4b66628734e37ef478de1012d9b438da, type: 2}
-  DoorGlass: {fileID: 2100000, guid: a7c57e8d38d32934883d8202dfb49410, type: 2}
-  DoorMetal: {fileID: 2100000, guid: 1af8a979e15d80e4a92d70ace7c8e322, type: 2}
-  PropMaterial: {fileID: 2100000, guid: e9b2d9939cb21744f8564290ddea6eae, type: 2}
-  SkinMaterial: {fileID: 2100000, guid: 60e7e4d8368701e469a3495309db2a92, type: 2}
-  SleeveMaterial: {fileID: 2100000, guid: 1c0907fb2a5822b4ca96abbfe5551b62, type: 2}
-  SignalMaterial: {fileID: 2100000, guid: 16e7c6778e968bb43bec381e239c9695, type: 2}
---- !u!4 &82277527
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 82277525}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &85719579
 GameObject:
   m_ObjectHideFlags: 0
@@ -6508,7 +6438,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -8047,7 +7977,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -10202,7 +10132,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 82ceb3389fd9948bc823f9a28352cda0, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: HorrorUtez.World::HorrorUtez.World.LampFlicker
   baseIntensity: 120
   humDepth: 0.12
@@ -11413,7 +11343,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -15421,7 +15351,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -17120,7 +17050,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -18163,7 +18093,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -19219,7 +19149,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -19471,7 +19401,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -23837,7 +23767,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 82ceb3389fd9948bc823f9a28352cda0, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: HorrorUtez.World::HorrorUtez.World.LampFlicker
   baseIntensity: 120
   humDepth: 0.12
@@ -23919,7 +23849,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -24531,7 +24461,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -25276,7 +25206,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 82ceb3389fd9948bc823f9a28352cda0, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: HorrorUtez.World::HorrorUtez.World.LampFlicker
   baseIntensity: 120
   humDepth: 0.12
@@ -26684,7 +26614,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -27345,7 +27275,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -29966,7 +29896,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 82ceb3389fd9948bc823f9a28352cda0, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: HorrorUtez.World::HorrorUtez.World.LampFlicker
   baseIntensity: 120
   humDepth: 0.12
@@ -31896,7 +31826,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -32260,7 +32190,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -33650,7 +33580,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 82ceb3389fd9948bc823f9a28352cda0, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: HorrorUtez.World::HorrorUtez.World.LampFlicker
   baseIntensity: 120
   humDepth: 0.12
@@ -34297,7 +34227,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -41421,7 +41351,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 82ceb3389fd9948bc823f9a28352cda0, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: HorrorUtez.World::HorrorUtez.World.LampFlicker
   baseIntensity: 120
   humDepth: 0.12
@@ -43722,7 +43652,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -47520,7 +47450,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -51272,7 +51202,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -51428,7 +51358,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -51765,7 +51695,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -54436,7 +54366,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -55813,7 +55743,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -56289,7 +56219,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -56507,7 +56437,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -57323,7 +57253,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -58865,7 +58795,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -59153,7 +59083,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -59219,7 +59149,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -59741,7 +59671,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -60005,7 +59935,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: b221fcf056ed347ee83cf33e0f3bc2bb, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: HorrorUtez.World::HorrorUtez.World.LightningSystem
   weather: {fileID: 851277525}
   flash: {fileID: 337772300}
@@ -60123,7 +60053,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: aaaa56b972e984bcdb0f4a34170ebea0, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: HorrorUtez.World::HorrorUtez.World.WeatherSystem
   volume: {fileID: 1172490020}
   sun: {fileID: 72842884}
@@ -60514,7 +60444,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 31f0d2d52e466475d8fc754e13aefd9a, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: HorrorUtez.Rendering::HorrorUtez.Rendering.PsxPlanarReflection
   surfaces:
   - {fileID: 590185668}
@@ -62200,7 +62130,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -66059,7 +65989,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -66310,7 +66240,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 82ceb3389fd9948bc823f9a28352cda0, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: HorrorUtez.World::HorrorUtez.World.LampFlicker
   baseIntensity: 120
   humDepth: 0.12
@@ -67600,7 +67530,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -69688,7 +69618,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -70373,7 +70303,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -71625,7 +71555,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -72192,7 +72122,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -75153,7 +75083,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -75799,7 +75729,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -76514,7 +76444,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -77245,7 +77175,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -80065,7 +79995,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -82629,7 +82559,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 3011773318738332261, guid: d0eab1631c0ba48a4916f7e7add8c125, type: 3}
       propertyPath: 'm_Materials.Array.data[1]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 93945009194de4062ae4e7ab0cc31cb6, type: 2}
     - target: {fileID: 3506401013320864162, guid: d0eab1631c0ba48a4916f7e7add8c125, type: 3}
       propertyPath: m_Layer
@@ -84845,7 +84775,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 172515602e62fb746b5d573b38a5fe58, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: Unity.RenderPipelines.Core.Runtime::UnityEngine.Rendering.Volume
   m_IsGlobal: 1
   priority: 0
@@ -84862,7 +84792,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: eb0cabbbff852402ab91dfa97149cac9, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: HorrorUtez.Rendering::HorrorUtez.Rendering.PsxLookBinder
 --- !u!4 &1172490022
 Transform:
@@ -84889,7 +84819,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 9c19151c8dfa84cf0b14e7ed08d28f16, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: HorrorUtez.Rendering::HorrorUtez.Rendering.PsxStyleApplier
 --- !u!1 &1173144772
 GameObject:
@@ -86277,7 +86207,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -86676,7 +86606,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -91694,7 +91624,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -93409,7 +93339,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -93590,7 +93520,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -97386,7 +97316,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 82ceb3389fd9948bc823f9a28352cda0, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: HorrorUtez.World::HorrorUtez.World.LampFlicker
   baseIntensity: 120
   humDepth: 0.12
@@ -98179,7 +98109,7 @@ MonoBehaviour:
   m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 80d3ed09db98f474480dc93d9b187915, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: HorrorUtez.UI::HorrorUtez.UI.PauseMenu
 --- !u!4 &1347235211
 Transform:
@@ -100000,7 +99930,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -100099,7 +100029,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 82ceb3389fd9948bc823f9a28352cda0, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: HorrorUtez.World::HorrorUtez.World.LampFlicker
   baseIntensity: 120
   humDepth: 0.12
@@ -101258,7 +101188,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -101747,7 +101677,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -103916,7 +103846,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -105036,7 +104966,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -107361,7 +107291,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -109413,7 +109343,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -109777,6 +109707,76 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 4660509915727361851, guid: 8cbf75ac2aea743b69bb13082cc355b1, type: 3}
   m_PrefabInstance: {fileID: 1496021333}
   m_PrefabAsset: {fileID: 0}
+--- !u!1 &1496800906
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 1496800908}
+  - component: {fileID: 1496800907}
+  m_Layer: 0
+  m_Name: "REMAKE \xB7 Turno nocturno"
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &1496800907
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1496800906}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 97bdf72ff0a9b3541a44a5b104629f6f, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: HorrorUtez.Remake::HorrorUtez.Remake.RemakeGame
+  StudentModel: {fileID: 5495050849326755231, guid: 2a832449a5b34424a876178ff08e3abf, type: 3}
+  TruckModel: {fileID: 919132149155446097, guid: a10830efe65df6c4690133d30d4e6652, type: 3}
+  EnemyModel: {fileID: 919132149155446097, guid: 1d94094bf21f4aa40b976456c0f6bab2, type: 3}
+  GiantModel: {fileID: 919132149155446097, guid: e88355b4f4daf5544a5d4e1aacc43470, type: 3}
+  LootModels:
+  - {fileID: 919132149155446097, guid: 08bb0f68501f52146a592a2b667f5d02, type: 3}
+  - {fileID: 919132149155446097, guid: e56eae58833a194498b269264cb7b29d, type: 3}
+  - {fileID: 919132149155446097, guid: 407cb3bf094bc814ca025734daa6cb78, type: 3}
+  - {fileID: 919132149155446097, guid: 08455470be556984ba44207f982a5d8e, type: 3}
+  - {fileID: 919132149155446097, guid: 2adcc0d4e7c61e7478f7bf3e1d7bc8f0, type: 3}
+  - {fileID: 919132149155446097, guid: c009f13e602a5794dbcf232b2dfac04f, type: 3}
+  - {fileID: 0}
+  - {fileID: 919132149155446097, guid: dcd13c42b4176ed43bcb2ce92e5def99, type: 3}
+  - {fileID: 919132149155446097, guid: b9fccff21761ab24aa6919539b0e8ce8, type: 3}
+  ScreenMaterials:
+  - {fileID: 2100000, guid: f4fe12160219b5446a27dace30fd9d2d, type: 2}
+  - {fileID: 2100000, guid: a986820ef9355cd4f845f9f3b7edae15, type: 2}
+  - {fileID: 2100000, guid: 53a394eb9eb832445b3df5b853092455, type: 2}
+  - {fileID: 2100000, guid: 3c8658d653b4e5e48b872223538a89db, type: 2}
+  - {fileID: 2100000, guid: 4b66628734e37ef478de1012d9b438da, type: 2}
+  DoorGlass: {fileID: 2100000, guid: a7c57e8d38d32934883d8202dfb49410, type: 2}
+  DoorMetal: {fileID: 2100000, guid: 1af8a979e15d80e4a92d70ace7c8e322, type: 2}
+  PropMaterial: {fileID: 2100000, guid: e9b2d9939cb21744f8564290ddea6eae, type: 2}
+  SkinMaterial: {fileID: 2100000, guid: 60e7e4d8368701e469a3495309db2a92, type: 2}
+  SleeveMaterial: {fileID: 2100000, guid: 1c0907fb2a5822b4ca96abbfe5551b62, type: 2}
+  SignalMaterial: {fileID: 2100000, guid: 16e7c6778e968bb43bec381e239c9695, type: 2}
+--- !u!4 &1496800908
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1496800906}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1497763124
 GameObject:
   m_ObjectHideFlags: 0
@@ -111001,7 +111001,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -115173,7 +115173,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -116475,7 +116475,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -118608,7 +118608,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -120165,7 +120165,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -121536,7 +121536,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -124900,7 +124900,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -130455,7 +130455,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -132745,7 +132745,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -138093,7 +138093,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -138398,7 +138398,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -145030,7 +145030,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -146891,7 +146891,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -147113,7 +147113,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -148582,7 +148582,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -148710,7 +148710,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -150186,7 +150186,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 82ceb3389fd9948bc823f9a28352cda0, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: HorrorUtez.World::HorrorUtez.World.LampFlicker
   baseIntensity: 120
   humDepth: 0.12
@@ -150971,7 +150971,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -151332,7 +151332,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -153389,7 +153389,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 31f0d2d52e466475d8fc754e13aefd9a, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: HorrorUtez.Rendering::HorrorUtez.Rendering.PsxPlanarReflection
   surfaces:
   - {fileID: 1147341653}
@@ -154207,7 +154207,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 194393479933798707, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: 'm_Materials.Array.data[0]'
-      value: 
+      value:
       objectReference: {fileID: 2100000, guid: 2f794469d0274434ba447e492d564afc, type: 2}
     - target: {fileID: 3458921399243012159, guid: 6ecedcc0d71284546bef0b9383ef8402, type: 3}
       propertyPath: m_Name
@@ -156880,4 +156880,4 @@ SceneRoots:
   - {fileID: 42152399}
   - {fileID: 1565395567}
   - {fileID: 1507824009}
-  - {fileID: 82277527}
+  - {fileID: 1496800908}

@@ -16,13 +16,11 @@ namespace HorrorUtez.Remake
         private RemakeGame game;
         private Font font, title;
         private RectTransform root;
-        private GameObject menu, hud, pause, result, touch, deathBanner;
+        private GameObject menu, hud, pause, result, touch, deathBanner, manual;
         private Text cargo, status, clock, vitals, prompt, roster, summary, connection, direction, mic, spectate, energyText, healthText;
         private Image cargoBar, staminaBar, healthBar, crosshair, damage, vignette;
         private InputField nameField, addressField;
         private Button next;
-        private readonly Button[] shop = new Button[6];
-        private readonly Text[] shopText = new Text[6];
         private bool grab, interact, jump;
         private Vector2 look;
         private int lastHealth = -1;
@@ -67,9 +65,36 @@ namespace HorrorUtez.Remake
             Button(pane, "MICRÓFONO", new Vector4(.06f, .21f, .49f, .32f), () => ToggleMic());
             Button(pane, "SALIR", new Vector4(.51f, .21f, .94f, .32f), () => Application.Quit());
             connection = Label(pane, "VERSIÓN EXPERIMENTAL / REMAKE", new Vector4(.06f, .03f, .94f, .18f), 22, Toxic);
-            Label(menu.transform, "EL CAMIÓN DE MUDANZA ES\nLA ÚNICA SALIDA.\n\nNO ROMPAS EL EQUIPO.\nNO TE QUEDES ATRÁS.\nNO MIRES AL RECTOR.",
-                new Vector4(.6f, .44f, .95f, .9f), 34, Bone, TextAnchor.UpperRight);
+            var mapButton = Button(menu.transform, "MAPA: CAMPUS UTEZ", new Vector4(.55f, .15f, .95f, .23f), () => {});
+            game.SelectedSkin=RemakeSkins.Clamp(PlayerPrefs.GetInt("RemakeSkin",1));
+            var skinButton=Button(menu.transform,"ESTUDIANTE: "+RemakeSkins.Names[game.SelectedSkin].ToUpper(),new Vector4(.55f,.34f,.95f,.42f),()=>{});
+            var skinInfo=Label(menu.transform,RemakeSkins.Descriptions[game.SelectedSkin],new Vector4(.55f,.42f,.95f,.47f),22,Toxic);
+            skinButton.onClick.AddListener(()=>{
+                game.SelectedSkin=(game.SelectedSkin+1)%RemakeSkins.Names.Length;PlayerPrefs.SetInt("RemakeSkin",game.SelectedSkin);
+                skinButton.GetComponentInChildren<Text>().text="ESTUDIANTE: "+RemakeSkins.Names[game.SelectedSkin].ToUpper();
+                skinInfo.text=RemakeSkins.Descriptions[game.SelectedSkin];
+            });
+            mapButton.onClick.AddListener(() => {
+                int selected = game.SelectedMap;
+                do { selected = (selected + 1) % RemakeRepoMaps.Names.Length; } while (!RemakeRepoMaps.Available(selected));
+                game.SelectedMap = selected; mapButton.GetComponentInChildren<Text>().text = "MAPA: " + RemakeRepoMaps.Names[selected];
+            });
+            Label(menu.transform, "EL CAMIÓN DE MUDANZA ES\nLA ÚNICA SALIDA.\n\nNO ROMPAS EL EQUIPO.\nNO TE QUEDES ATRÁS.\nCUIDADO CON HUGO.",
+                new Vector4(.6f, .50f, .95f, .9f), 34, Bone, TextAnchor.UpperRight);
             Label(menu.transform, "1-5 ESTUDIANTES · BRAZOS ELÁSTICOS · CAMPUS UTEZ", new Vector4(.55f, .05f, .95f, .1f), 22, Dim, TextAnchor.LowerRight);
+
+            Button(menu.transform,"MANUAL DE AMENAZAS",new Vector4(.55f,.25f,.95f,.33f),()=>manual.SetActive(true));
+            manual=Panel("Manual",root,new Vector4(.08f,.05f,.92f,.95f),Ink);
+            Border(manual.GetComponent<RectTransform>(),Blood);
+            Label(manual.transform,"MANUAL DEL TURNO",new Vector4(.04f,.84f,.96f,.98f),60,Blood,TextAnchor.MiddleLeft,title);
+            Text entry=Label(manual.transform,RemakeBestiary.Entries[0],new Vector4(.07f,.23f,.93f,.72f),33,Bone,TextAnchor.UpperLeft);
+            for(int i=0;i<5;i++) {
+                int page=i;float x=.04f+i*.185f;
+                Button(manual.transform,RemakeBestiary.Names[i].ToUpper(),new Vector4(x,.74f,x+.175f,.83f),()=>entry.text=RemakeBestiary.Entries[page]);
+            }
+            Label(manual.transform,"Todos necesitan visión para golpear. Usa paredes y esquinas.\nEl peso se comparte: pide ayuda para levantar equipo pesado.",new Vector4(.07f,.13f,.93f,.25f),24,Toxic);
+            Button(manual.transform,"VOLVER",new Vector4(.65f,.03f,.95f,.12f),()=>manual.SetActive(false));
+            manual.SetActive(false);
 
             // ---------------------------------------------------------------- gameplay HUD
             hud = Panel("HUD", root, new Vector4(0, 0, 1, 1), Color.clear, false);
@@ -106,22 +131,14 @@ namespace HorrorUtez.Remake
             Button(pause.transform, "VOLVER", new Vector4(.08f, .53f, .92f, .64f), () => TogglePause());
             Button(pause.transform, "MICRÓFONO / PERMISO", new Vector4(.08f, .39f, .92f, .5f), () => ToggleMic());
             Button(pause.transform, "CONTROLES TÁCTILES", new Vector4(.08f, .25f, .92f, .36f), () => { TouchEnabled = !TouchEnabled; touch.SetActive(TouchEnabled); });
-            Button(pause.transform, "MENÚ PRINCIPAL", new Vector4(.08f, .09f, .92f, .2f), () => SceneManager.LoadScene(SceneManager.GetActiveScene().name));
+            Button(pause.transform, "MENÚ PRINCIPAL", new Vector4(.08f, .09f, .92f, .2f), () => SceneManager.LoadScene("remake"));
 
-            // ---------------------------------------------------------------- results + upgrade shop
+            // ---------------------------------------------------------------- failed expedition report
             result = Panel("Resultado", root, new Vector4(.14f, .07f, .86f, .93f), Ink); Border(result.GetComponent<RectTransform>(), Toxic);
             Label(result.transform, "REPORTE DEL TURNO", new Vector4(.04f, .86f, .96f, .98f), 56, Blood, TextAnchor.MiddleLeft, title);
-            summary = Label(result.transform, "", new Vector4(.04f, .5f, .5f, .86f), 25, Bone, TextAnchor.UpperLeft);
-            Label(result.transform, "TIENDA DE LA COOPERATIVA", new Vector4(.53f, .8f, .96f, .86f), 26, Toxic);
-            for (int i = 0; i < shop.Length; i++)
-            {
-                int kind = i;
-                float y = .71f - i * .095f;
-                shop[i] = Button(result.transform, "", new Vector4(.53f, y, .96f, y + .085f), () => game.Request("upgrade", kind));
-                shopText[i] = shop[i].GetComponentInChildren<Text>(); shopText[i].alignment = TextAnchor.MiddleLeft; shopText[i].fontSize = 22;
-            }
+            summary = Label(result.transform, "", new Vector4(.04f, .5f, .96f, .86f), 25, Bone, TextAnchor.UpperLeft);
             next = Button(result.transform, "SIGUIENTE DÍA", new Vector4(.04f, .14f, .5f, .25f), () => game.Request("next"));
-            Button(result.transform, "MENÚ PRINCIPAL", new Vector4(.04f, .03f, .5f, .12f), () => SceneManager.LoadScene(SceneManager.GetActiveScene().name));
+            Button(result.transform, "MENÚ PRINCIPAL", new Vector4(.04f, .03f, .5f, .12f), () => SceneManager.LoadScene("remake"));
             hud.SetActive(false); pause.SetActive(false); result.SetActive(false);
         }
 
@@ -131,6 +148,7 @@ namespace HorrorUtez.Remake
             SetConnectionStatus(game.Voice.Enabled ? "Micrófono activo. Mantén V para hablar; en móvil, botón VOZ." : "Micrófono desactivado.");
         }
         public void SetConnectionStatus(string text) { if (connection != null) connection.text = text; }
+        internal void ShowManual(bool shown) { manual.SetActive(shown); }
         public void ShowGame() { menu.SetActive(false); hud.SetActive(true); pause.SetActive(false); result.SetActive(false); SetCursor(false); }
         public void TogglePause()
         {
@@ -141,31 +159,34 @@ namespace HorrorUtez.Remake
         public void Disconnected(string reason)
         {
             menu.SetActive(false); hud.SetActive(false); result.SetActive(true); summary.text = reason;
-            foreach (Button b in shop) b.interactable = false; next.interactable = false; SetCursor(true);
+            next.interactable = false; SetCursor(true);
         }
 
         private void Update()
         {
             if (game == null || !game.Started || game.Local == null) return;
             StudentState student = game.Local;
-            if (game.Phase == 3 || game.Phase == 4)
+            if (game.Phase == 4)
             {
                 result.SetActive(true); pause.SetActive(false); SetCursor(true);
                 string list = "";
                 foreach (StudentState s in game.Students.Values) list += s.name + "  ·  " + (s.escaped ? "EN EL CAMIÓN" : "SE QUEDÓ · PIERDE MEJORAS") + "\n";
                 summary.text = game.Notice + "\n\n" + list + "\nTU SALDO: $" + student.credits;
-                for (int i = 0; i < shop.Length; i++)
-                {
-                    int level = RemakeGame.UpgradeLevel(student, i), cost = RemakeGame.UpgradeCost(student, i);
-                    string pips = "[" + new string('#', level) + new string('.', 3 - level) + "]";
-                    shopText[i].text = "  " + RemakeGame.UpgradeNames[i] + "  " + pips + "   " + (level >= 3 ? "MÁXIMO" : "$" + cost) + "\n  " + RemakeGame.UpgradeInfo[i];
-                    shop[i].interactable = game.Phase == 3 && student.escaped && level < 3 && student.credits >= cost;
-                }
                 next.interactable = game.Authority;
                 next.GetComponentInChildren<Text>().text = game.Authority ? (game.Phase == 4 ? "REINTENTAR" : "SIGUIENTE DÍA") : "ESPERANDO AL HOST";
                 return;
             }
             if (result.activeSelf) { result.SetActive(false); SetCursor(false); }
+            if(game.Phase==3) {
+                result.SetActive(false);hud.SetActive(true);
+                status.text=game.ShopReady?"COOPERATIVA / SALDO $"+student.credits:"CAMIÓN EN MARCHA / RUMBO A LA COOPERATIVA";
+                clock.text="FIN DEL TURNO "+game.Day;roster.text="";direction.text="";cargo.text="$"+student.credits;
+                int kind=game.ShopReady?RemakeShop.AimedProduct(game.Player.View):-1;
+                prompt.text=kind>=0?RemakeGame.UpgradeNames[kind]+" / NIVEL "+RemakeGame.UpgradeLevel(student,kind)+"\n[E] COMPRAR $"+RemakeGame.UpgradeCost(student,kind)
+                    :game.ShopReady && RemakeShop.NearExit(game.Player.transform.position)?(game.Authority?"[E] SIGUIENTE TURNO":"EL ANFITRIÓN INICIA EL TURNO"):"";
+                if(kind>=0 && !student.escaped)prompt.text="Sin saldo de superviviente: vuelve con vida en el próximo turno.";
+                return;
+            }
             float hp = student.health / (float)Mathf.Max(1, student.MaxHealth);
             healthText.text = "SALUD  " + student.health + " / " + student.MaxHealth;
             healthBar.rectTransform.anchorMax = new Vector2(.05f + .9f * hp, .53f);
@@ -176,7 +197,7 @@ namespace HorrorUtez.Remake
             cargo.text = "$" + game.Cargo + " / $" + game.Quota;
             cargo.color = game.Cargo >= game.Quota ? Amber : Toxic;
             cargoBar.rectTransform.anchorMax = new Vector2(.05f + .9f * Mathf.Clamp01((float)game.Cargo / game.Quota), .24f);
-            clock.text = "DÍA " + game.Day + "  ·  " + (game.Seconds / 60).ToString("00") + ":" + (game.Seconds % 60).ToString("00");
+            clock.text = "DÍA " + game.Day + " / " + game.DayCondition + "  ·  " + (game.Seconds / 60).ToString("00") + ":" + (game.Seconds % 60).ToString("00");
             clock.color = game.Seconds < 60 ? Blood : Bone;
             roster.text = ""; foreach (StudentState s in game.Students.Values) roster.text += s.name + "  " + (s.alive ? s.health + " HP" : "CAÍDO") + "\n";
             vitals.text = "FUERZA " + student.strength + " · ALCANCE " + student.range + " · VEL " + student.speed;
@@ -209,13 +230,13 @@ namespace HorrorUtez.Remake
                 if (holding)
                 {
                     item = game.Loot[student.held];
-                    prompt.text = item.Label + "  ·  " + item.Body.mass + " kg" + (item.Value > 0 ? "  ·  $" + item.Value : "") + "\nRUEDA distancia · R girar · suelta para dejar";
+                    prompt.text = item.Label + "  ·  " + item.Body.mass + " kg" + (item.Value > 0 ? "  ·  $" + item.Value : "") + "\n"+item.Trait+" / RUEDA distancia · R girar · suelta para dejar";
                 }
                 else if (game.InTruck(game.Player.transform.position))
                     prompt.text = game.Cargo >= game.Quota ? "[E] ARRANCAR EL CAMIÓN" : "Acomoda y suelta la carga. Faltan $" + (game.Quota - game.Cargo);
                 else if (item != null)
                     prompt.text = item.Label + (item.Value > 0 ? "  ·  $" + item.Value : "") + "\n" + (item.Kind == RemakeLoot.CredentialKind ? "LLÉVALA AL CAMIÓN PARA REVIVIR"
-                        : item.Kind == RemakeLoot.CartKind ? "AGARRA EL ASA PARA EMPUJAR" : item.Body.mass > 24 ? "PESADO · PIDE AYUDA" : "[CLIC] AGARRAR");
+                        : item.Body.mass > 24 ? "PESADO · PIDE AYUDA" : "[CLIC] AGARRAR");
                 else if (game.Player.AimedDoor != null) prompt.text = "[E] PUERTA";
                 else prompt.text = "";
             }

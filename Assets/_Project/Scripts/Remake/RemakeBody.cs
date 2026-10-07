@@ -92,7 +92,8 @@ namespace HorrorUtez.Remake
             ready = true;
         }
 
-        public void Attack() { attack = 1; }
+        private float attackSpeed = 2.2f;
+        public void Attack(float duration = .45f) { attack = 1; attackSpeed = 1 / Mathf.Max(.1f, duration); }
 
         private Vector3 Ground(Vector3 p)
         {
@@ -185,7 +186,7 @@ namespace HorrorUtez.Remake
                 arm.end.rotation = Quaternion.LookRotation(quad ? fwd : (target - arm.lower.position).normalized + fwd * .3f,
                     quad ? Vector3.up : -fwd);
             }
-            if (attack > 0) attack = Mathf.Max(0, attack - dt * 2.2f);
+            if (attack > 0) attack = Mathf.Max(0, attack - dt * attackSpeed);
         }
 
         private static int Partner(int i) => i switch { 0 => 3, 3 => 0, 1 => 2, _ => 1 };

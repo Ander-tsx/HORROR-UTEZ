@@ -13,7 +13,7 @@ namespace HorrorUtez.Remake
         // Feel modelled on R.E.P.O.'s PlayerController: friction-smoothed
         // velocity, sprint ramp that drains energy, crouch-slide after sprinting, coyote/jump buffers,
         // heavier gravity and weighted landings.
-        public const float MinReach = .75f, MaxReach = 1.9f, BaseEnergy = 40;
+        public const float MinReach = .75f, MaxReach = 1.6f, BaseEnergy = 40;
         // Upgrades (StudentState) raise these caps the same way on the host and the owner.
         public static float ReachCap(StudentState s) => MaxReach + .25f * (s?.range ?? 0);
         public float EnergyMax => BaseEnergy + 10 * (game?.Local?.stamina ?? 0);
@@ -51,6 +51,8 @@ namespace HorrorUtez.Remake
         private RemakeCameraRig rig;
         private Light torch;
         private Animator animator;
+        private Quaternion neutralHeadRotation=Quaternion.identity;
+        private int appliedSkin=-1;
         private Vector3 visualScale = Vector3.one, previous, planar, slideVelocity, aimedPoint, pullPoint;
         private int airJumps, spectateIndex;
         public string Spectating { get; private set; }
@@ -63,6 +65,7 @@ namespace HorrorUtez.Remake
         private StudentState remote;
         private GameObject visual;
         private Transform[,] arms = new Transform[2, 3];
+        private readonly RemakeHandRig[] hands=new RemakeHandRig[2];
         private AudioSource footsteps;
         private AudioClip step, scare;
         private TextMesh nameplate;
@@ -92,7 +95,13 @@ namespace HorrorUtez.Remake
                 visual = Instantiate(game.StudentModel, transform); visual.transform.localScale*=AvatarScale; visualScale=visual.transform.localScale;
                 foreach (MonoBehaviour behaviour in visual.GetComponentsInChildren<MonoBehaviour>()) behaviour.enabled=false;
                 animator = visual.GetComponentInChildren<Animator>();
-                if(animator != null) animator.applyRootMotion=false;
+                if(animator != null) {
+                    animator.applyRootMotion=false;
+                    if(animator.isHuman) {
+                        var head=animator.GetBoneTransform(HumanBodyBones.Head);
+                        if(head!=null)neutralHeadRotation=Quaternion.Inverse(transform.rotation)*head.rotation;
+                    }
+                }
                 var label = new GameObject("Nombre"); label.transform.SetParent(transform,false); label.transform.localPosition=Vector3.up*2;
                 nameplate=label.AddComponent<TextMesh>(); nameplate.anchor=TextAnchor.MiddleCenter; nameplate.fontSize=40;
                 nameplate.characterSize=.026f; nameplate.color=new Color(.7f,.9f,.78f);
@@ -104,35 +113,47 @@ namespace HorrorUtez.Remake
             torch.innerSpotAngle=28; torch.intensity=35; torch.color=new Color(.85f,.95f,1);
             torch.shadows=local && !Application.isMobilePlatform ? LightShadows.Soft : LightShadows.None;
             torch.shadowResolution=UnityEngine.Rendering.LightShadowResolution.Low;
+            torch.cullingMask &= ~(1<<8);
+            if(local) {
+                var fill=new GameObject("Reflejo tenue / manos");fill.transform.SetParent(View.transform,false);
+                var handLight=fill.AddComponent<Light>();handLight.type=LightType.Point;handLight.range=2.5f;
+                handLight.intensity=.2f;handLight.color=new Color(.9f,.83f,.76f);handLight.cullingMask=1<<8;
+                handLight.shadows=LightShadows.None;
+            }
             footsteps = gameObject.AddComponent<AudioSource>(); footsteps.spatialBlend = 1; footsteps.volume=.14f;
             footsteps.rolloffMode=AudioRolloffMode.Linear; footsteps.maxDistance=18;
             step=ProceduralAudio.CreateFootstep(id+106,false);
             for(int side=0;side<2;side++)
             {
-                for(int segment=0;segment<3;segment++)
+                for(int segment=0;segment<2;segment++)
                 {
-                    GameObject handModel=segment==2?Resources.Load<GameObject>("StudentHand"):null;
-                    GameObject limb=handModel!=null?Instantiate(handModel):GameObject.CreatePrimitive(segment==2 ? PrimitiveType.Cube : PrimitiveType.Capsule);
-                    limb.name=segment==2 ? "Mano" : "Brazo elástico";
-                    if(limb.TryGetComponent<Collider>(out var limbCollider))Destroy(limbCollider);
-                    limb.transform.SetParent(transform,false);
-                    foreach(Renderer renderer in limb.GetComponentsInChildren<Renderer>())
-                    {renderer.sharedMaterial=segment==0 ? game.SleeveMaterial : game.SkinMaterial;renderer.shadowCastingMode=ShadowCastingMode.Off;}
+                    var limb=GameObject.CreatePrimitive(PrimitiveType.Capsule);Destroy(limb.GetComponent<Collider>());
+                    limb.name=segment==0?"Manga delgada":"Antebrazo delgado";limb.layer=8;limb.transform.SetParent(transform,false);
+                    limb.GetComponent<Renderer>().sharedMaterial=segment==0?game.SleeveMaterial:game.SkinMaterial;
                     arms[side,segment]=limb.transform;
-                    if(segment==2 && handModel==null)
-                    {
-                        for(int finger=0;finger<4;finger++)
-                        {
-                            var f=GameObject.CreatePrimitive(PrimitiveType.Cube); Destroy(f.GetComponent<Collider>());
-                            f.transform.SetParent(limb.transform,false); f.transform.localPosition=new Vector3((finger-1.5f)*.21f,0,.6f);
-                            f.transform.localScale=new Vector3(.17f,.7f,.55f); f.GetComponent<Renderer>().sharedMaterial=game.SkinMaterial;
-                        }
-                    }
                 }
+                hands[side]=new RemakeHandRig(transform,side,game.SkinMaterial);arms[side,2]=hands[side].Root;
+            }
+            ApplySkin(state?.skin??1);
+        }
+
+        private void ApplySkin(int skin) {
+            skin=RemakeSkins.Clamp(skin);if(appliedSkin==skin)return;appliedSkin=skin;
+            if(visual!=null)RemakeSkins.Apply(visual,skin);
+            for(int side=0;side<2;side++) {
+                hands[side].SetAppearance(RemakeSkins.SkinColor(skin));
+                RemakeSkins.Tint(arms[side,0].GetComponent<Renderer>(),RemakeSkins.ShirtColor(skin));
+                RemakeSkins.Tint(arms[side,1].GetComponent<Renderer>(),RemakeSkins.SkinColor(skin));
             }
         }
+
         public void Apply(StudentState state) { remote=state; }
         public void ToggleTorch() { if(torch!=null)torch.enabled=!torch.enabled; }
+        internal void Carry(Vector3 delta) {
+            if(controller!=null)controller.enabled=false;
+            transform.position+=delta;
+            if(controller!=null)controller.enabled=true;
+        }
         public void Teleport(Vector3 position,float pitch=0)
         {
             if(controller != null)controller.enabled=false;
@@ -150,6 +171,7 @@ namespace HorrorUtez.Remake
         private void Update()
         {
             if(game == null || !game.Started)return;
+            if(torch!=null)torch.intensity=game.Phase==3?1.8f:8;
             if(!LocalPlayer)
             {
                 if(remote == null)return;
@@ -158,8 +180,7 @@ namespace HorrorUtez.Remake
                 if(visual != null)
                 {
                     visual.transform.localRotation=Quaternion.Slerp(visual.transform.localRotation,Quaternion.Euler(!remote.alive ? 85 : remote.tumble ? 75 : 0,0,0),Time.deltaTime*10);
-                    float crouchScale=Mathf.Lerp(visual.transform.localScale.y/visualScale.y,remote.eye<1.2f?.68f:1,Time.deltaTime*10);
-                    visual.transform.localScale=new Vector3(visualScale.x,visualScale.y*crouchScale,visualScale.z);
+                    visual.transform.localScale=visualScale;
                 }
                 torch.enabled=remote.alive && remote.torch; torch.transform.rotation=Quaternion.LookRotation(remote.aim);
                 if(nameplate != null)
@@ -174,13 +195,15 @@ namespace HorrorUtez.Remake
                     Vector3 local=transform.InverseTransformDirection(velocity);
                     animator.SetFloat("MoveX",local.x,.15f,Time.deltaTime); animator.SetFloat("MoveZ",local.z,.15f,Time.deltaTime);
                     animator.SetFloat("Speed",Speed); animator.SetBool("Grounded",true);
+                    animator.SetFloat("Crouch",remote.eye<1.2f?1:0,.18f,Time.deltaTime);
+                    animator.SetFloat("VerticalSpeed",velocity.y,.15f,Time.deltaTime);
                 }
                 if(remote.alive && Speed>1 && Time.time>nextRemoteStep){Footstep(Speed>4?1:.6f);nextRemoteStep=Time.time+(Speed>4?.38f:.55f);}
                 previous=transform.position;return;
             }
             if(game.Local == null)return;
             float dt=Time.deltaTime;
-            if(game.MenuOpen || (game.Phase != 1 && game.Phase != 2))
+            if(game.MenuOpen || !game.CanMove)
             {
                 // Held grip requires the button; menus/phase changes must not leave objects stuck in the hand.
                 if(game.Local.held>=0)game.Request("drop");
@@ -272,7 +295,8 @@ namespace HorrorUtez.Remake
                 previousGrip=grab;
                 if(interact)
                 {
-                    if(game.InTruck(transform.position))game.Request("extract");
+                    if(game.Phase==3)game.ShopInteract();
+                    else if(game.InTruck(transform.position))game.Request("extract");
                     else if(AimedDoor != null)game.Request("door",game.DoorId(AimedDoor));
                 }
             }
@@ -406,7 +430,10 @@ namespace HorrorUtez.Remake
                 Sliding=true; slideTimer=SlideTime; slideVelocity=planar*1.15f; Energy-=2; sprintedTimer=0;
                 rig.Shake(.8f,.2f); Footstep(1); game.Noise(transform.position,12);
             }
+            float burden=0;
+            if(game.Local.held>=0 && game.Local.held<game.Loot.Count)burden=game.Loot[game.Local.held].GripEffort(game.Local);
             float speed=Running ? Mathf.Lerp(WalkSpeed,SprintCap,sprintLerp) : Crouching ? CrouchSpeed : WalkSpeed;
+            speed*=Mathf.Lerp(1,.62f,burden);
             Vector3 target=wish*speed;
             if(Sliding)
             {
@@ -489,6 +516,17 @@ namespace HorrorUtez.Remake
         {
             StudentState state=LocalPlayer ? game.Local : remote;
             if(state == null)return;
+            ApplySkin(state.skin);
+            if(!LocalPlayer && animator!=null && animator.isHuman && state.alive && !state.tumble) {
+                var neck=animator.GetBoneTransform(HumanBodyBones.Neck);
+                var head=animator.GetBoneTransform(HumanBodyBones.Head);
+                if(neck!=null)neck.rotation=Quaternion.AngleAxis(Mathf.Clamp(state.pitch,-35,40)*.25f,transform.right)*neck.rotation;
+                if(head!=null)head.rotation=Quaternion.AngleAxis(Mathf.Clamp(state.pitch,-35,40),transform.right)*transform.rotation*neutralHeadRotation;
+                if(Speed<.2f && state.eye>1.2f && state.held<0) {
+                    RelaxArm(HumanBodyBones.LeftUpperArm,HumanBodyBones.LeftLowerArm,HumanBodyBones.LeftHand,-1);
+                    RelaxArm(HumanBodyBones.RightUpperArm,HumanBodyBones.RightLowerArm,HumanBodyBones.RightHand,1);
+                }
+            }
             bool holding=state.held>=0 && state.held<game.Loot.Count;
             Transform view=LocalPlayer ? View.transform : null;
             for(int side=0;side<2;side++)
@@ -497,26 +535,33 @@ namespace HorrorUtez.Remake
                 for(int segment=0;segment<3;segment++)arms[side,segment].gameObject.SetActive(visible);
                 if(!visible)continue;
                 float sign=side==0?-1:1;
-                Vector3 shoulder=LocalPlayer ? view.TransformPoint(sign*.28f,-.27f,.12f) : transform.TransformPoint(sign*.25f,1.4f,.07f);
-                Vector3 hand=LocalPlayer ? view.TransformPoint(sign*.3f,-.36f,.52f) : transform.TransformPoint(sign*.32f,1,.4f);
-                if(holding)
-                {
-                    // Both hands clamp onto the grab point; the arms stretch to reach it.
-                    RemakeLoot item=game.Loot[state.held];
-                    Vector3 right=Vector3.Cross(Vector3.up,state.aim).normalized;
-                    hand=item.transform.TransformPoint(state.grabLocal)+right*(sign*.09f)-state.aim*.05f;
-                    if((hand-shoulder).magnitude>2.1f)hand=shoulder+(hand-shoulder).normalized*2.1f;
-                }
-                Vector3 elbow=Vector3.Lerp(shoulder,hand,.5f)+Vector3.down*.12f;
-                Limb(arms[side,0],shoulder,elbow,.075f);Limb(arms[side,1],elbow,hand,.06f);
-                arms[side,2].position=hand;arms[side,2].rotation=Quaternion.LookRotation((hand-elbow).normalized);
-                arms[side,2].localScale=new Vector3(sign*.14f,.15f,.18f);
+                Vector3 shoulder=LocalPlayer ? view.TransformPoint(sign*.23f,-.25f,.05f) : transform.TransformPoint(sign*.22f,1.25f,.07f);
+                float sway=Mathf.Sin(Time.time*1.7f+sign*.4f)*.004f;
+                Vector3 idle=LocalPlayer ? view.TransformPoint(sign*.20f,-.32f+sway,.34f) : transform.TransformPoint(sign*.25f,1,.4f);
+                Quaternion rotation=LocalPlayer?view.rotation*Quaternion.Euler(-32,sign*18,-sign*18):transform.rotation;
+                RemakeLoot item=holding?game.Loot[state.held]:null;
+                Vector3 anchor=holding?item.transform.TransformPoint(state.grabLocal):idle;
+                Vector3 right=Vector3.Cross(Vector3.up,state.aim).normalized;
+                if(right.sqrMagnitude<.01f)right=transform.right;
+                float effort=holding?item.GripEffort(state):0;
+                Vector3 hand=hands[side].Pose(idle,rotation,item,anchor,right,state.aim,effort);
+                Vector3 elbow=Vector3.Lerp(shoulder,hand,.5f)+Vector3.down*(.12f+effort*.07f)+right*sign*.035f;
+                Limb(arms[side,0],shoulder,elbow,.036f);Limb(arms[side,1],elbow,hand,.025f);
+
             }
         }
         private static void Limb(Transform limb,Vector3 from,Vector3 to,float radius)
         {
             limb.position=(from+to)*.5f;limb.rotation=Quaternion.FromToRotation(Vector3.up,to-from);
             limb.localScale=new Vector3(radius*2,(to-from).magnitude*.5f,radius*2);
+        }
+        private void RelaxArm(HumanBodyBones upperName,HumanBodyBones lowerName,HumanBodyBones handName,float side) {
+            var upper=animator.GetBoneTransform(upperName);var lower=animator.GetBoneTransform(lowerName);var hand=animator.GetBoneTransform(handName);
+            if(upper==null||lower==null||hand==null)return;
+            Vector3 direction=(Vector3.down+transform.right*side*.12f+transform.forward*.08f).normalized;
+            upper.rotation=Quaternion.FromToRotation(lower.position-upper.position,direction)*upper.rotation;
+            direction=(Vector3.down+transform.forward*.16f+transform.right*side*.04f).normalized;
+            lower.rotation=Quaternion.FromToRotation(hand.position-lower.position,direction)*lower.rotation;
         }
     }
 }

@@ -3,17 +3,19 @@ using UnityEngine;
 
 namespace HorrorUtez.Remake
 {
-    public enum EnemyKind { Caretaker, Giant }
+    public enum EnemyKind { Caretaker, Giant, Ulises, Cristian, Derick }
 
     // Host-simulated enemies with procedural bodies. The caretaker patrols the campus; the giant
     // ("El Rector") walks a fixed route through the whole university, in and out of CECADEC's ground
-    // floor, folding into a crawl under ceilings. Both perceive students by sight (two rays from head
-    // and chest) and by proximity, remember the last known position, hunt periodically and recover
+    // floor, folding into a crawl under ceilings. Sight uses occlusion, a field of view and exposure
+    // time; hearing investigates noises, chase remembers only the last visible position. Both recover
     // from getting stuck. Thrown gear stuns both (R.E.P.O.-style).
     public sealed class RemakeEnemy : MonoBehaviour
     {
         private enum Mode { Patrol, Investigate, Chase }
         public EnemyKind Kind { get; private set; }
+        public string DisplayName => RemakeBestiary.Names[(int)Kind];
+        public bool Recovering => Kind == EnemyKind.Derick && Chasing && (Time.time - burstStarted) % 5f >= 2f;
         public bool Chasing => mode == Mode.Chase && prey != null;
         public bool Stunned => Time.time < stunnedUntil || (!game.Authority && (flags & 2) != 0);
         public int Flags => (Chasing ? 1 : 0) | (Time.time < stunnedUntil ? 2 : 0) | (Time.time < attackUntil ? 4 : 0);
@@ -25,27 +27,30 @@ namespace HorrorUtez.Remake
         private Mode mode;
         private Vector3 spawn, goal, targetPosition, lastKnown, stuckFrom, nudge;
         private float nextThink, nextHit, activeAt, stunnedUntil, attackUntil, pendingHitAt = -1, crawl, nextProbe, targetCrawl;
-        private float lastNoise, nextGroan, lastSeen = -99, pauseUntil, investigateUntil, nextHunt, nextRepath, stuckCheckAt, nudgeUntil;
+        private float lastNoise, nextGroan, lastSeen = -99, pauseUntil, investigateUntil, nextRepath, stuckCheckAt, nudgeUntil;
         private readonly List<Vector3> route = new List<Vector3>();
         private Vector3 routeGoal = new Vector3(9999, 0, 0);
         private int routeIndex, flags, patrolIndex, stuckCount;
         private float stuckDistance;
         private StudentState prey, hitTarget;
+        private readonly Dictionary<int, float> exposure = new Dictionary<int, float>();
         private AudioSource voice;
 
         private bool arrived;
+        private float burstStarted;
         private void Investigate(Vector3 point, float seconds) { mode = Mode.Investigate; goal = point; investigateUntil = Time.time + seconds; arrived = false; }
         private bool Giant => Kind == EnemyKind.Giant;
-        private float StandHeight => Giant ? 3.55f : 1.85f;
+        private float StandHeight => Giant ? 3.55f : Kind==EnemyKind.Caretaker ? 1.55f : Kind==EnemyKind.Ulises ? 2.08f : 1.85f;
         private float CrawlHeight => Giant ? 1.45f : 1.2f;
         private float Reach => Giant ? 2.4f : 1.4f;
-        private float SightRange => Giant ? 34 : 22;
-        private float SenseRange => Giant ? 7 : 4;
-        private float Memory => Giant ? 8 : 5;
+        private float SightRange => Giant ? 24 : Kind == EnemyKind.Caretaker ? 7 : 18;
+        private float SenseRange => Giant ? 2.5f : 2;
+        private float Memory => Giant ? 4 : 3;
 
         public void Setup(RemakeGame owner, EnemyKind kind, Vector3 position, GameObject model)
         {
             game = owner; Kind = kind; spawn = goal = targetPosition = position;
+            gameObject.name = DisplayName;
             transform.position = position;
             body = gameObject.AddComponent<CharacterController>();
             body.radius = .25f; body.height = StandHeight; body.center = Vector3.up * (StandHeight / 2);
@@ -54,10 +59,23 @@ namespace HorrorUtez.Remake
             {
                 Transform instance = Instantiate(model, transform).transform;
                 instance.localPosition = Vector3.zero; instance.localRotation = Quaternion.identity;
+                if(Kind==EnemyKind.Caretaker)instance.localScale=Vector3.one*.82f;
+                if(Kind==EnemyKind.Derick)instance.localScale=new Vector3(.8f,1.05f,.8f);
+                if(Kind==EnemyKind.Cristian)instance.localScale=new Vector3(1.18f,1,1.18f);
+                if(Kind==EnemyKind.Ulises)instance.localScale=new Vector3(.83f,1.12f,.83f);
                 visual = gameObject.AddComponent<RemakeBody>();
                 visual.Setup(instance, game.WorldMask);
                 if (Giant) { visual.StrideScale = 1.7f; visual.StepHeight = .42f; visual.StepTime = .5f; visual.Hunch = 30; visual.Twitch = 1.2f; }
                 else { visual.Hunch = 6; visual.Twitch = .35f; }
+                if (Kind == EnemyKind.Caretaker) { visual.Hunch = 22; visual.Twitch = .7f; }
+                if (Kind == EnemyKind.Derick) { instance.localScale = new Vector3(.8f,1.05f,.8f); visual.Hunch = 18; visual.StepTime = .22f; }
+                if (Kind == EnemyKind.Cristian) instance.localScale = new Vector3(1.18f,1,1.18f);
+                if (Kind == EnemyKind.Ulises) { instance.localScale = new Vector3(.83f,1.12f,.83f); visual.Twitch = 1.5f; }
+                Color tint = Kind == EnemyKind.Ulises ? new Color(.35f,.55f,.7f) : Kind == EnemyKind.Cristian ? new Color(.5f,.18f,.12f) : Kind == EnemyKind.Derick ? new Color(.6f,.53f,.22f) : Color.white;
+                foreach(Renderer renderer in transform.GetComponentsInChildren<Renderer>()) {
+                    var props=new MaterialPropertyBlock(); renderer.GetPropertyBlock(props);props.SetColor("_BaseColor",tint);renderer.SetPropertyBlock(props);
+                }
+                AddIdentity();
                 visual.Planted = (point, loudness) => game.Audio?.Footfall(Kind, point, loudness);
             }
             voice = gameObject.AddComponent<AudioSource>(); voice.spatialBlend = 1; voice.rolloffMode = AudioRolloffMode.Linear;
@@ -66,36 +84,60 @@ namespace HorrorUtez.Remake
             voice.Play();
             WakeIn(Giant ? 25 : 35);
         }
+        private void AddIdentity()
+        {
+            Transform Find(string n){foreach(var t in GetComponentsInChildren<Transform>())if(t.name==n)return t;return transform;}
+            void Part(string n,Transform parent,Vector3 p,Vector3 size,Material material,PrimitiveType shape=PrimitiveType.Cube) {
+                var go=GameObject.CreatePrimitive(shape);Destroy(go.GetComponent<Collider>());go.name=n;go.layer=9;
+                go.transform.SetParent(parent,false);go.transform.localPosition=p;go.transform.localScale=size;go.GetComponent<Renderer>().sharedMaterial=material;
+            }
+            if(Kind==EnemyKind.Ulises) {
+                var head=Find("Head_Joint");Part("Visor oscuro / Ulises",head,new Vector3(0,.04f,.17f),new Vector3(.27f,.11f,.05f),game.SleeveMaterial);
+                Part("Correa visor",head,new Vector3(0,.04f,0),new Vector3(.3f,.025f,.3f),game.PropMaterial);
+            }
+            if(Kind==EnemyKind.Cristian) {
+                var hips=Find("Hips_Joint");Part("Caja de llaves / Cristian",hips,new Vector3(.32f,-.03f,.1f),new Vector3(.26f,.32f,.17f),game.PropMaterial);
+                for(int i=0;i<4;i++)Part("Llave",hips,new Vector3(.28f+i*.035f,-.25f,.18f),new Vector3(.014f,.13f,.025f),game.SignalMaterial);
+            }
+            if(Kind==EnemyKind.Derick) {
+                var chest=Find("Chest_Joint");Part("Dorsal / Derick",chest,new Vector3(0,.03f,.19f),new Vector3(.24f,.18f,.035f),game.SignalMaterial);
+                for(int i=-1;i<=1;i+=2)Part("Rodillera",Find(i<0?"LowerLeg_L":"LowerLeg_R"),new Vector3(0,-.07f,.09f),new Vector3(.15f,.2f,.08f),game.SleeveMaterial);
+            }
+        }
         private void WakeIn(float seconds)
         {
-            activeAt = Time.time + seconds; nextHunt = activeAt + (Giant ? 35 : 9999);
+            activeAt = Time.time + seconds;
             mode = Mode.Patrol; prey = null; route.Clear(); routeGoal = new Vector3(9999, 0, 0);
+            exposure.Clear();
             patrolIndex = NearestWaypoint();
         }
         public void Hear(Vector3 point, float radius)
         {
-            if (Giant) radius *= 1.3f;
+            Vector3 ear = transform.position + Vector3.up * .9f;
+            Vector3 sound = point + Vector3.up * .3f;
+            if (Physics.Linecast(ear, sound, game.WorldMask, QueryTriggerInteraction.Ignore)) radius *= .3f;
+            radius *= Kind == EnemyKind.Caretaker ? 1.6f : Kind == EnemyKind.Ulises ? .65f : 1;
             if (Vector3.Distance(transform.position, point) > radius || Time.time - lastNoise < 0.25f || Stunned || mode == Mode.Chase) return;
             Investigate(point, 10); lastNoise = Time.time; nextThink = 0;
         }
         public void Apply(Vector3 position, int state)
         {
             targetPosition = position; body.enabled = false;
-            if ((state & 4) != 0 && (flags & 4) == 0) { visual?.Attack(); game.Audio?.Play(Giant ? "giant_swipe" : "caretaker_swing", transform.position, .8f); }
+            if ((state & 4) != 0 && (flags & 4) == 0) { visual?.Attack(1.05f); game.Audio?.Play(Giant ? "giant_swipe" : "caretaker_swing", transform.position, .8f); }
             if ((state & 1) != 0 && (flags & 1) == 0 && game.Audio != null) game.Audio.Play(Giant ? "giant_scream" : "caretaker_alert", transform.position + Vector3.up * 2, 1);
             flags = state;
         }
         // Diagnostics (capture tour, smoke): place and wake an enemy immediately.
         public void DebugPlace(Vector3 position) { body.enabled = false; transform.position = position; targetPosition = position; body.enabled = game.Authority; route.Clear(); routeGoal = new Vector3(9999, 0, 0); }
         public void Wake() { activeAt = 0; nextThink = 0; }
-        public void Rest(float seconds) { activeAt = Time.time + seconds; mode = Mode.Patrol; prey = null; route.Clear(); }
+        public void Rest(float seconds) { activeAt = Time.time + seconds; mode = Mode.Patrol; prey = null; route.Clear(); exposure.Clear(); pendingHitAt = -1; }
         public void Stun(float seconds)
         {
             if (!game.Authority || Time.time < stunnedUntil) return;
             stunnedUntil = Time.time + seconds; pendingHitAt = -1; route.Clear();
-            if (prey != null) { Investigate(prey.position, seconds + 6); prey = null; }
+            if (prey != null) { Investigate(lastKnown, seconds + 6); prey = null; }
             game.Audio?.Play(Giant ? "giant_hurt" : "caretaker_hurt", transform.position, 1);
-            game.Tell(Giant ? "¡El Rector quedó aturdido!" : "¡Aturdiste al velador!");
+            game.Tell("¡" + DisplayName + " quedó aturdido!");
         }
         public void ResetEnemy()
         {
@@ -103,6 +145,8 @@ namespace HorrorUtez.Remake
             goal = targetPosition = spawn; stunnedUntil = 0; pendingHitAt = -1;
             WakeIn(Giant ? 25 : 25);
         }
+        public void DaySpawn(Vector3 position) { spawn=position;ResetEnemy(); }
+        internal bool DebugDetects(StudentState student) => Sense()==student;
 
         private void Update()
         {
@@ -117,7 +161,7 @@ namespace HorrorUtez.Remake
                 {
                     if (!s.alive) continue;
                     float d = Vector3.Distance(s.position, transform.position);
-                    if (d < nearest) { nearest = d; look = game.Avatar(s.id); }
+                    if (d < nearest && Visible(transform.position + Vector3.up * 1.1f, s)) { nearest = d; look = game.Avatar(s.id); }
                 }
                 visual.HasLookTarget = look != null && !Stunned;
                 if (look != null) visual.LookTarget = look.position + Vector3.up * 1.2f;
@@ -149,6 +193,7 @@ namespace HorrorUtez.Remake
             {
                 if (mode != Mode.Chase || prey != seen)
                 {
+                    burstStarted = Time.time;
                     if (mode != Mode.Chase && game.Audio != null)
                         game.Audio.Play(Giant ? "giant_scream" : "caretaker_alert", transform.position + Vector3.up * 2, 1);
                     Debug.Log("[Remake] " + name + " persigue a " + seen.name);
@@ -168,19 +213,7 @@ namespace HorrorUtez.Remake
                 if (!arrived && Flat(goal - transform.position) < 1.6f) { arrived = true; pauseUntil = Time.time + Random.Range(1.5f, 3f); }
                 if (Time.time > investigateUntil || (arrived && Time.time > pauseUntil)) { mode = Mode.Patrol; patrolIndex = NearestWaypoint(); }
             }
-            // The giant hunts: every minute or so it heads towards a student even without seeing them.
-            if (Giant && mode == Mode.Patrol && Time.time > nextHunt)
-            {
-                nextHunt = Time.time + Random.Range(55f, 85f);
-                StudentState target = null; int k = 0;
-                foreach (StudentState s in game.Students.Values)
-                    if (s.alive && !game.InTruck(s.position) && Random.Range(0, ++k) == 0) target = s;
-                if (target != null)
-                {
-                    Investigate(target.position + Quaternion.Euler(0, Random.Range(0, 360f), 0) * Vector3.forward * Random.Range(2f, 6f), 25);
-                    Debug.Log("[Remake] " + name + " sale de caza hacia " + target.name);
-                }
-            }
+            // Patrol never receives a hidden student's position. Only sight and noise provide clues.
             if (mode == Mode.Patrol)
             {
                 if (Giant && game.GiantRoute.Count > 0)
@@ -193,7 +226,14 @@ namespace HorrorUtez.Remake
                         if (Random.value < .3f) game.Audio?.Play("giant_groan", transform.position + Vector3.up * 2.5f, .9f);
                     }
                 }
-                else if (Flat(goal - transform.position) < 1.8f) goal = game.PatrolPoint(false);
+                else if (Flat(goal - transform.position) < 1.8f) {
+                    goal = game.PatrolPoint(false);
+                    if(Kind == EnemyKind.Cristian) {
+                        RemakeLoot guarded=null;
+                        foreach(var item in game.Loot) if(item.Value>=900 && item.gameObject.activeSelf && !game.CargoContains(item.Bounds) && (guarded==null || Flat(item.transform.position-transform.position)<Flat(guarded.transform.position-transform.position))) guarded=item;
+                        if(guarded!=null)goal=guarded.Spawn;
+                    }
+                }
             }
         }
 
@@ -206,14 +246,24 @@ namespace HorrorUtez.Remake
             {
                 if (!s.alive || game.InTruck(s.position) || Mathf.Abs(s.position.y - transform.position.y) > 2.5f) continue;
                 float d = Flat(s.position - transform.position);
-                if (d > SightRange || d >= bestDistance) continue;
-                if (d < SenseRange || Visible(head, s) || Visible(chest, s)) { best = s; bestDistance = d; }
+                bool crouched = s.eye < 1.1f;
+                float range = SightRange * (crouched ? .7f : 1);
+                if(Kind == EnemyKind.Ulises) range = s.torch ? 28 : 5;
+                if(Kind == EnemyKind.Cristian && s.held < 0) range *= .45f;
+                Vector3 bearing = s.position - transform.position; bearing.y = 0;
+                bool inView = d < SenseRange || Vector3.Angle(transform.forward, bearing) < (crouched ? 45 : 65);
+                bool clear = d <= range && inView && (Visible(head, s) || Visible(chest, s));
+                exposure.TryGetValue(s.id, out float noticed);
+                noticed = clear ? Mathf.Min(2, noticed + .3f) : Mathf.Max(0, noticed - .6f);
+                exposure[s.id] = noticed;
+                float threshold = crouched ? 1.2f : .6f;
+                if (clear && (d < SenseRange || noticed >= threshold || prey == s) && d < bestDistance) { best = s; bestDistance = d; }
             }
             return best;
         }
         private bool Visible(Vector3 from, StudentState s)
         {
-            foreach (float h in new[] { 1.15f, .45f })
+            foreach (float h in new[] { Mathf.Min(1.15f, s.eye), Mathf.Min(.45f, s.eye * .6f) })
             {
                 Vector3 to = s.position + Vector3.up * h, d = to - from;
                 if (!Physics.Raycast(from, d.normalized, d.magnitude, game.WorldMask, QueryTriggerInteraction.Ignore)) return true;
@@ -225,7 +275,7 @@ namespace HorrorUtez.Remake
         private void Steer()
         {
             if (Time.time < pauseUntil && mode != Mode.Chase) { body.Move(Vector3.down * 3 * Time.deltaTime); return; }
-            Vector3 target = mode == Mode.Chase && prey != null ? (Time.time - lastSeen < 1 ? prey.position : lastKnown) : goal;
+            Vector3 target = mode == Mode.Chase && prey != null ? lastKnown : goal;
             bool direct = mode == Mode.Chase && Flat(target - transform.position) < 16 && Clear(transform.position, target);
             Vector3 destination = target;
             if (!direct)
@@ -244,8 +294,9 @@ namespace HorrorUtez.Remake
             bool attacking = Time.time < attackUntil;
             if (heading.magnitude > .25f && !attacking)
             {
-                float speed = mode == Mode.Chase ? (Giant ? 4.3f : 3.7f) + Mathf.Min(game.Day * .12f, 1.3f)
+                float speed = mode == Mode.Chase ? RemakeBestiary.Chase(Kind) + Mathf.Min((game.Day - 1) * .08f, .45f)
                     : mode == Mode.Investigate ? (Giant ? 2.2f : 2.3f) : (Giant ? 1.6f : 1.65f);
+                if(Recovering) speed = .5f;
                 speed *= Mathf.Lerp(1, .72f, crawl);
                 body.Move((heading.normalized * speed + Vector3.down * 3) * Time.deltaTime);
                 transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(heading), Time.deltaTime * (Giant ? 4 : 7));
@@ -297,23 +348,23 @@ namespace HorrorUtez.Remake
         {
             if (pendingHitAt <= 0 || Time.time < pendingHitAt) return;
             pendingHitAt = -1;
-            if (hitTarget != null && hitTarget.alive && !game.InTruck(hitTarget.position) && Vector3.Distance(hitTarget.position, transform.position) < Reach * 1.25f)
+            if (hitTarget != null && hitTarget.alive && !Stunned && !game.InTruck(hitTarget.position) && Vector3.Distance(hitTarget.position, transform.position) < Reach && Visible(transform.position + Vector3.up * .9f, hitTarget))
             {
                 Vector3 away = hitTarget.position - transform.position; away.y = 0;
                 away = away.sqrMagnitude > .01f ? away.normalized : transform.forward;
-                if (Giant) game.Hurt(hitTarget.id, 45, away * 9 + Vector3.up * 6);
-                else game.Hurt(hitTarget.id, 28, away * 6.5f + Vector3.up * 3.5f);
+                game.Hurt(hitTarget.id, RemakeBestiary.Damage(Kind), away * (Giant ? 6 : 3) + Vector3.up * (Giant ? 3 : 1.5f));
             }
         }
         private void TryAttack()
         {
+            if(Recovering) return;
             if (Time.time < nextHit) return;
             foreach (StudentState student in game.Students.Values)
-                if (student.alive && !game.InTruck(student.position) && Vector3.Distance(student.position, transform.position) < Reach)
+                if (student.alive && !game.InTruck(student.position) && Vector3.Distance(student.position, transform.position) < Reach && Visible(transform.position + Vector3.up * .9f, student))
                 {
-                    hitTarget = student; pendingHitAt = Time.time + (Giant ? .4f : .3f);
-                    attackUntil = Time.time + .5f; nextHit = Time.time + (Giant ? 1.8f : 1.2f);
-                    visual?.Attack();
+                    hitTarget = student; pendingHitAt = Time.time + (Giant ? .75f : .6f);
+                    attackUntil = Time.time + 1.05f; nextHit = Time.time + (Giant ? 3.2f : 2.5f);
+                    visual?.Attack(1.05f);
                     game.Audio?.Play(Giant ? "giant_swipe" : "caretaker_swing", transform.position, .8f);
                     Vector3 face = student.position - transform.position; face.y = 0;
                     if (face.sqrMagnitude > .01f) transform.rotation = Quaternion.LookRotation(face);

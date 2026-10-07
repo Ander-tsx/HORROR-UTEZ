@@ -8,7 +8,7 @@ using UnityEngine.InputSystem;
 
 namespace HorrorUtez.Remake
 {
-    public sealed class RemakeGame : MonoBehaviour
+    public sealed partial class RemakeGame : MonoBehaviour
     {
         public GameObject StudentModel, TruckModel, EnemyModel, GiantModel;
         public GameObject[] LootModels;
@@ -17,6 +17,9 @@ namespace HorrorUtez.Remake
         public readonly List<Vector3> GiantRoute = new List<Vector3>();
         public RemakeAudio Audio { get; private set; }
         public RemakeDressing Dressing { get; private set; }
+        public int Map { get; private set; }
+        public int SelectedMap { get; set; }
+        public int SelectedSkin { get; set; } = 1;
         public Material PropMaterial, SkinMaterial, SleeveMaterial, SignalMaterial;
         public readonly Dictionary<int, StudentState> Students = new Dictionary<int, StudentState>();
         public readonly List<RemakeLoot> Loot = new List<RemakeLoot>();
@@ -71,8 +74,10 @@ namespace HorrorUtez.Remake
             foreach (HingedDoor door in doors) door.Open();
             Audio = gameObject.AddComponent<RemakeAudio>(); Audio.Setup(this);
             Dressing = new RemakeDressing(this); Dressing.Build();
+            RemakeCampusExpansion.Build(this);
             if (Dressing.Ready) { GiantRoute.AddRange(Dressing.GiantRoute()); doorways.AddRange(Dressing.ExtraDoorways); }
-            BuildTruck(); BuildLoot(); BuildStaging();
+            BuildTruck(); BuildLoot(); BuildExtraLoot(); BuildStaging();
+            SessionSeed = Environment.TickCount & int.MaxValue;
             var view = new GameObject("Remake menu camera");
             menuCamera = view.AddComponent<Camera>();
             view.AddComponent<AudioListener>();
@@ -86,7 +91,11 @@ namespace HorrorUtez.Remake
             Hud = gameObject.AddComponent<RemakeHud>(); Hud.Setup(this);
             Cursor.lockState = CursorLockMode.None; Cursor.visible = true;
             string[] args = Environment.GetCommandLineArgs();
+            int mapAt = Array.IndexOf(args, "-remakeMap");
+            if (mapAt >= 0 && mapAt + 1 < args.Length && int.TryParse(args[mapAt + 1], out int selected)) SelectedMap = Mathf.Clamp(selected, 0, 3);
             Automated = args.Contains("-remakeSmoke") || args.Contains("-remakeTour") || args.Contains("-remakeWatchGiant") || args.Contains("-remakeCapture");
+            int skinAt=Array.IndexOf(args,"-remakeSkin");
+            if(skinAt>=0 && skinAt+1<args.Length && int.TryParse(args[skinAt+1],out int skinChoice))SelectedSkin=RemakeSkins.Clamp(skinChoice);
             if (Automated) foreach (UnityEngine.EventSystems.EventSystem es in FindObjectsByType<UnityEngine.EventSystems.EventSystem>(FindObjectsInactive.Include)) es.enabled = false;
             if (args.Contains("-remakeHost")) Begin(true, "Prueba host");
             int joinAt = Array.IndexOf(args, "-remakeJoin");
@@ -102,11 +111,12 @@ namespace HorrorUtez.Remake
             try
             {
                 if (host) { Wire = new RemakeWire(); Wire.Host(); }
+                ConfigureMap(SelectedMap);
                 Online = host; Authority = true; LocalId = 0; Started = true; Phase = 1;
-                Students.Clear(); AddStudent(0, CleanName(name));
+                Students.Clear(); AddStudent(0, CleanName(name));Students[0].skin=RemakeSkins.Clamp(SelectedSkin);
                 deadline = Time.time + 480;
                 foreach (RemakeLoot item in Loot) item.SetAuthority(true);
-                SpawnEnemies(); StartLocal();
+                SpawnEnemies(); ApplyDayLayout(); StartLocal();
                 ConnectionStatus = host ? "ANFITRIÓN · " + RemakeWire.LocalAddresses() + ":" + RemakeWire.Port : "PARTIDA LOCAL";
                 Hud.ShowGame();
                 Debug.Log("[Remake] Started " + ConnectionStatus);
@@ -127,7 +137,7 @@ namespace HorrorUtez.Remake
                 Tell("No se pudo conectar: " + Wire.Error); Hud.SetConnectionStatus(Notice);
                 Wire.Dispose(); Wire = null; Authority = true; Online = false; return;
             }
-            Wire.Send(0, JsonUtility.ToJson(new WireMessage { type = "hello", name = CleanName(name), day = 1 }));
+            Wire.Send(0, JsonUtility.ToJson(new WireMessage { type = "hello", name = CleanName(name), day = 4, skin = RemakeSkins.Clamp(SelectedSkin) }));
             ConnectionStatus = "CLIENTE · " + address + ":" + RemakeWire.Port;
         }
         private static string CleanName(string name)
@@ -156,25 +166,22 @@ namespace HorrorUtez.Remake
         private void SpawnEnemies()
         {
             if (Enemies.Count > 0) return;
-            for (int i = 0; i < 2; i++)
+            for(int i=0;i<5;i++)
             {
-                var go = new GameObject("El velador " + i) { layer = 9 };
-                var enemy = go.AddComponent<RemakeEnemy>();
-                enemy.Setup(this, EnemyKind.Caretaker, new Vector3(i == 0 ? -12 : 22, 0.1f, i == 0 ? 22 : -35), EnemyModel);
-                Enemies.Add(enemy);
+                EnemyKind kind=(EnemyKind)i;
+                Vector3 position=GiantRoute.Count>0 ? GiantRoute[(i*5+6)%GiantRoute.Count] : new Vector3(-12+i*8,.1f,-25);
+                var go=new GameObject(RemakeBestiary.Names[i]){layer=9};
+                var enemy=go.AddComponent<RemakeEnemy>();
+                enemy.Setup(this,kind,position,kind==EnemyKind.Giant?GiantModel:EnemyModel);Enemies.Add(enemy);
+                foreach(Transform t in go.GetComponentsInChildren<Transform>())t.gameObject.layer=9;
             }
-            // El Rector: a giant that wakes after a while at the far end of the campus.
-            var giant = new GameObject("El Rector") { layer = 9 };
-            var rector = giant.AddComponent<RemakeEnemy>();
-            rector.Setup(this, EnemyKind.Giant, GiantRoute.Count > 11 ? GiantRoute[11] + Vector3.up * .1f : new Vector3(26, 0.1f, -58), GiantModel);
-            Enemies.Add(rector);
-            foreach (Transform t in giant.GetComponentsInChildren<Transform>()) t.gameObject.layer = 9;
-            foreach (RemakeEnemy e in Enemies) foreach (Transform t in e.GetComponentsInChildren<Transform>()) t.gameObject.layer = 9;
         }
+
         private void Update()
         {
             PumpNetwork();
             if (!Started) return;
+            TickCycle();
             if (!Automated && Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame) Hud.TogglePause();
             if (Authority && Phase == 1)
             {
@@ -192,7 +199,7 @@ namespace HorrorUtez.Remake
                     else if (Time.time >= finishAt) FinishDay();
                 }
             }
-            if (Player != null && Local != null && Local.alive && (Phase == 1 || Phase == 2))
+            if (Player != null && Local != null && Local.alive && (Phase == 1 || Phase == 2 || (Phase == 3 && ShopReady)))
             {
                 Local.position = Player.transform.position; Local.yaw = Player.Yaw; Local.pitch = Player.Pitch;
                 Local.aim = Player.View.transform.forward; Local.reach = Player.Reach; Local.torch = Player.TorchOn;
@@ -209,7 +216,7 @@ namespace HorrorUtez.Remake
             }
             if (Authority && Online && Time.unscaledTime > nextSnapshot)
             { nextSnapshot = Time.unscaledTime + 0.075f; Wire?.Broadcast(JsonUtility.ToJson(Snapshot())); }
-            SyncAvatars(); UpdatePopups(); Dressing?.Tick();
+            SyncAvatars(); UpdatePopups(); if (Map == 0) Dressing?.Tick();
             if (truckDisplay != null) truckDisplay.text = "$" + Cargo + " / $" + Quota + "\n" + (Cargo >= Quota ? "CARGA LISTA" : "RECUPERAR EQUIPO");
         }
         private void PumpNetwork()
@@ -243,18 +250,20 @@ namespace HorrorUtez.Remake
         {
             if (message.type == "hello")
             {
-                if (message.day != 1 || Phase != 1 || Students.ContainsKey(peer) || Students.Count >= 5)
+                if (message.day != 4 || Phase != 1 || Students.ContainsKey(peer) || Students.Count >= 5)
                 { Wire.Disconnect(peer); return; }
                 AddStudent(peer, CleanName(message.name));
+                Students[peer].skin=RemakeSkins.Clamp(message.skin);
                 Wire.Send(peer, JsonUtility.ToJson(new WireMessage { type = "welcome", id = peer }));
                 Wire.Send(peer, JsonUtility.ToJson(Snapshot())); Tell(Students[peer].name + " llegó al campus."); return;
             }
             if (!Students.TryGetValue(peer, out StudentState state)) return;
-            if (message.type == "pose" && state.alive && (Phase == 1 || Phase == 2))
+            if (message.type == "pose" && state.alive && (Phase == 1 || Phase == 2 || (Phase == 3 && ShopReady)))
             {
                 if (!Finite(message.position) || !Finite(message.aim) || !float.IsFinite(message.yaw) || !float.IsFinite(message.pitch)) return;
                 float elapsed = Mathf.Clamp(Time.time - lastPose[peer], 0.04f, 0.5f);
-                if (Vector3.Distance(state.position, message.position) > 9 * elapsed + 1.5f || Mathf.Abs(message.position.x) > 90 || Mathf.Abs(message.position.z) > 130) return;
+                float maxX=Phase==3 ? 210 : 90;
+                if (Vector3.Distance(state.position, message.position) > 9 * elapsed + 1.5f || Mathf.Abs(message.position.x) > maxX || Mathf.Abs(message.position.z) > 130) return;
                 float moved = Vector3.Distance(state.position, message.position);
                 state.position = message.position; state.aim = message.aim.normalized; state.yaw = message.yaw;
                 state.pitch = Mathf.Clamp(message.pitch, -80, 80); state.reach = Mathf.Clamp(message.reach, RemakeStudent.MinReach, RemakeStudent.ReachCap(state)); state.torch = message.flag;
@@ -282,8 +291,9 @@ namespace HorrorUtez.Remake
             if (message.type == "voice") { Voice.Receive(message.id, message.audio); return; }
             if (message.type == "sound") { Audio?.Play(string.IsNullOrEmpty(message.text) ? "impact_plastic" : message.text, message.position, message.reach > 0 ? message.reach : .5f); return; }
             if (message.type != "state" || message.students == null || message.loot == null) return;
+            if (!Started) ConfigureMap(message.map);
             bool newDay = pendingDay != message.day;
-            pendingDay = Day = message.day; Quota = message.quota; Cargo = message.cargo;
+            pendingDay = message.day; SessionSeed = message.seed; Day = message.day; SpawnEnemies(); ApplyDayLayout(); Quota = message.quota; Cargo = message.cargo;
             Phase = message.phase; Seconds = message.seconds; Notice = message.text;
             bool wasDown = Local != null && !Local.alive;
             Students.Clear(); foreach (StudentState state in message.students) Students[state.id] = state;
@@ -306,7 +316,7 @@ namespace HorrorUtez.Remake
         }
         public WireMessage Snapshot() => new WireMessage
         {
-            type = "state", day = Day, quota = Quota, cargo = Cargo, phase = Phase, seconds = Seconds, text = Notice,
+            type = "state", seed = SessionSeed, map = Map, day = Day, quota = Quota, cargo = Cargo, phase = Phase, seconds = Seconds, text = Notice,
             students = Students.Values.ToArray(),
             loot = Loot.Select(l => new LootState { id = l.Id, value = l.Value, owner = l.Owner, position = l.transform.position, rotation = l.transform.rotation }).ToArray(),
             enemies = Enemies.Select(e => e.transform.position).ToArray(), enemyFlags = Enemies.Select(e => e.Flags).ToArray(), doors = doors.Select(d => d.IsOpen).ToArray()
@@ -320,11 +330,11 @@ namespace HorrorUtez.Remake
         private void Command(int id, WireMessage message)
         {
             if (!Students.TryGetValue(id, out StudentState state)) return;
-            if (message.type == "next" && id == 0 && (Phase == 3 || Phase == 4)) { NextDay(Phase == 4); return; }
-            if (message.type == "upgrade" && Phase == 3 && state.escaped)
+            if (message.type == "next" && id == 0 && ((Phase == 3 && ShopReady && RemakeShop.NearExit(state.position)) || Phase == 4)) { NextDay(Phase == 4); return; }
+            if (message.type == "upgrade" && Phase == 3 && ShopReady && state.escaped)
             {
                 int kind = Mathf.Clamp(message.item, 0, UpgradeNames.Length - 1), cost = UpgradeCost(state, kind);
-                if (UpgradeLevel(state, kind) < 3 && state.credits >= cost)
+                if (RemakeShop.NearProduct(state.position, kind) && UpgradeLevel(state, kind) < 3 && state.credits >= cost)
                 { state.credits -= cost; SetUpgrade(state, kind, UpgradeLevel(state, kind) + 1); Tell(state.name + " compró " + UpgradeNames[kind] + "."); }
                 return;
             }
@@ -373,7 +383,7 @@ namespace HorrorUtez.Remake
             {
                 if (card.Kind != RemakeLoot.CredentialKind || card.Owner < 0 || Students.Values.Any(s => s.held == card.Id)) continue;
                 if (card.Body.linearVelocity.sqrMagnitude > 2.25f || !CargoContains(card.Bounds)) continue;
-                if (Students.TryGetValue(card.Owner, out StudentState state) && !state.alive && (Phase == 1 || Phase == 2))
+                if (Students.TryGetValue(card.Owner, out StudentState state) && !state.alive && (Phase == 1 || Phase == 2 || (Phase == 3 && ShopReady)))
                 {
                     state.alive = true; state.health = Mathf.Max(30, state.MaxHealth / 3); state.position = TruckPosition + new Vector3(0, .9f, -1.6f);
                     lastPose[state.id] = Time.time;
@@ -441,6 +451,7 @@ namespace HorrorUtez.Remake
         }
         private void NextDay(bool restart)
         {
+            if(restart)LayoutDay=0;
             Day = restart ? 1 : Day + 1; Quota = 1600 + Mathf.Min(Day - 1, 5) * 220; Phase = 1;
             deadline = Time.time + 480; Seconds = 480; Cargo = 0;
             foreach (StudentState state in Students.Values)
@@ -449,9 +460,9 @@ namespace HorrorUtez.Remake
                 state.health = state.MaxHealth; state.alive = true; state.escaped = false; state.held = -1;
                 state.position = SpawnPoint(state.id); lastPose[state.id] = Time.time;
             }
-            foreach (RemakeLoot item in Loot) item.ResetLoot();
+            ApplyDayLayout();
+            foreach (RemakeLoot item in Loot) item.SetAuthority(Authority);
             foreach (RemakeLoot card in Loot) if (card.Kind == RemakeLoot.CredentialKind) card.Hide();
-            foreach (RemakeEnemy enemy in Enemies) enemy.ResetEnemy();
             Player.Teleport(Local.position); Hud.ShowGame();
             Tell("Día " + Day + ". Recupera equipo por $" + Quota + ".");
         }
@@ -507,6 +518,7 @@ namespace HorrorUtez.Remake
             new Vector3(22, 0, -30), new Vector3(-20, 0, -40), new Vector3(10, 0, -55) };
         public Vector3 PatrolPoint(bool indoors)
         {
+            if (Map > 0 && GiantRoute.Count > 0) return GiantRoute[UnityEngine.Random.Range(0, GiantRoute.Count)];
             if (indoors && Dressing != null && Dressing.Patrol.Count > 0 && UnityEngine.Random.value < .6f)
                 return Dressing.Patrol[UnityEngine.Random.Range(0, Dressing.Patrol.Count)];
             return OutdoorPatrol[UnityEngine.Random.Range(0, indoors ? OutdoorPatrol.Length : 4)];
@@ -558,6 +570,70 @@ namespace HorrorUtez.Remake
         }
         private void OnDestroy() { Wire?.Dispose(); Time.timeScale = 1; Cursor.lockState = CursorLockMode.None; Cursor.visible = true; }
 
+        private void ConfigureMap(int map)
+        {
+            if (Map == map) return;
+            if (!RemakeRepoMaps.Available(map)) throw new InvalidOperationException("El sector solicitado no está instalado.");
+            // Sessions choose one expedition before spawning students. Returning to menu reloads the scene.
+            var module = RemakeRepoMaps.Build(map, PropMaterial);
+            var campus = GameObject.Find("UTEZ_Buildings"); if (campus != null) campus.SetActive(false);
+            var labs = GameObject.Find("Compuaulas · ambientación"); if (labs != null) labs.SetActive(false);
+            var previousDoors = doors; var previousDoorways = doorways.ToArray(); var previousRoute = GiantRoute.ToArray();
+            try
+            {
+                Map = map; doors = Array.Empty<HingedDoor>(); doorways.Clear(); GiantRoute.Clear(); navigation = null;
+                Physics.SyncTransforms();
+                Renderer[] mapRenderers = module.GetComponentsInChildren<Renderer>();
+                if (mapRenderers.Length == 0) throw new InvalidOperationException("El mapa no contiene geometría.");
+                Bounds bounds = mapRenderers[0].bounds;
+                foreach (Renderer renderer in mapRenderers) bounds.Encapsulate(renderer.bounds);
+                var route = new List<Vector3>();
+                // Keep only accessible ground-floor spots in the imported sector, within the existing navigation grid.
+                for (float z = Mathf.Max(-62, bounds.min.z + 1); z < Mathf.Min(35, bounds.max.z - 1); z += 1.5f)
+                    for (float x = Mathf.Max(-33, bounds.min.x + 1); x < Mathf.Min(33, bounds.max.x - 1); x += 1.5f)
+                    {
+                        Vector3 p = new Vector3(x, .5f, z);
+                        if (!Physics.Raycast(p + Vector3.up, Vector3.down, out RaycastHit ground, 2, WorldMask, QueryTriggerInteraction.Ignore)) continue;
+                        p = ground.point + Vector3.up * .05f;
+                        if (Physics.CheckCapsule(p + Vector3.up * .4f, p + Vector3.up * 1.25f, .35f, WorldMask, QueryTriggerInteraction.Ignore)) continue;
+                        FindPath(SpawnPoint(0), p, route);
+                        if (route.Count > 0 && Vector3.Distance(route[route.Count - 1], p) < 1) GiantRoute.Add(p);
+                    }
+                for (int sector = 0; sector < 3; sector++)
+                {
+                    float centre = (sector - 1) * 17;
+                    int accessible = GiantRoute.Count(p => Mathf.Abs(p.x - centre) < 6.8f && Mathf.Abs(p.z + 32) < 6.8f);
+                    Debug.Log("[Remake] Map " + map + " sector " + sector + " interior spots: " + accessible);
+                    if (accessible == 0)
+                    {
+                        if (Automated)
+                        {
+                            var nav = NavigationMap(null);
+                            System.IO.File.WriteAllBytes(System.IO.Path.Combine(Application.dataPath,"..","sector-nav-"+map+".png"),nav.EncodeToPNG());
+                            Destroy(nav);
+                        }
+                        throw new InvalidOperationException("El sector " + sector + " no tiene entrada navegable desde el camión.");
+                    }
+                }
+                if (GiantRoute.Count == 0) throw new InvalidOperationException("El mapa no tiene entrada navegable desde el camión.");
+                for (int i = 2; i < Loot.Count; i++)
+                {
+                    RemakeLoot loot = Loot[i]; if (loot.Kind == RemakeLoot.CredentialKind) continue;
+                    loot.Spawn = GiantRoute[(i * 7) % GiantRoute.Count] + Vector3.up * (loot.Size.y * .5f + .08f);
+                    loot.ResetLoot();
+                }
+                Debug.Log("[Remake] Sector " + map + " has " + GiantRoute.Count + " reachable ground-floor spots");
+            }
+            catch
+            {
+                module.SetActive(false); Destroy(module); Map = 0; navigation = null;
+                doors = previousDoors; doorways.Clear(); doorways.AddRange(previousDoorways);
+                GiantRoute.Clear(); GiantRoute.AddRange(previousRoute);
+                if (campus != null) campus.SetActive(true); if (labs != null) labs.SetActive(true);
+                Physics.SyncTransforms(); throw;
+            }
+        }
+
         private GameObject Box(string name, Transform parent, Vector3 position, Vector3 size, Material mat, bool collider = true)
         {
             GameObject go = GameObject.CreatePrimitive(PrimitiveType.Cube); go.name = name;
@@ -568,7 +644,7 @@ namespace HorrorUtez.Remake
         }
         private void BuildTruck()
         {
-            var truck = new GameObject("Camión · única extracción"); truck.transform.position = TruckPosition;
+            var truck = new GameObject("Camión · única extracción"); truck.transform.position = TruckPosition; truckRoot=truck.transform;
             if (TruckModel != null)
             {
                 Instantiate(TruckModel, truck.transform);
@@ -604,9 +680,9 @@ namespace HorrorUtez.Remake
         private void BuildLoot()
         {
             string[] names = { "Laptop del laboratorio", "Proyector de aula", "Microscopio", "Estación de trabajo", "UPS de servidores",
-                "Impresora de servicios", "Carrito de mantenimiento", "Osciloscopio", "Switch de red" };
+                "Impresora de servicios", "Tipo reservado", "Osciloscopio", "Switch de red" };
             int[] values = { 420, 560, 780, 840, 1100, 620, 0, 690, 380 };
-            float[] mass = { 4, 8, 12, 24, 36, 18, 16, 7, 3 };
+            float[] mass = { 6, 11, 16, 29, 36, 23, 16, 10, 5 };
             Vector3[] sizes = { new Vector3(.66f,.43f,.46f), new Vector3(.61f,.27f,.5f), new Vector3(.45f,.85f,.39f),
                 new Vector3(.49f,.91f,.59f), new Vector3(.53f,.66f,.61f), new Vector3(.77f,.67f,.78f), new Vector3(1.4f,.53f,1.7f),
                 new Vector3(.44f,.26f,.4f), new Vector3(.46f,.08f,.34f) };
@@ -617,7 +693,7 @@ namespace HorrorUtez.Remake
                 Spot("cc9_teacher", new Vector3(-3,.6f,-15)), Spot("se_lab", new Vector3(2,.6f,-22)), Spot("aula2_teacher", new Vector3(-9,.7f,16)),
                 Spot("aula1_floor", new Vector3(6,.6f,19)), new Vector3(8,.6f,-7), Spot("process_bench2", new Vector3(-6,.6f,-9)),
                 Spot("storage_shelf", new Vector3(3,.6f,12)) };
-            int[] kinds = { 0,1,2,3,4,5,0,2,1,3,6,7,8 };
+            int[] kinds = { 0,1,2,3,4,5,0,2,1,3,8,7,8 };
             for (int i = 0; i < points.Length; i++)
             {
                 int kind = kinds[i]; var go = new GameObject(names[kind]); go.layer = 10;
@@ -633,29 +709,9 @@ namespace HorrorUtez.Remake
                 else Box("Placeholder", go.transform, Vector3.zero, sizes[kind], PropMaterial, false);
                 var box = go.AddComponent<BoxCollider>(); box.size = sizes[kind];
                 if (kind == 0) box.center = new Vector3(0, 0.015f, 0.04f);
-                if (kind == 6)
-                {
-                    box.size = new Vector3(1.3f, 0.12f, 1.65f); box.center = Vector3.zero;
-                    go.transform.position = new Vector3(8, 0.38f, -7);
-                    for (int side = -1; side <= 1; side += 2)
-                    {
-                        var sideGo = new GameObject("Cart side"); sideGo.transform.SetParent(go.transform, false);
-                        sideGo.transform.localPosition = new Vector3(side * .63f, .2f, 0);
-                        var wall = sideGo.AddComponent<BoxCollider>(); wall.size = new Vector3(.08f,.4f,1.65f);
-                    }
-                    var handle = new GameObject("Cart handle"); handle.transform.SetParent(go.transform, false);
-                    handle.transform.localPosition = new Vector3(0,.6f,.77f);
-                    var handleBox = handle.AddComponent<BoxCollider>(); handleBox.size = new Vector3(1.3f,1,.08f);
-                    foreach(float x in new[]{-.63f,.63f}) foreach(float z in new[]{-.59f,.59f})
-                    {
-                        var wheel = new GameObject("Cart wheel collision"); wheel.transform.SetParent(go.transform,false);
-                        wheel.transform.localPosition = new Vector3(x,-.2f,z); wheel.AddComponent<SphereCollider>().radius=.16f;
-                    }
-                }
                 foreach (Transform child in go.GetComponentsInChildren<Transform>()) child.gameObject.layer = 10;
                 var item = go.AddComponent<RemakeLoot>(); item.Setup(this, i, kind, names[kind], values[kind], mass[kind], sizes[kind]);
                 item.SetAuthority(false); Loot.Add(item);
-                if(kind==6)item.Body.constraints=RigidbodyConstraints.FreezeRotationX|RigidbodyConstraints.FreezeRotationZ;
             }
             // One hidden ID card per possible student, created identically on every peer so loot ids stay in sync.
             for (int c = 0; c < 5; c++)
@@ -690,6 +746,7 @@ namespace HorrorUtez.Remake
         private const float Step = 0.4f;
         private static readonly Vector3 Origin = new Vector3(-38, 0, -66);
         private readonly bool[] open = new bool[Width * Height];
+        private readonly float[] groundHeight = new float[Width * Height];
         private readonly int[] parent = new int[Width * Height];
         private readonly Queue<int> queue = new Queue<int>();
         private readonly List<Vector3> raw = new List<Vector3>();
@@ -700,7 +757,11 @@ namespace HorrorUtez.Remake
             for (int z = 0; z < Height; z++) for (int x = 0; x < Width; x++)
             {
                 Vector3 p = Point(x + z * Width);
-                open[x+z*Width] = Physics.Raycast(p+Vector3.up*1.7f,Vector3.down,2,mask,QueryTriggerInteraction.Ignore) &&
+                int index = x + z * Width;
+                // Probe below desk tops so furniture is an obstacle, never mistaken for the floor.
+                bool grounded = Physics.Raycast(p+Vector3.up*.7f,Vector3.down,out RaycastHit ground,1,mask & ~(1<<11),QueryTriggerInteraction.Ignore);
+                if (grounded) { groundHeight[index] = ground.point.y + .05f; p.y = groundHeight[index]; }
+                open[index] = grounded && ground.point.y < .75f &&
                     !Physics.CheckCapsule(p+Vector3.up*.45f,p+Vector3.up*1.55f,.25f,mask,QueryTriggerInteraction.Ignore);
             }
             // A 0.9 m doorway rarely contains a cell centre with full capsule clearance: carve every ground-floor
@@ -715,12 +776,12 @@ namespace HorrorUtez.Remake
                 for (int z = 0; z < Height; z++) for (int x = 0; x < Width; x++)
                 {
                     Vector3 p = Point(x + z * Width);
-                    if (carve.Contains(new Vector3(p.x, .5f, p.z)) && Physics.Raycast(p + Vector3.up * 1.7f, Vector3.down, 2, mask, QueryTriggerInteraction.Ignore))
-                        open[x + z * Width] = true;
+                    if (carve.Contains(new Vector3(p.x, .5f, p.z)) && Physics.Raycast(new Vector3(p.x,.7f,p.z), Vector3.down, out RaycastHit floor, 1, mask & ~(1<<11), QueryTriggerInteraction.Ignore))
+                    { open[x + z * Width] = true; groundHeight[x + z * Width] = floor.point.y + .05f; }
                 }
             }
         }
-        private static Vector3 Point(int i) => Origin + new Vector3(i % Width * Step, 0.08f, i / Width * Step);
+        private Vector3 Point(int i) => Origin + new Vector3(i % Width * Step, groundHeight[i], i / Width * Step);
         // Diagnostics: top-down PNG of open cells, the giant's route (red) and a trail of positions (blue).
         public Texture2D Map(List<Vector3> route, List<Vector3> trail, Vector2 min, Vector2 max, int s, List<Vector3> marks = null)
         {
@@ -772,6 +833,7 @@ namespace HorrorUtez.Remake
                     int nx=cx+dx, nz=cz+dz;
                     if(nx<0||nx>=Width||nz<0||nz>=Height)continue;
                     int n=nx+nz*Width; if(!open[n]||parent[n]>=0)continue;
+                    if(Mathf.Abs(groundHeight[n]-groundHeight[current])>.35f)continue;
                     if(dx!=0&&dz!=0&&(!open[cx+dx+cz*Width]||!open[cx+(cz+dz)*Width]))continue;
                     parent[n]=current;queue.Enqueue(n);
                 }

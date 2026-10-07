@@ -12,6 +12,8 @@ the old first-person player assembly is needed in the new runtime controller.
 | `RemakeLoot.cs` | Grab-point spring with per-student lift cap, camera-relative orientation torque, cart steering and in-cart tally/stabilisation, fragility/durability damage tiers, shattering, replication |
 | `RemakeBody.cs` | Procedural animation for segmented enemy models: joint hierarchy from rest pose, two-bone IK legs/arms, planted stepping (biped or diagonal quadruped), stand-to-crawl posture, head tracking with twitches, arm-swipe attack |
 | `RemakeDressing.cs` | Runtime dressing of CECADEC's ground-floor rooms as wrecked compuaulas (fixed seed, identical on every peer), invisible ceiling slabs, flickering fluorescents (brown out near the giant), indoor loot spots and giant patrol points |
+| `RemakeCampusExpansion.cs` | CDS offices on both floors, auditorium seats/stage, aligned CDS entrance, exterior props and deterministic denser forest |
+| `RemakeRepoMaps.cs` | Authorized static module meshes/textures/colliders reconstructed from JSON; three compact layouts, three original modules per layout, PSX/URP materials |
 | `RemakeAudio.cs` | Adaptive music (explore/chase crossfade), heartbeat, tired breathing, wind, 3D one-shot pool, loops, random distant scares, giant footfall camera shake |
 | `RemakeEnemy.cs` | Caretakers and the giant "El Rector": hearing/vision, grid paths, ceiling probe that folds the giant into a crawl, wind-up attacks with knockback, stuns from thrown gear, replicated flags |
 | `RemakeWire.cs` | TCP listener/client, framing, connection cap, bounded queues, per-peer reader/writer tasks and serializable DTOs |
@@ -24,8 +26,8 @@ the old first-person player assembly is needed in the new runtime controller.
 ## Authority and wire protocol
 
 Host = local student ID 0. Up to four peer sockets are accepted. The host allocates IDs;
-incoming client `id` values do not decide identity. `hello` carries protocol version 1 in
-`day`; the host sends `welcome`, then `state`. Joining is allowed during active salvage.
+incoming client `id` values do not decide identity. `hello` carries protocol version 3 in
+`day` (26 loot IDs and session seed); the host sends `welcome`, then `state`. Joining is allowed during active salvage.
 
 Frames: network-order int32 UTF-8 length, followed by JSON. Maximum 128 KiB. Inbox is
 bounded indirectly by disconnecting abusive senders at 256 queued frames; each writer
@@ -36,7 +38,7 @@ loops. Snapshots every 75 ms, local pose reports every 50 ms.
 Messages: `hello`, `welcome`, `state`, `pose`, `grab`, `drop`, `door`, `extract`, `upgrade`,
 `next`, `voice`, `sound`. Host validates finite/bounded poses, reach, proximity/line of
 sight to loot, door distance, alive/phase status, quota/cargo containment and upgrade funds.
-Snapshots contain students, loot transforms/value, enemy positions, door targets and phase.
+Snapshots contain students, loot transforms/value, enemy positions, door targets, phase and map ID.
 Clients interpolate non-owned visuals and use kinematic loot; only the host applies forces.
 
 This is a trusted personal prototype. It is not authenticated, encrypted or production
@@ -125,3 +127,78 @@ are recorded. Actual-device audio needs manual validation.
 - Audio: `Tools/audio/gen_remake_audio.py` synthesizes 37 WAVs (numpy, offline) into `Resources/Audio`.
 - BuildRemake.ps1 `-Isolated` mirrors Assets into the validation project, then copies generated .meta files,
   materials, the prepared remake.unity and the synced player prefab back (robocopy /XO).
+
+## 2026-10-05 expansion (supersedes historical cart/perception details above)
+
+- Kind 6 remains reserved in the old asset tables, but no cart is spawned or exposed in the HUD.
+  Loot ID 10 now contains a network switch; the 18-item total and credential IDs stay stable.
+- Enemies use occluded head/chest rays even at close range; standing field of view is 130 degrees,
+  crouched 90. Exposure needs .6 s standing / 1.2 s crouched, except at close range or during an
+  established chase. Crouched sight range is reduced. Hearing through walls has 30% range.
+  No periodic hunt receives hidden player coordinates, and chase steering uses lastKnown only.
+- Giant/caretaker sight 24/18 m, memory 4/3 s, initial chase speed 3.25/3 m/s; day scaling caps at +.45.
+  Attacks recheck visibility at windup and impact, allow .75/.6 s to dodge, deal 30/18 HP and have
+  3.2/2.5 s cooldowns. Stuns investigate the last visible position.
+- Navigation samples actual ground height under each cell and rejects steps over .35 m. It stays
+  ground floor only; furniture above .75 m is not accepted as navigable floor.
+- CDS receives office partitions, wrecked PCs, shelves and lighting on both floors; the authored
+  south storefront and generic shell openings are aligned at runtime. Stairwell space is reserved.
+  Auditorium receives stage/seats/control equipment. Forest adds deterministic vegetation by reusing
+  the existing project's meshes, preserving the paved campus. Weather's ambient/moon light runs at 50%.
+- Authorized static R.E.P.O. assets are exported with UnityPy into `Art/RepoAuthorized/Resources/Repo`.
+  Three optional maps use three distinct original modules each. JSON preserves local transform hierarchy,
+  geometry, UV, submeshes and colliders; textures load into copied PSX/Lit materials. Connector variants
+  are opened, animated door leaves omitted. The original C# scripts, Photon, generator and events are
+  not loaded. Four meshes are additionally exported for campus props (three currently placed).
+- Host chooses a map in the menu; snapshots replicate map ID, and the client reconstructs it before
+  applying loot/enemy poses. Both peers must use protocol version 3 / this build. `-remakeMap 1..3`
+  selects maps for diagnostics. Map smoke checks all three module interiors, loot access, extraction,
+  second day and runtime errors. A failed layout setup restores the campus before returning to menu.
+- Isolated builds now synchronize metadata for new runtime scripts and the authorized asset directory.
+
+## 2026-10-05 campus day-cycle pass (in progress)
+
+- `RemakeLootCatalog`: eight additional modelled valuables, kinds 10..17 and IDs 18..25.
+  Existing credential IDs 13..17 stay stable. Total 26 entities, 16 valuable types;
+  two special valuables are absent per day. Impact fragility and durability vary by type.
+- `RemakeDayCycle`: shared session seed, ordered room-center candidates, per-day shuffle,
+  special-loot selection, value variation and enemy activation/spawns. First-day plaza
+  loot is preserved. Four conditions: thicker fog, partial fluorescent outage, all five
+  enemies on duty, reduced moonlight. Campus walls/layout stay authored and unchanged.
+  Use room centers, not the dynamically pruned giant route, as canonical campus loot candidates.
+- `RemakeShop` / `remake_shop.unity`: distinct additive scene at x=200, six physical
+  upgrade displays, counter, lamps and return terminal. Session, students and voice stay
+  in the campus scene. On success, three-second truck/cargo/boarded-student motion precedes
+  loading the shop. Failed/stranded students reset upgrades and currency; all can walk
+  in the safe shop. Only survivors buy; host validates distance, funds and max level.
+  Only the host near the exit starts a new day. Shop unloads and truck resets on return.
+- `RemakeBestiary`: Carsi (hearing, short sight), Hugo (giant), Ulises (flashlight-sensitive
+  sight), Cristian (valuable guard/hauling students), Derick (two-second sprint, three-second
+  recovery). New profiles reuse and modify the segmented caretaker base, with visor,
+  keys, runner details and tint. Five manual pages are available in the main menu.
+- Lift cap reduced to 21 + 7 x strength kg per holder; original item masses increased.
+  Movement and visible effort use mass shared between holders. Reach reduced to 1.6 m.
+- The procedural `RemakeHandRig` prototype was explicitly rejected visually by the user
+  and has been replaced with SparrowHawk's downloaded CC0 anatomical mesh. Resources
+  `AnatomicalHand.json` preserves vertices, UVs, author weights and 22 deform bones;
+  runtime uses SkinnedMeshRenderer, mirrored left-hand base, collider-limited joint curl
+  with fixed bone lengths, effort tremor and imported forearm/arm connection. JSON avoids
+  legacy Blender FBX constraint/axis ambiguity; source .blend/exporter remain editable.
+- Student body now derives from abdoubouam's downloaded human basemesh, remapped to the
+  existing avatar bones; photo head, uniform/accessories and animation avatar preserved.
+  Original complete rigged human and adapted StudentFromHumanBase.blend are retained.
+  Enemy animation still uses existing segmented models; the human source is available
+  for future resculpting. See Source~/DOWNLOADED_MODELS.md for source/licenses/commands.
+- Weather `FogScale` defaults to 1 for original scenes; remake sets day/store scales.
+  Version 4 snapshots carry the session seed and per-student skin; older clients cannot join.
+
+2026-10-06: RemakeSkins supplies five selectable identities (Ander, Erick, Cesar, Juan,
+Sebas), face textures, clothing/hand tint and body/head blendshapes. Selection persists
+in PlayerPrefs, is transmitted in hello and authoritative StudentState, and survives
+day transitions. Erick preserves the original portrait with a slimmer body; the other
+faces are original stylized identities, not likenesses from photographs.
+Remote idle arms relax through humanoid bones; crouch uses the animator rather than
+scaling the body. Head orientation retains the rig's neutral frame and follows aim.
+Downloaded first-person hands use smoothed weights and CPU dual quaternion skinning,
+gradual collider-aware finger curl and reversible visual compression. This is visual
+deformation, not a physical soft-body solver. Mobile performance remains untested.

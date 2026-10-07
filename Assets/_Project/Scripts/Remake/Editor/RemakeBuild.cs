@@ -58,6 +58,7 @@ namespace HorrorUtez.Remake.Editor
     public static class RemakeBuild
     {
         public const string Scene="Assets/_Project/Scenes/remake.unity";
+        public const string ShopScene="Assets/_Project/Scenes/remake_shop.unity";
         private const string Art="Assets/_Project/Art/Remake/";
         [MenuItem("HORROR-UTEZ/Remake/Open playable scene")]
         public static void OpenPlayable()
@@ -134,7 +135,7 @@ namespace HorrorUtez.Remake.Editor
             var root=new GameObject("REMAKE · Turno nocturno");var game=root.AddComponent<RemakeGame>();
             game.StudentModel=AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Project/Prefabs/Player/PlayerCharacter.prefab");
             game.TruckModel=Model("Truck");game.EnemyModel=Model("Caretaker");game.GiantModel=Model("Giant");
-            game.LootModels=new[]{Model("Laptop"),Model("Projector"),Model("Microscope"),Model("Workstation"),Model("UPS"),Model("Printer"),Model("Cart"),Model("Oscilloscope"),Model("Router")};
+            game.LootModels=new[]{Model("Laptop"),Model("Projector"),Model("Microscope"),Model("Workstation"),Model("UPS"),Model("Printer"),null,Model("Oscilloscope"),Model("Router")};
             game.DoorGlass=Mat("Door_Glass");game.DoorMetal=Mat("Metal_Brushed");
             game.ScreenMaterials=new[]{"Screen_Dead","Screen_Cracked","Screen_BSOD","Screen_Terminal","Screen_Static"}.Select(n=>AssetDatabase.LoadAssetAtPath<Material>(Art+"Materials/"+n+".mat")).ToArray();
             Material Mat(string n)=>AssetDatabase.LoadAssetAtPath<Material>(Art+"Materials/"+n+".mat");
@@ -166,7 +167,11 @@ namespace HorrorUtez.Remake.Editor
             PlayerSettings.defaultInterfaceOrientation=UIOrientation.LandscapeLeft;
             PlayerSettings.SetScriptingBackend(NamedBuildTarget.Android,ScriptingImplementation.IL2CPP);
             EditorSceneManager.MarkSceneDirty(scene);EditorSceneManager.SaveScene(scene);
-            EditorBuildSettings.scenes=new[]{new EditorBuildSettingsScene(Scene,true)};
+            var shopScene=EditorSceneManager.NewScene(NewSceneSetup.EmptyScene,NewSceneMode.Additive);
+            var shopRoot=new GameObject("Cooperativa UTEZ");shopRoot.AddComponent<RemakeShop>();
+            UnityEngine.SceneManagement.SceneManager.MoveGameObjectToScene(shopRoot,shopScene);
+            EditorSceneManager.SaveScene(shopScene,ShopScene);EditorSceneManager.CloseScene(shopScene,true);
+            EditorBuildSettings.scenes=new[]{new EditorBuildSettingsScene(Scene,true),new EditorBuildSettingsScene(ShopScene,true)};
             AssetDatabase.SaveAssets();
             Debug.Log("[RemakeBuild] Scene ready: "+Scene+". URP + Windows + Android controls.");
             foreach(string name in new[]{"Truck","Laptop","Caretaker","Giant"})
@@ -188,6 +193,8 @@ namespace HorrorUtez.Remake.Editor
         {
             const string prefabPath="Assets/_Project/Prefabs/Player/PlayerCharacter.prefab";
             const string fbxPath="Assets/_Project/Art/Characters/Player/PlayerCharacter.fbx";
+            var importer=(ModelImporter)AssetImporter.GetAtPath(fbxPath);
+            if(!importer.importBlendShapes){importer.importBlendShapes=true;importer.SaveAndReimport();}
             AssetDatabase.ImportAsset(fbxPath,ImportAssetOptions.ForceUpdate);
             var fbx=AssetDatabase.LoadAssetAtPath<GameObject>(fbxPath);
             if(fbx==null||!File.Exists(prefabPath)){Debug.LogWarning("[RemakeBuild] Player prefab or FBX missing.");return;}
@@ -229,7 +236,7 @@ namespace HorrorUtez.Remake.Editor
         {
             if(!File.Exists(Scene))Prepare();
             Directory.CreateDirectory("Builds/Remake/Windows");
-            BuildReport report=BuildPipeline.BuildPlayer(new BuildPlayerOptions{scenes=new[]{Scene},
+            BuildReport report=BuildPipeline.BuildPlayer(new BuildPlayerOptions{scenes=new[]{Scene,ShopScene},
                 locationPathName="Builds/Remake/Windows/HORROR-UTEZ.exe",target=BuildTarget.StandaloneWindows64,options=BuildOptions.None});
             if(report.summary.result!=BuildResult.Succeeded)throw new Exception("Windows build: "+report.summary.result);
             Debug.Log("[RemakeBuild] Windows ready. "+report.summary.totalSize+" bytes.");
@@ -260,7 +267,7 @@ namespace HorrorUtez.Remake.Editor
                 if(description!=null&&description.CanWrite)description.SetValue(null,"Chat de voz por proximidad con los demás estudiantes.");
             }
             Directory.CreateDirectory("Builds/Remake/Mac");
-            BuildReport report=BuildPipeline.BuildPlayer(new BuildPlayerOptions{scenes=new[]{Scene},
+            BuildReport report=BuildPipeline.BuildPlayer(new BuildPlayerOptions{scenes=new[]{Scene,ShopScene},
                 locationPathName="Builds/Remake/Mac/HORROR-UTEZ.app",target=BuildTarget.StandaloneOSX,options=BuildOptions.None});
             if(report.summary.result!=BuildResult.Succeeded)throw new Exception("macOS build: "+report.summary.result);
             Debug.Log("[RemakeBuild] macOS ready. "+report.summary.totalSize+" bytes.");
@@ -271,7 +278,7 @@ namespace HorrorUtez.Remake.Editor
         {
             if(!BuildPipeline.IsBuildTargetSupported(BuildTargetGroup.Android,BuildTarget.Android))throw new Exception("Install Android Build Support (SDK, NDK, OpenJDK) for this Unity editor.");
             Directory.CreateDirectory("Builds/Remake/Android");
-            BuildReport report=BuildPipeline.BuildPlayer(new BuildPlayerOptions{scenes=new[]{Scene},
+            BuildReport report=BuildPipeline.BuildPlayer(new BuildPlayerOptions{scenes=new[]{Scene,ShopScene},
                 locationPathName="Builds/Remake/Android/HORROR-UTEZ.apk",target=BuildTarget.Android,options=BuildOptions.Development});
             if(report.summary.result!=BuildResult.Succeeded)throw new Exception("Android build: "+report.summary.result);
         }

@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-using System.Linq;
 using UnityEngine;
 
 namespace HorrorUtez.Remake
@@ -19,11 +17,14 @@ namespace HorrorUtez.Remake
         public const int CartKind = 6, CredentialKind = 9;
         public int Owner { get; private set; } = -1;
         private static readonly Vector3 Hidden = new Vector3(0, -200, 0);
-        public int CartHaul { get; private set; }
-        private readonly List<RemakeLoot> riding = new List<RemakeLoot>();
-        private TextMesh cartDisplay;
-        private float cartScanAt;
         private bool grabbedOnce;
+        public string Trait => Kind >= 10 ? RemakeLootCatalog.Traits[Kind-10] : Kind == CredentialKind ? "Reanimación" : Body.mass >= 25 ? "Pesado / cooperativo" : "Equipo frágil";
+        public float GripEffort(StudentState student) {
+            int holders=0;foreach(var s in game.Students.Values)if(s.alive && s.held==Id)holders++;
+            return Mathf.Clamp01(Body.mass/(Mathf.Max(1,holders)*(21+student.strength*7f)));
+        }
+        private float Fragile => Kind >= 10 ? (Kind == 12 ? 100 : Kind == 11 || Kind == 16 ? 25 : 70) : Fragility[Kind];
+        private float Durable => Kind >= 10 ? (Kind == 11 || Kind == 16 ? 85 : Kind == 12 ? 25 : 65) : Durability[Kind];
         public Bounds Bounds => GetComponent<BoxCollider>().bounds;
 
         public void Setup(RemakeGame owner, int id, int kind, string label, int value, float mass, Vector3 size)
@@ -38,13 +39,6 @@ namespace HorrorUtez.Remake
             Spawn = transform.position; SpawnRotation = transform.rotation;
             targetPosition = Spawn; targetRotation = SpawnRotation;
             safeUntil = Time.time + 3;
-            if (kind == CartKind)
-            {
-                var display = new GameObject("Valor en carrito"); display.transform.SetParent(transform, false);
-                display.transform.localPosition = new Vector3(0, 1.18f, 0.77f); display.transform.localRotation = Quaternion.Euler(0, 180, 0);
-                cartDisplay = display.AddComponent<TextMesh>(); cartDisplay.text = "$0"; cartDisplay.fontSize = 60; cartDisplay.characterSize = 0.018f;
-                cartDisplay.anchor = TextAnchor.MiddleCenter; cartDisplay.color = new Color(0.68f, 1, 0.79f);
-            }
         }
         public void SetAuthority(bool authority)
         {
@@ -84,11 +78,6 @@ namespace HorrorUtez.Remake
             foreach (StudentState student in game.Students.Values)
             {
                 if (!student.alive || student.held != Id) continue;
-                if (Kind == CartKind)
-                {
-                    if (!held) Steer(student);
-                    held = true; continue;
-                }
                 Quaternion cam = Quaternion.Euler(student.pitch, student.yaw, 0);
                 Vector3 eyes = student.position + Vector3.up * student.eye;
                 Vector3 aim = cam * Vector3.forward;
@@ -99,7 +88,7 @@ namespace HorrorUtez.Remake
                 Vector3 grabPoint = transform.TransformPoint(student.grabLocal);
                 if (Vector3.Distance(puller, grabPoint) > 3.2f) { student.held = -1; continue; }
                 held = true;
-                float lift = 9.81f * 1.6f * (16 + student.strength * 6) / Mathf.Max(Body.mass, 0.5f);
+                float lift = 9.81f * 1.4f * (15 + student.strength * 5) / Mathf.Max(Body.mass, 0.5f);
                 Vector3 accel = (puller - grabPoint) * 85 - Body.GetPointVelocity(grabPoint) * 13;
                 Body.AddForceAtPosition(Vector3.ClampMagnitude(accel, lift) * Body.mass, grabPoint);
                 Quaternion delta = cam * student.hold * Quaternion.Inverse(Body.rotation);
@@ -114,50 +103,11 @@ namespace HorrorUtez.Remake
             if (held) Body.angularVelocity *= 0.92f;
             // Like R.E.P.O., the first pickup is briefly indestructible so yanking gear off a shelf is forgiving.
             if (held && !grabbedOnce) { grabbedOnce = true; safeUntil = Mathf.Max(safeUntil, Time.time + 0.5f); }
-            // Cargo riding in the cart is eased towards the cart's motion so turns do not fling it out.
-            if (Kind == CartKind)
-                foreach (RemakeLoot item in riding)
-                    if (item != null && !game.Students.Values.Any(s => s.held == item.Id))
-                    {
-                        Vector3 v = item.Body.linearVelocity, cart = Body.linearVelocity;
-                        item.Body.linearVelocity = new Vector3(Mathf.Lerp(v.x, cart.x, 0.2f), v.y, Mathf.Lerp(v.z, cart.z, 0.2f));
-                    }
             if (Body.position.y < -8)
             {
                 Body.position = Spawn; Body.linearVelocity = Vector3.zero; Body.angularVelocity = Vector3.zero;
                 safeUntil = Time.time + 2;
             }
-        }
-        // Cart handling follows R.E.P.O.'s PhysGrabCart: the handle is not a spring;
-        // the cart's velocity is steered to a point ahead of the student and it yaws so the handle faces them.
-        private void Steer(StudentState student)
-        {
-            Vector3 forward = Quaternion.Euler(0, student.yaw, 0) * Vector3.forward;
-            Vector3 velocity = Body.linearVelocity, flat = new Vector3(velocity.x, 0, velocity.z);
-            float distance = Mathf.Lerp(1.9f, 2.5f, Mathf.Clamp01(Vector3.Dot(flat, forward) / 5f));
-            Vector3 offset = student.position + forward * distance - Body.position; offset.y = 0;
-            if (offset.magnitude > 4.5f) { student.held = -1; return; }
-            float near = Mathf.Clamp01(offset.magnitude);
-            Vector3 steered = Vector3.MoveTowards(flat, Vector3.ClampMagnitude(offset.normalized * 5 * near, 5), near * 100 * Time.fixedDeltaTime);
-            Body.linearVelocity = new Vector3(steered.x, velocity.y, steered.z);
-            Vector3 toStudent = student.position - Body.position; toStudent.y = 0;
-            if (toStudent.sqrMagnitude < 0.01f) return;
-            float error = Mathf.DeltaAngle(Body.rotation.eulerAngles.y, Quaternion.LookRotation(toStudent).eulerAngles.y);
-            float gain = Mathf.Min(Mathf.Clamp(Mathf.Abs(error) / 180f, 0.2f, 1f) * 20f, 4);
-            float spin = Mathf.MoveTowards(Body.angularVelocity.y, Mathf.Clamp(error * Mathf.Deg2Rad * gain, -4, 4), gain);
-            Body.angularVelocity = new Vector3(0, spin, 0);
-        }
-        private void LateUpdate()
-        {
-            if (Kind != CartKind || game == null || !game.Started || Time.time < cartScanAt) return;
-            cartScanAt = Time.time + 0.4f; riding.Clear(); CartHaul = 0;
-            foreach (Collider hit in Physics.OverlapBox(transform.TransformPoint(0, 0.35f, 0), new Vector3(0.62f, 0.3f, 0.8f), transform.rotation, 1 << 10))
-            {
-                RemakeLoot item = hit.GetComponentInParent<RemakeLoot>();
-                if (item == null || item == this || riding.Contains(item)) continue;
-                riding.Add(item); CartHaul += item.Value;
-            }
-            if (cartDisplay != null) cartDisplay.text = "$" + CartHaul;
         }
         private void OnCollisionEnter(Collision collision)
         {
@@ -167,7 +117,7 @@ namespace HorrorUtez.Remake
             nextImpact = Time.time + 0.25f;
             Vector3 point = collision.contactCount > 0 ? collision.GetContact(0).point : transform.position;
             game.Noise(transform.position, Mathf.Clamp(speed * 3, 5, 32));
-            game.PlayImpact(point, Mathf.Clamp01(speed / 9), Metallic[Kind] ? "impact_metal" : "impact_plastic");
+            game.PlayImpact(point, Mathf.Clamp01(speed / 9), (Kind >= 10 || Metallic[Kind]) ? "impact_metal" : "impact_plastic");
             // Thrown gear stuns enemies (R.E.P.O.): heavier and faster hits stun longer; the giant shrugs off light ones.
             RemakeEnemy enemy = collision.collider.GetComponentInParent<RemakeEnemy>();
             if (enemy != null)
@@ -177,12 +127,12 @@ namespace HorrorUtez.Remake
                 if (hit >= needed) enemy.Stun(Mathf.Clamp(hit / needed * (enemy.Kind == EnemyKind.Giant ? 1.6f : 2.5f), 1.5f, 6));
             }
             // Damage tiers follow R.E.P.O.'s impact detector: fragility scales the hit,
-            // durability scales the loss (1/5/10% of the original value), cargo riding in a cart is protected.
-            if (BaseValue <= 0 || Value <= 0 || game.Loot.Any(l => l.Kind == CartKind && l.riding.Contains(this))) return;
-            float force = speed * Fragility[Kind] / 100f;
+            // durability scales the loss (1/5/10% of the original value).
+            if (BaseValue <= 0 || Value <= 0) return;
+            float force = speed * Fragile / 100f;
             float tier = force >= 6.5f ? 0.1f : force >= 4.2f ? 0.05f : force >= 2.2f ? 0.01f : 0;
             if (tier == 0) return;
-            float share = tier * (1 + 9 * (100 - Durability[Kind]) / 100f);
+            float share = tier * (1 + 9 * (100 - Durable) / 100f);
             int lost = Mathf.Clamp(Mathf.RoundToInt(BaseValue * share * Random.Range(0.9f, 1.1f)), 1, Value);
             Value -= lost;
             if (Value < BaseValue * 0.15f) Shatter(); else { game.ValuePopup(point, lost); game.PlayImpact(point, .6f, "value_lost"); }
