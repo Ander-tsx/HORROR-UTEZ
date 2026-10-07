@@ -11,7 +11,7 @@ Blender). Todo modelo que entra al proyecto es `.fbx`.
 
 1. Modela en metros (1 unidad de Blender = 1 m). Origen de la pieza en su base, centrado.
 2. Nombra los materiales igual que un material de `Assets/_Project/Art/Remake/Materials`
-   (por ejemplo `Metal_Brushed`, `Plastic_Beige`, `Wood_Desk`). Al importar se asigna ese
+   (por ejemplo `Metal_Brushed`, `Plastic_Beige`, `Laminate_Wood`). Al importar se asigna ese
    material PSX automáticamente. Para una textura nueva, ponla en `Art/Remake/Textures`
    y usa el menú **HORROR-UTEZ → Crear materiales PSX para texturas nuevas**.
 3. *File → Export → FBX*: **Selected Objects**, *Apply Scalings: FBX All*, ejes por
