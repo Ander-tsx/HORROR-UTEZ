@@ -23,7 +23,7 @@ namespace HorrorUtez.Tests
     /// </summary>
     public sealed class SettingsSmokeTests
     {
-        private const string ScenePath = "Assets/_Project/Scenes/utez.unity";
+        private const string ScenePath = "Assets/_Project/Scenes/Legacy/utez.unity";
 
         private bool _psxWasEnabled;
         private float _volumeWas;

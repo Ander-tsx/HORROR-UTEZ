@@ -65,7 +65,6 @@ namespace HorrorUtez.Remake
             Button(pane, "MICRÓFONO", new Vector4(.06f, .21f, .49f, .32f), () => ToggleMic());
             Button(pane, "SALIR", new Vector4(.51f, .21f, .94f, .32f), () => Application.Quit());
             connection = Label(pane, "VERSIÓN EXPERIMENTAL / REMAKE", new Vector4(.06f, .03f, .94f, .18f), 22, Toxic);
-            var mapButton = Button(menu.transform, "MAPA: CAMPUS UTEZ", new Vector4(.55f, .15f, .95f, .23f), () => {});
             game.SelectedSkin=RemakeSkins.Clamp(PlayerPrefs.GetInt("RemakeSkin",1));
             var skinButton=Button(menu.transform,"ESTUDIANTE: "+RemakeSkins.Names[game.SelectedSkin].ToUpper(),new Vector4(.55f,.34f,.95f,.42f),()=>{});
             var skinInfo=Label(menu.transform,RemakeSkins.Descriptions[game.SelectedSkin],new Vector4(.55f,.42f,.95f,.47f),22,Toxic);
@@ -73,11 +72,6 @@ namespace HorrorUtez.Remake
                 game.SelectedSkin=(game.SelectedSkin+1)%RemakeSkins.Names.Length;PlayerPrefs.SetInt("RemakeSkin",game.SelectedSkin);
                 skinButton.GetComponentInChildren<Text>().text="ESTUDIANTE: "+RemakeSkins.Names[game.SelectedSkin].ToUpper();
                 skinInfo.text=RemakeSkins.Descriptions[game.SelectedSkin];
-            });
-            mapButton.onClick.AddListener(() => {
-                int selected = game.SelectedMap;
-                do { selected = (selected + 1) % RemakeRepoMaps.Names.Length; } while (!RemakeRepoMaps.Available(selected));
-                game.SelectedMap = selected; mapButton.GetComponentInChildren<Text>().text = "MAPA: " + RemakeRepoMaps.Names[selected];
             });
             Label(menu.transform, "EL CAMIÓN DE MUDANZA ES\nLA ÚNICA SALIDA.\n\nNO ROMPAS EL EQUIPO.\nNO TE QUEDES ATRÁS.\nCUIDADO CON HUGO.",
                 new Vector4(.6f, .50f, .95f, .9f), 34, Bone, TextAnchor.UpperRight);

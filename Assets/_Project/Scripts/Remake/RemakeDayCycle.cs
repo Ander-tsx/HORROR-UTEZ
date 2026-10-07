@@ -52,10 +52,7 @@ namespace HorrorUtez.Remake
             }
             RenderSettings.fogDensity=originalFog*((Day-1)%4==0?1.35f:1);
             foreach(var go in dayLights)if(go!=null)Destroy(go);dayLights.Clear();
-            var candidates=new List<Vector3>();
-            if(Map==0) {
-                if(Dressing!=null)candidates.AddRange(Dressing.RoomCentres.Values);
-            }else candidates.AddRange(GiantRoute);
+            var candidates=new List<Vector3>(Markers.RoomCentres.Values);
             // Host and clients use the same ordered static candidates and seed; no random live physics probes.
             candidates=candidates.Where(p=>Vector3.Distance(p,TruckPosition)>7).OrderBy(p=>p.x).ThenBy(p=>p.z).ToList();
             for(int i=candidates.Count-1;i>0;i--){int j=random.Next(i+1);var v=candidates[i];candidates[i]=candidates[j];candidates[j]=v;}
@@ -72,14 +69,12 @@ namespace HorrorUtez.Remake
                 // Every day has a different subset of the eight special valuables.
                 if(item.Id>=18 && ((item.Id-18+Day)%4==0)){item.Value=0;item.gameObject.SetActive(false);}
             }
-            if(Map==0) {
-                foreach(var room in Dressing.RoomCentres) {
-                    var lamp=new GameObject("Luz del turno / "+room.Key);lamp.transform.position=room.Value+Vector3.up*2.2f;
-                    var light=lamp.AddComponent<Light>();light.type=LightType.Point;light.range=8;light.intensity=(Day-1)%4==1?0:3;light.color=new Color(.28f,.42f,.55f);dayLights.Add(lamp);
-                }
-                foreach(var light in FindObjectsByType<Light>(FindObjectsSortMode.None))
-                    if(light.name.Contains("Fluorescente") && !light.name.Contains("cooperativa"))light.enabled=(Day-1)%4!=1 || Mathf.Abs(light.transform.position.x)%3<1;
+            foreach(var room in Markers.RoomCentres) {
+                var lamp=new GameObject("Luz del turno / "+room.Key);lamp.transform.position=room.Value+Vector3.up*2.2f;
+                var light=lamp.AddComponent<Light>();light.type=LightType.Point;light.range=8;light.intensity=(Day-1)%4==1?0:3;light.color=new Color(.28f,.42f,.55f);dayLights.Add(lamp);
             }
+            foreach(var light in FindObjectsByType<Light>(FindObjectsSortMode.None))
+                if(light.name.Contains("Fluorescente") && !light.name.Contains("cooperativa"))light.enabled=(Day-1)%4!=1 || Mathf.Abs(light.transform.position.x)%3<1;
             foreach(var enemy in Enemies) {
                 bool enabled=enemy.Kind==EnemyKind.Giant || enemy.Kind==EnemyKind.Caretaker || (Day-1)%4==2 || (Day+SessionSeed+(int)enemy.Kind)%3!=0;
                 enemy.gameObject.SetActive(enabled);

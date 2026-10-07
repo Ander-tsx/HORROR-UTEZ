@@ -1,4 +1,10 @@
 # Runtime architecture
+> **2026-10-06:** the map is authored in the editor (`remake.unity` + `Prefabs/Map/` zone prefabs). Sections
+> below that describe runtime dressing, `RemakeCampusExpansion`, R.E.P.O. maps/sectors, map selection or
+> `RemakeBuild.Prepare` copying `utez.unity` are historical: that content is now baked into the scene and the
+> R.E.P.O. maps were deleted. Runtime still creates the networked entities (students, enemies, loot,
+> credentials, truck), HUD, audio and the navigation grid (built from the authored colliders + markers).
+
 
 Assembly `HorrorUtez.Remake` depends on Core, World, Rendering, Input System, uGUI and
 URP. Its nested Editor assembly handles setup, importing and builds. No dependency on
@@ -11,9 +17,8 @@ the old first-person player assembly is needed in the new runtime controller.
 | `RemakeCameraRig.cs` | Layered first-person camera: smoothed aim, footstep bob (drives footsteps), turn/strafe tilt, jump/land/hit kick springs, shake, sprint/scare FOV |
 | `RemakeLoot.cs` | Grab-point spring with per-student lift cap, camera-relative orientation torque, cart steering and in-cart tally/stabilisation, fragility/durability damage tiers, shattering, replication |
 | `RemakeBody.cs` | Procedural animation for segmented enemy models: joint hierarchy from rest pose, two-bone IK legs/arms, planted stepping (biped or diagonal quadruped), stand-to-crawl posture, head tracking with twitches, arm-swipe attack |
-| `RemakeDressing.cs` | Runtime dressing of CECADEC's ground-floor rooms as wrecked compuaulas (fixed seed, identical on every peer), invisible ceiling slabs, flickering fluorescents (brown out near the giant), indoor loot spots and giant patrol points |
-| `RemakeCampusExpansion.cs` | CDS offices on both floors, auditorium seats/stage, aligned CDS entrance, exterior props and deterministic denser forest |
-| `RemakeRepoMaps.cs` | Authorized static module meshes/textures/colliders reconstructed from JSON; three compact layouts, three original modules per layout, PSX/URP materials |
+| `Map/RemakeMapMarkers.cs` | Collects the scene markers (loot spots, rooms, patrol points, giant waypoints, doorways, sliding door, corridor anchor) into `game.Markers` |
+| `Map/Remake*.cs` (markers) | `RemakeLootSpot`, `RemakeRoom`, `RemakePatrolPoint`, `RemakeGiantWaypoint`, `RemakeDoorway`, `RemakeAnchor` (data + Scene-view gizmos); `RemakeFlickerLight` and `RemakeSlidingDoor` (self-driven behaviour) |
 | `RemakeAudio.cs` | Adaptive music (explore/chase crossfade), heartbeat, tired breathing, wind, 3D one-shot pool, loops, random distant scares, giant footfall camera shake |
 | `RemakeEnemy.cs` | Caretakers and the giant "El Rector": hearing/vision, grid paths, ceiling probe that folds the giant into a crawl, wind-up attacks with knockback, stuns from thrown gear, replicated flags |
 | `RemakeWire.cs` | TCP listener/client, framing, connection cap, bounded queues, per-peer reader/writer tasks and serializable DTOs |
@@ -21,7 +26,7 @@ the old first-person player assembly is needed in the new runtime controller.
 | `RemakeHud.cs` | Horror-styled menu/HUD (VT323 + Creepster OFL fonts), health/energy/haul, reactive crosshair, damage and low-health overlays, fallen/spectator banner, results with the 6-line upgrade shop, touch controls |
 | `RemakeSmoke.cs` | Command-line opt-in executable integration test; never attached in normal play |
 | `RemakeCapture.cs` | Opt-in diagnostic screenshots; `-remakeTour` captures labs, corridor, player model, truck, enemies and the awake giant outdoors and crawling indoors |
-| `Editor/RemakeBuild.cs` | FBX importer, materials, copied playable scene, serialized shaders, Windows/Android build commands |
+| `Editor/RemakeBuild.cs` | FBX import conventions, project-settings repair (never touches scenes), missing-material creation, player prefab sync, Windows/macOS/Android builds |
 
 ## Authority and wire protocol
 

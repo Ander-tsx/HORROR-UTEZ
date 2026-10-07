@@ -1,0 +1,22 @@
+# Unity YAML (scenes, prefabs, assets, materials): merge with UnityYAMLMerge.
+# Configure the driver once per machine (see README, section 7). Without it Git uses its normal text merge.
+*.unity   merge=unityyamlmerge
+*.prefab  merge=unityyamlmerge
+*.asset   merge=unityyamlmerge
+*.mat     merge=unityyamlmerge
+*.anim    merge=unityyamlmerge
+*.controller merge=unityyamlmerge
+
+# Binary art: never diff, merge or convert line endings.
+*.fbx   binary
+*.blend binary
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.psd   binary
+*.tga   binary
+*.wav   binary
+*.ogg   binary
+*.mp3   binary
+*.ttf   binary
+*.otf   binary

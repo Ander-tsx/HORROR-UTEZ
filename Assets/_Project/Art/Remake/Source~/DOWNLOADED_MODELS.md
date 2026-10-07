@@ -1,5 +1,8 @@
 # Downloaded anatomical bases (2026-10-05)
 
+> 2026-10-06: the `Tools/blender/*.py` scripts mentioned below were removed from the repository (the map and
+> models are now edited in Unity; see Documentation/Remake/BLENDER.md). They remain in Git tag `pre-unity-migration`.
+
 Downloaded through the user's authenticated Chrome/BlendSwap session with authorization.
 
 - **Hands Rigged**, SparrowHawk: https://blendswap.com/blend/22269 — CC0, 8.83 MB.

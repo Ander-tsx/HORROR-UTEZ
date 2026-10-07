@@ -26,11 +26,11 @@ namespace HorrorUtez.Remake
             }
             foreach(HorrorUtez.World.HingedDoor d in Object.FindObjectsByType<HorrorUtez.World.HingedDoor>(FindObjectsInactive.Include))
                 Debug.Log("[Watch] door "+d.name+" at "+d.transform.position.ToString("F1")+" open "+d.IsOpen);
-            foreach(var room in game.Dressing.RoomCentres)
+            foreach(var room in game.Markers.RoomCentres)
             {
-                game.FindPath(game.Dressing.Corridor,room.Value,leg);float len=0;Vector3 at=game.Dressing.Corridor;foreach(Vector3 q in leg){len+=Vector3.Distance(at,q);at=q;}
+                game.FindPath(game.Markers.Corridor,room.Value,leg);float len=0;Vector3 at=game.Markers.Corridor;foreach(Vector3 q in leg){len+=Vector3.Distance(at,q);at=q;}
                 bool ok=leg.Count>0&&Vector3.Distance(leg[leg.Count-1],room.Value)<3.5f;
-                Debug.Log("[Watch] room "+room.Key+" reachable "+ok+" path "+len.ToString("F0")+" m straight "+Vector3.Distance(game.Dressing.Corridor,room.Value).ToString("F0"));
+                Debug.Log("[Watch] room "+room.Key+" reachable "+ok+" path "+len.ToString("F0")+" m straight "+Vector3.Distance(game.Markers.Corridor,room.Value).ToString("F0"));
             }
             game.Player.Teleport(game.TruckPosition+new Vector3(0,.9f,-1.5f));
             giant.Wake();Time.timeScale=3;
@@ -129,9 +129,9 @@ namespace HorrorUtez.Remake
                 shots.Add(("process_lab",W(3.0f,-33.0f),W(7.5f,-28.8f,.9f)));
                 shots.Add(("back_room",W(0,-38.8f),W(-6,-43.5f,.8f)));
             }
-            if(game.Dressing!=null && game.Dressing.Ready)
+            if(game.Markers!=null && game.Markers.Ready)
             {
-                Vector3 door=game.Dressing.EastDoor, outward=Vector3.ProjectOnPlane(door-game.Dressing.Corridor,Vector3.up).normalized;
+                Vector3 door=game.Markers.EastDoor, outward=Vector3.ProjectOnPlane(door-game.Markers.Corridor,Vector3.up).normalized;
                 Vector3 side=Vector3.Cross(Vector3.up,outward);
                 shots.Add(("east_door_out",door+outward*7+side*2.5f+Vector3.up*1.38f,door+Vector3.up*1.3f));
                 shots.Add(("east_door_in",door-outward*4.5f-side*1.5f+Vector3.up*1.38f,door+Vector3.up*1.2f));

@@ -21,7 +21,7 @@ namespace HorrorUtez.Tests
     /// </summary>
     public sealed class UtezSceneSmokeTests
     {
-        private const string ScenePath = "Assets/_Project/Scenes/utez.unity";
+        private const string ScenePath = "Assets/_Project/Scenes/Legacy/utez.unity";
 
         [UnitySetUp]
         public IEnumerator LoadScene()

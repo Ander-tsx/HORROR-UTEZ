@@ -1,4 +1,41 @@
-# Build and validation record — 2026-10-03
+# Build and validation record
+
+## Current procedure (2026-10-06, editor-authored map)
+
+Unity 6000.6.3f1. From the repository root (editor closed, or add `-Isolated` while it is open):
+
+```powershell
+./Tools/unity/BuildRemake.ps1            # -> Builds/Remake/Windows/HORROR-UTEZ.exe, log Library/remake-build.log
+$exe = Join-Path $PWD 'Builds/Remake/Windows/HORROR-UTEZ.exe'
+& $exe -remakeSolo -remakeSmoke -logFile "$PWD/Library/smoke-solo.log"          # ALL COMPLETE, exit 0
+& $exe -remakeHost -remakeSmoke -remakePort 27891 -logFile "$PWD/Library/smoke-host.log"
+& $exe -remakeJoin 127.0.0.1 -remakeSmoke -remakePort 27891 -logFile "$PWD/Library/smoke-client.log"
+& $exe -remakeSolo -remakeTour -logFile "$PWD/Library/tour.log"                 # tour-*.png next to the exe
+```
+
+Run host and client as separate processes. Check exit codes and `[RemakeSmoke] PASS/FAIL`; failure exits 3.
+Builds no longer modify `remake.unity`: the scene is authored and only `EnsureProjectSettings` runs first.
+
+### 2026-10-06 migration results (Claude Code)
+
+- Scene audit (batch editor): before conversion 2,822 renderers, 0 missing meshes/materials/scripts. After
+  .blend→FBX conversion: identical. After baking: 3,877 renderers, 0 missing meshes/materials/scripts,
+  0 unsaved procedural meshes; markers: 13 loot, 11 rooms, 21 patrol, 27 route, 4 doorways, 6 flicker,
+  1 sliding door, 1 anchor. Two renderers use a material embedded in an FBX (not investigated; possibly a misnamed landmark slot).
+- Bake counts equal the previous runtime logs: 480 lab renderers, 96 CDS (each floor), 48 auditorium,
+  277 forest, 27 giant waypoints.
+- Windows build of migrated source: success, no `error CS`.
+- Solo smoke: 54 PASS / 0 FAIL, ALL COMPLETE, exit 0 — same 54 assertions as `remake-skins-final-solo.log`
+  (only a chase distance differs: 6.6 vs 6.4 m). Log: `Library/migr-solo.log`.
+- Loopback host/client (port 27891): host 54 PASS ALL COMPLETE, client 21 PASS CLIENT COMPLETE, both exit 0
+  (same counts as before). Logs: `Library/migr-host.log`, `Library/migr-client.log`.
+- Tour: exit 0, 41 captures; reviewed CC9 lab, east glass door (inside/outside), CDS interior with the giant
+  and the truck: furniture, lights and doors match the pre-migration look.
+- Smoke runs used `-batchmode`; the tour ran windowed. Not run: legacy PlayMode tests, Android, macOS,
+  interactive play by the user.
+
+## History
+
 
 Use Unity 6000.6.3f1 and branch `remake` in the Projects checkout. Do not terminate or
 reuse the user's open editor for batch work. From the repository root:

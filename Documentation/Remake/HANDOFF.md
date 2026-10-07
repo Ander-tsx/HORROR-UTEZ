@@ -1,8 +1,44 @@
-# Remake handoff — 2026-10-03 (end of the Claude Code session; next session: Codex)
+# Remake handoff
 
-The user communicates in Spanish. Their last words: "va tomando forma pero aún le falta mucho trabajo".
-Read [AGENTS.md](../../AGENTS.md) first, then this file, [ARCHITECTURE.md](ARCHITECTURE.md),
-[TESTING.md](TESTING.md), [BLENDER.md](BLENDER.md) and [PLAY.md](PLAY.md).
+The user communicates in Spanish. Read [AGENTS.md](../../AGENTS.md) and the [README](../../README.md) first.
+
+## Current state — 2026-10-06: migration to an editor-authored map (supersedes older notes below)
+
+External collaborators are joining, so the procedural workflow was replaced by a normal Unity workflow:
+
+- **Map = Unity scene + zone prefabs.** `remake.unity` (68 KB, was 5 MB) references `Prefabs/Map/`:
+  Zona_CECADEC, Zona_CDS, Zona_Auditorio, Zona_Techado, Terreno, Bosque, Props_Campus, Gameplay_Marcadores.
+- **Baked, not generated.** Everything `RemakeDressing` (compuaulas, ceiling slabs, east glass door, extra
+  openings, fluorescents, giant route) and `RemakeCampusExpansion` (CDS/auditorium interiors, CDS entrance,
+  REPO campus props, dense forest) built at runtime was executed once in the editor and saved into the
+  scene, with identical counts to the runtime logs (480 lab renderers, 96 CDS per floor, 48 auditorium,
+  277 forest, 27 giant waypoints). Lab furniture are prefab instances of `Resources/Lab/*.fbx`. Procedural
+  slab meshes live in `Art/Remake/Baked/CampusGenerated.asset`. Night-shift staging (was
+  `BuildStaging`) is in Props_Campus. The shop geometry was baked into `remake_shop.unity`.
+- **Markers.** Data that was hard-coded now lives on components in `Scripts/Remake/Map/`, read by
+  `RemakeMapMarkers` (`game.Markers`, replaces `game.Dressing`): 13 loot spots (same keys/order as the old
+  BuildLoot list, plus plaza_a/b/c), 11 rooms, 14 indoor + 7 outdoor patrol points (first four outdoor =
+  plaza), 27 giant waypoints (hierarchy order), 4 doorways, 6 flicker lights, 1 sliding door, corridor anchor.
+  Flicker and sliding door are self-driven components. The night lighting mood moved to
+  `RemakeGame.ApplyNightMood()` (same values, still runtime because WeatherSystem animates on top).
+- **No Blender required.** The 12 map `.blend` files Unity imported natively were converted to FBX with
+  Unity's own `Unity-BlenderToFBX.py` (Blender 5.2.2), keeping the `.meta` GUIDs; scene audit before/after:
+  0 missing meshes/materials. `Untitled.blend` (unused) deleted. `CECADEC_North.fbx` is 49 MB.
+- **R.E.P.O. maps removed** at the user's request: Manor/Museum/Arctic, `RemakeRepoMaps`, the MAPA button,
+  `-remakeMap`, sector smoke checks and `Art/RepoAuthorized` (JSON + textures). Snapshots no longer send a map id.
+- **Removed tooling** (kept in tag `pre-unity-migration`): `Tools/blender`, `Tools/audio`, `Tools/repo_*.py`,
+  `Tools/unity/compile_check.py`, `Scripts/World/Editor` (Utez*Builder, UtezKit, UtezProjectSetup...),
+  `RemakeDiagnostics`, `utez_blockout.unity`. `utez.unity` moved to `Scenes/Legacy/` (PlayMode tests updated).
+- **RemakeBuild** no longer recreates `remake.unity` from `utez.unity` (that used to wipe manual edits).
+  Menus: Abrir escena jugable, Reparar configuración del proyecto (settings only, never scenes),
+  Crear materiales PSX para texturas nuevas (only missing ones), Sincronizar prefab del estudiante, Build/*.
+  `BuildRemake.ps1` no longer copies scenes/materials back from the isolated copy.
+- ProBuilder 6.1.2 added. `.gitattributes` added (UnityYAMLMerge driver for YAML, binaries marked binary).
+  `RemakeShopProduct` moved to its own file (required to serialize it in a scene).
+- Results on the migrated build: see TESTING.md (solo 54/54, host 54/54, client 21/21, tour 41 captures,
+  all exit 0). Not verified: interactive play by the user, Android, macOS (no new Mac build).
+
+## History (before 2026-10-06; paths, branches and generators described below are obsolete)
 
 ## 1. Where things are
 

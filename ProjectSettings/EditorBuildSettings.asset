@@ -8,4 +8,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/_Project/Scenes/remake.unity
     guid: ef055a8bee6d06444bb3be952e42ee36
+  - enabled: 1
+    path: Assets/_Project/Scenes/remake_shop.unity
+    guid: 9d75171b75bf36f489ab7f97daf78fe6
   m_configObjects: {}

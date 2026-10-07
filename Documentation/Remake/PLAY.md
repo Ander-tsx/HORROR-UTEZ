@@ -36,13 +36,7 @@ estado real de validación: las pruebas automáticas pasan, la sensación en jue
 
 ## Ampliación del 2026-10-05
 
-El botón **MAPA** del menú permite elegir Campus UTEZ, Mansión, Museo o Ártico antes
-de explorar solo u hospedar. Los invitados reciben el mapa elegido por el anfitrión.
-Usa el mismo ejecutable actualizado en ambas máquinas: el protocolo pasó a versión 2.
-
-Los tres mapas adicionales son diseños compactos construidos con nueve módulos
-originales autorizados de R.E.P.O. (tres por mapa), adaptados a nuestro juego. Conservan
-el camión como única extracción; no ejecutan el generador ni los eventos originales.
+El campus UTEZ es el único mapa. Los mapas de prueba basados en R.E.P.O. (Mansión, Museo y Ártico) y el botón **MAPA** se retiraron el 2026-10-06.
 
 El carrito se retiró. CDS tiene oficinas en ambas plantas y el auditorio tiene
 butacas, escenario y zona técnica. El exterior incorpora mobiliario, equipo y más

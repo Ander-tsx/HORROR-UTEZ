@@ -1,67 +1,50 @@
-# Blender, modelos y referencias
+# Piezas nuevas desde Blender
 
-Blender instalado por Steam:
-`C:\Program Files (x86)\Steam\steamapps\common\Blender\blender.exe` (5.2.2).
-Registrar esa instalación con `--register` resolvió que Unity no encontrara Blender.
-No se instaló correctamente la copia MSI: quedó una extracción temporal en Library.
+Desde 2026-10-06 **el mapa se arma y se edita en Unity** (prefabs de zona + ProBuilder).
+Blender es opcional y sirve solo para piezas pequeñas: muebles, objetos valiosos, utilería
+y personajes. No hay scripts de generación: se modela a mano y se exporta un FBX.
 
-El entorno original importa `.blend` directamente mediante `PsxKitImporter`: respetar
-su conversión de ejes, escala y nombres de materiales. El personaje usa fuentes Blender
-en `Source~`, FBX Humanoid y clips Mixamo separados. No unificar ambos flujos a ciegas.
+Unity nunca importa `.blend` directamente (eso obligaría a todo el equipo a instalar
+Blender). Todo modelo que entra al proyecto es `.fbx`.
 
-Los props nuevos usan `Tools/blender/gen_remake_props.py`. Ejecutar desde la raíz:
+## Exportar
 
-```powershell
-& 'C:\Program Files (x86)\Steam\steamapps\common\Blender\blender.exe' -b --factory-startup --python Tools/blender/gen_remake_props.py
-```
+1. Modela en metros (1 unidad de Blender = 1 m). Origen de la pieza en su base, centrado.
+2. Nombra los materiales igual que un material de `Assets/_Project/Art/Remake/Materials`
+   (por ejemplo `Metal_Brushed`, `Plastic_Beige`, `Wood_Desk`). Al importar se asigna ese
+   material PSX automáticamente. Para una textura nueva, ponla en `Art/Remake/Textures`
+   y usa el menú **HORROR-UTEZ → Crear materiales PSX para texturas nuevas**.
+3. *File → Export → FBX*: **Selected Objects**, *Apply Scalings: FBX All*, ejes por
+   defecto (*Forward: -Z*, *Up: Y*), sin animación (salvo personajes). Son los mismos
+   ajustes que usaba Unity al convertir `.blend`. Revisa en Unity que la pieza quede
+   derecha y a escala junto a un mueble existente.
+4. Guarda el FBX en:
+   - `Assets/_Project/Art/Remake/Resources/Lab/` → muebles de laboratorio/oficina.
+   - `Assets/_Project/Art/Remake/` → botín, vehículos y piezas generales.
+   - `Assets/_Project/Art/Environment/Kit/` → piezas de arquitectura (muros, ventanas).
+5. Guarda el `.blend` editable en una carpeta `Source~` junto al FBX (por ejemplo
+   `Art/Remake/Source~/`). Unity ignora las carpetas que terminan en `~`.
 
-Genera fuentes editables en `Assets/_Project/Art/Remake/Source~` y FBX explícitos.
-Unity omite las carpetas terminadas en `~`. La mano nueva se carga mediante Resources
-desde `Art/Remake/Resources/StudentHand.fbx`. Conservar fuentes, exports y `.meta`.
-Regenerar sobrescribe modelos generados: incorporar mejoras en el script o guardar
-una variante antes de editar manualmente. Revisar pivotes, escala, materiales y orientación.
-Los visuales actuales rotan 180° para alinear el FBX con los colliders del juego.
-No se han combinado/optimizado todos los múltiples meshes para móvil.
+Las carpetas `Art/Remake/`, `Art/Environment/Kit/` y `Art/Environment/Landmarks/` tienen
+reglas de importación automáticas: escala 1, ejes convertidos y sin cámaras ni luces.
 
-Referencias locales: `C:\Users\andre\Downloads\UTEZ - Mapping-20261003T182058Z-1-001\UTEZ - Mapping`.
-Hay 40 JPG, principalmente CECADEC, pasillos, laboratorios y oficinas. Contact sheet:
-`Library/Tooling/map-contact.jpg`. No se importaron fotos al repositorio.
-Las medidas existentes están en `UtezDimensions.cs`; conservar la distribución real.
-Faltan planos adicionales: usar geometría existente e imaginar detalles compatibles.
+## Colocar en el mapa
 
-La última generación agregó teclados/puertos, piezas de microscopios, ventilación,
-detalles de impresora/UPS, tablas/rieles/cabina del camión, cuidador y dedos humanos.
-Blender terminó sin errores; aún falta validar importación y apariencia en Unity.
+Arrastra el FBX a la zona correspondiente (en Prefab Mode). Agrega un Box Collider y el
+layer **RemakeScenery** si estorba el paso, y márcalo como Static si no se mueve.
 
-## Kit v2 (2026-10-03, segunda pasada)
+## Personajes
 
-Ejecutar desde la raíz, en este orden (`$B` = Blender de Steam):
+El estudiante (`Art/Characters/Player/PlayerCharacter.fbx`) se usa a través del prefab
+`Prefabs/Player/PlayerCharacter.prefab`. Tras reexportar el FBX con otro orden de huesos o
+de submallas, usa **HORROR-UTEZ → Sincronizar prefab del estudiante con su FBX**. El
+original editable está en `Art/Characters/Player/Source~/PlayerCharacter.blend` y los
+cuerpos base descargados en `Art/Remake/Source~/` (licencias en `DOWNLOADED_MODELS.md`).
 
-```powershell
-& $B -b --factory-startup --python Tools/blender/gen_remake_textures.py   # 51 texturas -> Art/Remake/Textures
-& $B -b --factory-startup --python Tools/blender/gen_remake_lab.py        # 26 piezas -> Art/Remake/Resources/Lab
-& $B -b --factory-startup --python Tools/blender/gen_remake_props.py      # botín, camión, velador, gigante
-& $B -b Assets/_Project/Art/Characters/Player/Source~/PlayerCharacter.blend --python Tools/blender/gen_player_body_v3.py
-& $B -b --factory-startup --python Tools/audio/gen_remake_audio.py        # 37 WAV -> Art/Remake/Resources/Audio
-```
+## Historia
 
-- `remake_kit.py`: se modela en coordenadas de Unity. `to_blender` es una reflexión `(x, z, y)` que cancela la
-  del importador FBX; las caras se invierten para conservar el lado visible y las UV ajustadas (pantallas,
-  pizarrón, pósters) se calculan en espacio Unity. Se verificó en Unity con el centro del velador (+x, lado del
-  trapeador) y textos legibles en el tour. Ya no hay giros de 180° en tiempo de ejecución.
-- Nombres de material = nombres de textura. RemakeBuild crea un material PSX/Lit por textura.
-- Personajes enemigos por segmentos (Pelvis, Spine, Chest, Neck, Head, UpperArm/LowerArm/Hand, UpperLeg/
-  LowerLeg/Foot `_L/_R`), cada objeto con origen en su articulación; `RemakeBody` los anima.
-- Jugador: las fotos de la cara no están en este equipo (`Tools/character/source` falta), así que
-  `gen_player_body_v3.py` abre el `.blend` guardado, conserva cabeza, textura y rig, y sólo reemplaza el cuerpo
-  (polo, jeans, tenis, manos con dedos, mochila, reloj) con pesos deterministas por pieza. Usa los mismos 7
-  materiales que remapea el `.meta` del FBX. RemakeBuild sincroniza el prefab desempacado con el FBX.
-- Fuentes del HUD: VT323 y Creepster (Google Fonts, OFL) en `Resources/Fonts` con sus licencias.
-# Variantes del estudiante (2026-10-06)
-
-`import_human_base.py` abre el PlayerCharacter.blend original, conserva el rig/cabeza
-y adapta el humano descargado. Genera cinco shape keys en cuerpo y cabeza; exportar
-con `use_mesh_modifiers=False` y habilitar blendshapes en PsxCharacterImporter.
-La cara conserva el atlas original de Erick con proyección frontal corregida.
-`gen_student_skin_faces.py` genera los otros cuatro atlas estilizados y copia el de
-Erick en Resources/Skins. El FBX mantiene su GUID y siete materiales existentes.
+Hasta 2026-10-06 los edificios, las texturas, el audio y gran parte del mapa se generaban
+con scripts de Python para Blender (`Tools/blender`, `Tools/audio`) y con código C# en
+tiempo de ejecución. Todo eso se horneó en assets de Unity y se retiró del repositorio.
+Los scripts siguen disponibles en el tag `pre-unity-migration` por si alguien necesita
+consultarlos.

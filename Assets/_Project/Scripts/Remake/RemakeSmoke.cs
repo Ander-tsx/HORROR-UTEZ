@@ -36,7 +36,7 @@ namespace HorrorUtez.Remake
             Assert(RemakeSkins.Names.Length==5 && RemakeSkins.Names.All(n=>Resources.Load<Texture2D>("Skins/Skin_"+n)!=null),"five selectable skins have face textures");
             var skinModel=game.StudentModel.GetComponentsInChildren<SkinnedMeshRenderer>();
             Assert(skinModel.Length>=2 && skinModel.All(r=>r.sharedMesh.blendShapeCount>=5),"body and head have five sculpted skin variants");
-            if(game.Authority && game.Map==0) {
+            if(game.Authority) {
                 var access=new System.Collections.Generic.List<Vector3>();string unreachable="";
                 foreach(var valuable in game.Loot.Where(l=>l.Value>0 && l.gameObject.activeSelf)) {
                     game.FindPath(game.SpawnPoint(0),valuable.Spawn,access);
@@ -80,7 +80,6 @@ namespace HorrorUtez.Remake
                 Assert(game.Students.Count>=2,"host accepts second player");
                 yield return new WaitForSeconds(5);
             }
-            if(game.Map>0) { yield return CheckSector(); yield break; }
             // Test a third, fallen student and the rule that stranded players lose upgrades.
             game.Students[99]=new StudentState{id=99,name="Smoke fallen",position=new Vector3(-3,0,-3),strength=2,credits=90};
             game.Hurt(99,100);Assert(!game.Students[99].alive,"lethal damage drops the student");
@@ -144,9 +143,9 @@ namespace HorrorUtez.Remake
             }
             Assert(game.GiantRoute.Count>=12 && broken==0,"giant route is navigable end to end ("+game.GiantRoute.Count+" waypoints)");
             string closed="";
-            foreach(var room in game.Dressing.RoomCentres)
+            foreach(var room in game.Markers.RoomCentres)
             {
-                game.FindPath(game.Dressing.Corridor,room.Value,leg);
+                game.FindPath(game.Markers.Corridor,room.Value,leg);
                 if(leg.Count==0||Vector3.Distance(leg[leg.Count-1],room.Value)>3.5f)closed+=room.Key+" ";
             }
             if(closed!="")
@@ -166,7 +165,7 @@ namespace HorrorUtez.Remake
                     foreach(var hit in Physics.SphereCastAll(from,.25f,(to-from).normalized,6,game.WorldMask,QueryTriggerInteraction.Ignore))
                         Debug.Log("[RemakeSmoke] CDS entrance obstacle "+hit.collider.name+" "+hit.point);
                 }
-                foreach(var room in game.Dressing.RoomCentres)
+                foreach(var room in game.Markers.RoomCentres)
                     if(closed.Contains(room.Key))
                     {
                         Vector3 probeEye=room.Value+Vector3.up;
@@ -203,13 +202,13 @@ namespace HorrorUtez.Remake
             giant.Rest(600);giant.DebugPlace(game.GiantRoute.Count>11?game.GiantRoute[11]:open+new Vector3(40,0,0));
             game.Local.health=100;game.Local.alive=true;yield return new WaitForSeconds(1.5f);
             if(game.Player.Tumbling)game.Player.GetUp();
-            Vector3 door=game.Dressing.EastDoor;Vector3 outward=Vector3.ProjectOnPlane(door-game.Dressing.Corridor,Vector3.up).normalized;
+            Vector3 door=game.Markers.EastDoor;Vector3 outward=Vector3.ProjectOnPlane(door-game.Markers.Corridor,Vector3.up).normalized;
             Vector3 outside=door+outward*3,inside=door-outward*2.5f;
             game.Player.Teleport(outside+Vector3.up*.05f);yield return new WaitForSeconds(2f);
             Vector3 eye=Vector3.up*1.1f;
             Assert(!Physics.Raycast(outside+eye,(inside-outside).normalized,Vector3.Distance(outside,inside),~(1<<9),QueryTriggerInteraction.Ignore),"east glass door opens and is passable");
-            game.FindPath(outside,game.Dressing.Corridor,leg);
-            Assert(leg.Count>0 && Vector3.Distance(leg[leg.Count-1],game.Dressing.Corridor)<2.5f,"navigation reaches the corridor through the glass door");
+            game.FindPath(outside,game.Markers.Corridor,leg);
+            Assert(leg.Count>0 && Vector3.Distance(leg[leg.Count-1],game.Markers.Corridor)<2.5f,"navigation reaches the corridor through the glass door");
             // R.E.P.O.-style revive: a fallen student's ID card carried into the truck brings them back.
             game.Students[97]=new StudentState{id=97,name="Smoke card",position=game.TruckPosition+new Vector3(-6,0.1f,-6)};
             game.Hurt(97,200);
@@ -275,40 +274,5 @@ namespace HorrorUtez.Remake
             Debug.Log("[RemakeSmoke] ALL COMPLETE");yield return new WaitForSeconds(2);Application.Quit(0);
         }
 
-        private IEnumerator CheckSector()
-        {
-            float untilSector;
-            foreach(var enemy in game.Enemies) enemy.Rest(600);
-            Assert(game.GiantRoute.Count>2,"imported sector has reachable ground-floor locations");
-            for(int i=0;i<3;i++)
-            {
-                float centre=(i-1)*17;
-                Assert(game.GiantRoute.Any(p=>Mathf.Abs(p.x-centre)<6.8f && Mathf.Abs(p.z+32)<6.8f),"original module "+i+" has a reachable interior");
-            }
-            var path=new System.Collections.Generic.List<Vector3>();
-            foreach(var item in game.Loot.Where(l=>l.BaseValue>0).Skip(2))
-            {
-                game.FindPath(game.SpawnPoint(0),item.Spawn,path);
-                Assert(path.Count>0 && Vector3.Distance(path[path.Count-1],item.Spawn)<2,"truck can reach sector loot "+item.Id);
-            }
-            Vector3 at=game.GiantRoute[game.GiantRoute.Count/2];
-            game.Player.Teleport(at);game.Player.Aim(180,0);yield return new WaitForSeconds(1);
-            RemakeCapture.Save(game.Player.View,Path.Combine(Application.dataPath,"..","sector-"+game.Map+".png"));
-            for(int i=0;i<3;i++)
-            {
-                var item=game.Loot[i];item.Value=item.BaseValue;
-                item.Body.position=game.TruckPosition+new Vector3((i-1)*.75f,.9f+item.Size.y*.5f,-1);
-                item.Body.rotation=Quaternion.identity;item.Body.linearVelocity=Vector3.zero;item.Body.angularVelocity=Vector3.zero;
-            }
-            game.Player.Teleport(game.TruckPosition+new Vector3(0,.9f,-2.8f));yield return new WaitForSeconds(2);
-            Assert(game.Cargo>=game.Quota,"sector salvage pays truck quota");
-            game.Request("extract");yield return new WaitForSeconds(5.8f);
-            Assert(game.Phase==3 && game.Local.escaped,"sector ends through the single truck extraction");
-            untilSector=Time.realtimeSinceStartup+20;while(!game.ShopReady && Time.realtimeSinceStartup<untilSector)yield return null;
-            game.Player.Teleport(RemakeShop.Exit);yield return new WaitForSeconds(.2f);game.Request("next");yield return new WaitForSeconds(.5f);
-            Assert(game.Day==2 && game.Phase==1,"sector starts a second day");
-            Assert(!hadError,"sector has no runtime errors");
-            Debug.Log("[RemakeSmoke] SECTOR COMPLETE "+game.Map);yield return new WaitForSeconds(2);Application.Quit(0);
-        }
     }
 }

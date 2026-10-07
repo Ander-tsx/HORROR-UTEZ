@@ -1,19 +1,32 @@
 # HORROR-UTEZ: instructions for coding agents
 
-Read `Documentation/Remake/HANDOFF.md` first, then `Documentation/Remake/ARCHITECTURE.md`
-and `Documentation/Remake/TESTING.md`. The user communicates in Spanish.
+Read `README.md` (team workflow), then `Documentation/Remake/HANDOFF.md`, `Documentation/Remake/ARCHITECTURE.md`
+and `Documentation/Remake/TESTING.md`. The user communicates in Spanish. External collaborators now work on
+this repository, so keep everything understandable from the Unity editor alone.
 
 ## Workspace and branch
 
-- All new-version work belongs on branch `remake`. Check `git branch --show-current`
-  before changing anything. Preserve uncommitted user changes.
-- Correct workspace: `C:\Users\andre\Software\Projects\HORROR-UTEZ`.
-- A DIFFERENT checkout exists at `C:\Users\andre\Software\HORROR-UTEZ` on `main`.
-  Unity Hub previously opened that other checkout. Do not confuse the two.
-- Playable remake scene: `Assets/_Project/Scenes/remake.unity`. The scene constructs
-  its truck, loot, players and HUD at runtime. Press Play to see the new menu.
-- Original authored campus: `Assets/_Project/Scenes/utez.unity`. Do not regenerate or
-  overwrite this hand-edited scene. `utez_blockout.unity` is the procedural reference.
+- `remake` was merged into `main`. Work on a feature branch and merge into `main`. Check
+  `git branch --show-current` before changing anything. Preserve uncommitted user changes.
+- Correct workspace on the user's PC: `C:\Users\andre\Software\Projects\HORROR-UTEZ`.
+  A DIFFERENT old checkout exists at `C:\Users\andre\Software\HORROR-UTEZ`. Do not confuse the two.
+- Playable scene: `Assets/_Project/Scenes/remake.unity`. It references the zone prefabs in
+  `Assets/_Project/Prefabs/Map/` (CECADEC, CDS, Auditorio, Techado, Terreno, Bosque, Props_Campus,
+  Gameplay_Marcadores). Networked entities (students, enemies, loot, credentials, truck) and the HUD are
+  still created by code when Play starts.
+- Shop: `Assets/_Project/Scenes/remake_shop.unity`, authored, loaded additively.
+- `Assets/_Project/Scenes/Legacy/utez.unity` is the old single-player scene. Not used by the game.
+
+## Map authoring rules (since 2026-10-06)
+
+- The Unity scene and prefabs are the single source of truth for the map. Do NOT add runtime code or
+  Blender/Python scripts that generate map geometry, furniture or lights. Edit prefabs instead.
+- Gameplay reads marker components from the scene (`Scripts/Remake/Map/`): RemakeLootSpot, RemakeRoom,
+  RemakePatrolPoint, RemakeGiantWaypoint, RemakeDoorway, RemakeFlickerLight, RemakeSlidingDoor, RemakeAnchor.
+  `RemakeMapMarkers` collects them. Add a marker type rather than hard-coding coordinates.
+- Unity must never need Blender: models enter the project as FBX. `.blend` files only live in `Source~`.
+- The procedural generators, R.E.P.O. maps and Blender/audio scripts were removed; tag
+  `pre-unity-migration` keeps them for reference.
 
 ## Product requirements already agreed with the user
 
@@ -31,7 +44,7 @@ and `Documentation/Remake/TESTING.md`. The user communicates in Spanish.
 - With a paid quota and at least one survivor extracting, dead/stranded students revive
   next day without upgrades. Students aboard keep their upgrades.
 - Preserve the UTEZ campus layout; improve assets and fill missing details imaginatively.
-- Use the established Blender import conventions. Sources and references are documented.
+- Small pieces may be modelled in Blender and imported as FBX (Documentation/Remake/BLENDER.md).
 - Main menu must be original. A mixed modern low-poly/PSX aesthetic is desired.
 - Later requests (2026-10-03): player fully modelled (it is online), more detailed models, more ambience,
   music and sounds, polished HUD with horror low-poly fonts, compuaulas dressed as labs (desks, mostly broken
@@ -40,7 +53,7 @@ and `Documentation/Remake/TESTING.md`. The user communicates in Spanish.
 
 ## Implementation discipline
 
-- Current campus slice uses protocol 3, 26 loot entities (five credentials), a separate
+- Current campus slice uses protocol 4, 26 loot entities (five credentials), a separate
   additive `remake_shop.unity` and five named enemy profiles/manual. Detailed first-person
   hands use SparrowHawk's downloaded CC0 skinned anatomical mesh. Student body uses a
   downloaded human base retargeted to the existing avatar. Editable originals and source
@@ -49,11 +62,10 @@ and `Documentation/Remake/TESTING.md`. The user communicates in Spanish.
 
 - Do not promise the complete R.E.P.O. migration when delivering a prototype. State
   exactly which systems are implemented, tested, or still missing.
-- R.E.P.O. was decompiled for reference in ignored `Library/Tooling/RepoStudy`.
-  No R.E.P.O. C# source has been copied into the playable implementation. On 2026-10-05
-  the user confirmed authorization to reuse its assets/maps; selected static module geometry,
-  textures and props now live in `Assets/_Project/Art/RepoAuthorized`, with provenance.
-  Do not confuse these compact adapted layouts with a complete migration of its procedural generator.
+- R.E.P.O. was decompiled for reference in ignored `Library/Tooling/RepoStudy`; no R.E.P.O. C# source is
+  in the game. On 2026-10-06 the user asked to delete the three R.E.P.O. expedition maps; they and their
+  map selector are gone. Three small authorized R.E.P.O. props remain baked on the campus (Props_Campus /
+  "Equipo del campus": trash bin, computer, server rack).
 - Do not touch the running interactive Unity instance to build. Use
   `Tools/unity/BuildRemake.ps1 -Isolated` while the user has the editor open.
 - Unity-generated assets need their `.meta` files committed. Keep generated executables,

@@ -12,13 +12,9 @@ namespace HorrorUtez.Remake
     {
         public GameObject StudentModel, TruckModel, EnemyModel, GiantModel;
         public GameObject[] LootModels;
-        public Material[] ScreenMaterials;
-        public Material DoorGlass, DoorMetal;
         public readonly List<Vector3> GiantRoute = new List<Vector3>();
         public RemakeAudio Audio { get; private set; }
-        public RemakeDressing Dressing { get; private set; }
-        public int Map { get; private set; }
-        public int SelectedMap { get; set; }
+        public RemakeMapMarkers Markers { get; private set; }
         public int SelectedSkin { get; set; } = 1;
         public Material PropMaterial, SkinMaterial, SleeveMaterial, SignalMaterial;
         public readonly Dictionary<int, StudentState> Students = new Dictionary<int, StudentState>();
@@ -73,10 +69,10 @@ namespace HorrorUtez.Remake
             foreach (HingedDoor door in doors) if (door.TryGetComponent(out Collider leaf)) doorways.Add(leaf.bounds);
             foreach (HingedDoor door in doors) door.Open();
             Audio = gameObject.AddComponent<RemakeAudio>(); Audio.Setup(this);
-            Dressing = new RemakeDressing(this); Dressing.Build();
-            RemakeCampusExpansion.Build(this);
-            if (Dressing.Ready) { GiantRoute.AddRange(Dressing.GiantRoute()); doorways.AddRange(Dressing.ExtraDoorways); }
-            BuildTruck(); BuildLoot(); BuildExtraLoot(); BuildStaging();
+            Markers = new RemakeMapMarkers(); Markers.Load();
+            GiantRoute.AddRange(Markers.GiantRoute); doorways.AddRange(Markers.ExtraDoorways);
+            ApplyNightMood();
+            BuildTruck(); BuildLoot(); BuildExtraLoot();
             SessionSeed = Environment.TickCount & int.MaxValue;
             var view = new GameObject("Remake menu camera");
             menuCamera = view.AddComponent<Camera>();
@@ -91,8 +87,6 @@ namespace HorrorUtez.Remake
             Hud = gameObject.AddComponent<RemakeHud>(); Hud.Setup(this);
             Cursor.lockState = CursorLockMode.None; Cursor.visible = true;
             string[] args = Environment.GetCommandLineArgs();
-            int mapAt = Array.IndexOf(args, "-remakeMap");
-            if (mapAt >= 0 && mapAt + 1 < args.Length && int.TryParse(args[mapAt + 1], out int selected)) SelectedMap = Mathf.Clamp(selected, 0, 3);
             Automated = args.Contains("-remakeSmoke") || args.Contains("-remakeTour") || args.Contains("-remakeWatchGiant") || args.Contains("-remakeCapture");
             int skinAt=Array.IndexOf(args,"-remakeSkin");
             if(skinAt>=0 && skinAt+1<args.Length && int.TryParse(args[skinAt+1],out int skinChoice))SelectedSkin=RemakeSkins.Clamp(skinChoice);
@@ -111,7 +105,6 @@ namespace HorrorUtez.Remake
             try
             {
                 if (host) { Wire = new RemakeWire(); Wire.Host(); }
-                ConfigureMap(SelectedMap);
                 Online = host; Authority = true; LocalId = 0; Started = true; Phase = 1;
                 Students.Clear(); AddStudent(0, CleanName(name));Students[0].skin=RemakeSkins.Clamp(SelectedSkin);
                 deadline = Time.time + 480;
@@ -216,7 +209,7 @@ namespace HorrorUtez.Remake
             }
             if (Authority && Online && Time.unscaledTime > nextSnapshot)
             { nextSnapshot = Time.unscaledTime + 0.075f; Wire?.Broadcast(JsonUtility.ToJson(Snapshot())); }
-            SyncAvatars(); UpdatePopups(); if (Map == 0) Dressing?.Tick();
+            SyncAvatars(); UpdatePopups();
             if (truckDisplay != null) truckDisplay.text = "$" + Cargo + " / $" + Quota + "\n" + (Cargo >= Quota ? "CARGA LISTA" : "RECUPERAR EQUIPO");
         }
         private void PumpNetwork()
@@ -291,7 +284,6 @@ namespace HorrorUtez.Remake
             if (message.type == "voice") { Voice.Receive(message.id, message.audio); return; }
             if (message.type == "sound") { Audio?.Play(string.IsNullOrEmpty(message.text) ? "impact_plastic" : message.text, message.position, message.reach > 0 ? message.reach : .5f); return; }
             if (message.type != "state" || message.students == null || message.loot == null) return;
-            if (!Started) ConfigureMap(message.map);
             bool newDay = pendingDay != message.day;
             pendingDay = message.day; SessionSeed = message.seed; Day = message.day; SpawnEnemies(); ApplyDayLayout(); Quota = message.quota; Cargo = message.cargo;
             Phase = message.phase; Seconds = message.seconds; Notice = message.text;
@@ -316,7 +308,7 @@ namespace HorrorUtez.Remake
         }
         public WireMessage Snapshot() => new WireMessage
         {
-            type = "state", seed = SessionSeed, map = Map, day = Day, quota = Quota, cargo = Cargo, phase = Phase, seconds = Seconds, text = Notice,
+            type = "state", seed = SessionSeed, day = Day, quota = Quota, cargo = Cargo, phase = Phase, seconds = Seconds, text = Notice,
             students = Students.Values.ToArray(),
             loot = Loot.Select(l => new LootState { id = l.Id, value = l.Value, owner = l.Owner, position = l.transform.position, rotation = l.transform.rotation }).ToArray(),
             enemies = Enemies.Select(e => e.transform.position).ToArray(), enemyFlags = Enemies.Select(e => e.Flags).ToArray(), doors = doors.Select(d => d.IsOpen).ToArray()
@@ -513,15 +505,14 @@ namespace HorrorUtez.Remake
             Audio?.Play(clip, point, volume);
             if (Online) Wire?.Broadcast(JsonUtility.ToJson(new WireMessage { type = "sound", position = point, text = clip, reach = volume }));
         }
-        // Patrols: caretakers walk the plaza; the giant also prowls CECADEC's ground floor.
-        private static readonly Vector3[] OutdoorPatrol = { new Vector3(-8, 0, 1), new Vector3(6, 0, -8), new Vector3(-12, 0, 18), new Vector3(18, 0, 8),
-            new Vector3(22, 0, -30), new Vector3(-20, 0, -40), new Vector3(10, 0, -55) };
+        // Patrols (RemakePatrolPoint markers): caretakers walk the plaza; the giant also prowls CECADEC's ground floor.
         public Vector3 PatrolPoint(bool indoors)
         {
-            if (Map > 0 && GiantRoute.Count > 0) return GiantRoute[UnityEngine.Random.Range(0, GiantRoute.Count)];
-            if (indoors && Dressing != null && Dressing.Patrol.Count > 0 && UnityEngine.Random.value < .6f)
-                return Dressing.Patrol[UnityEngine.Random.Range(0, Dressing.Patrol.Count)];
-            return OutdoorPatrol[UnityEngine.Random.Range(0, indoors ? OutdoorPatrol.Length : 4)];
+            if (indoors && Markers.Patrol.Count > 0 && UnityEngine.Random.value < .6f)
+                return Markers.Patrol[UnityEngine.Random.Range(0, Markers.Patrol.Count)];
+            List<Vector3> outdoor = Markers.OutdoorPatrol;
+            if (outdoor.Count == 0) return TruckPosition;
+            return outdoor[UnityEngine.Random.Range(0, indoors ? outdoor.Count : Mathf.Min(4, outdoor.Count))];
         }
         private static void SoundAt(AudioClip clip, Vector3 point, float volume) => AudioSource.PlayClipAtPoint(clip, point, volume);
         public void SendVoice(string audio)
@@ -536,7 +527,7 @@ namespace HorrorUtez.Remake
         {
             if (navigation == null) { navigation = new NavigationGrid(WorldMask, doorways); PruneGiantRoute(); }
             var marks = new List<Vector3>(); foreach (HingedDoor door in doors) marks.Add(door.transform.position);
-            if (Dressing != null) foreach (Vector3 room in Dressing.RoomCentres.Values) marks.Add(room + Vector3.right * .01f);
+            foreach (Vector3 room in Markers.RoomCentres.Values) marks.Add(room + Vector3.right * .01f);
             return navigation.Map(GiantRoute, trail, min, max, scale, marks);
         }
         // Drops route waypoints that are unreachable or only reachable by an absurd detour (raised planters and kerbs
@@ -570,68 +561,14 @@ namespace HorrorUtez.Remake
         }
         private void OnDestroy() { Wire?.Dispose(); Time.timeScale = 1; Cursor.lockState = CursorLockMode.None; Cursor.visible = true; }
 
-        private void ConfigureMap(int map)
+        // Night mood for the campus scene: darker sun and ambient, green-black fog. Weather keeps animating on top.
+        private static void ApplyNightMood()
         {
-            if (Map == map) return;
-            if (!RemakeRepoMaps.Available(map)) throw new InvalidOperationException("El sector solicitado no está instalado.");
-            // Sessions choose one expedition before spawning students. Returning to menu reloads the scene.
-            var module = RemakeRepoMaps.Build(map, PropMaterial);
-            var campus = GameObject.Find("UTEZ_Buildings"); if (campus != null) campus.SetActive(false);
-            var labs = GameObject.Find("Compuaulas · ambientación"); if (labs != null) labs.SetActive(false);
-            var previousDoors = doors; var previousDoorways = doorways.ToArray(); var previousRoute = GiantRoute.ToArray();
-            try
-            {
-                Map = map; doors = Array.Empty<HingedDoor>(); doorways.Clear(); GiantRoute.Clear(); navigation = null;
-                Physics.SyncTransforms();
-                Renderer[] mapRenderers = module.GetComponentsInChildren<Renderer>();
-                if (mapRenderers.Length == 0) throw new InvalidOperationException("El mapa no contiene geometría.");
-                Bounds bounds = mapRenderers[0].bounds;
-                foreach (Renderer renderer in mapRenderers) bounds.Encapsulate(renderer.bounds);
-                var route = new List<Vector3>();
-                // Keep only accessible ground-floor spots in the imported sector, within the existing navigation grid.
-                for (float z = Mathf.Max(-62, bounds.min.z + 1); z < Mathf.Min(35, bounds.max.z - 1); z += 1.5f)
-                    for (float x = Mathf.Max(-33, bounds.min.x + 1); x < Mathf.Min(33, bounds.max.x - 1); x += 1.5f)
-                    {
-                        Vector3 p = new Vector3(x, .5f, z);
-                        if (!Physics.Raycast(p + Vector3.up, Vector3.down, out RaycastHit ground, 2, WorldMask, QueryTriggerInteraction.Ignore)) continue;
-                        p = ground.point + Vector3.up * .05f;
-                        if (Physics.CheckCapsule(p + Vector3.up * .4f, p + Vector3.up * 1.25f, .35f, WorldMask, QueryTriggerInteraction.Ignore)) continue;
-                        FindPath(SpawnPoint(0), p, route);
-                        if (route.Count > 0 && Vector3.Distance(route[route.Count - 1], p) < 1) GiantRoute.Add(p);
-                    }
-                for (int sector = 0; sector < 3; sector++)
-                {
-                    float centre = (sector - 1) * 17;
-                    int accessible = GiantRoute.Count(p => Mathf.Abs(p.x - centre) < 6.8f && Mathf.Abs(p.z + 32) < 6.8f);
-                    Debug.Log("[Remake] Map " + map + " sector " + sector + " interior spots: " + accessible);
-                    if (accessible == 0)
-                    {
-                        if (Automated)
-                        {
-                            var nav = NavigationMap(null);
-                            System.IO.File.WriteAllBytes(System.IO.Path.Combine(Application.dataPath,"..","sector-nav-"+map+".png"),nav.EncodeToPNG());
-                            Destroy(nav);
-                        }
-                        throw new InvalidOperationException("El sector " + sector + " no tiene entrada navegable desde el camión.");
-                    }
-                }
-                if (GiantRoute.Count == 0) throw new InvalidOperationException("El mapa no tiene entrada navegable desde el camión.");
-                for (int i = 2; i < Loot.Count; i++)
-                {
-                    RemakeLoot loot = Loot[i]; if (loot.Kind == RemakeLoot.CredentialKind) continue;
-                    loot.Spawn = GiantRoute[(i * 7) % GiantRoute.Count] + Vector3.up * (loot.Size.y * .5f + .08f);
-                    loot.ResetLoot();
-                }
-                Debug.Log("[Remake] Sector " + map + " has " + GiantRoute.Count + " reachable ground-floor spots");
-            }
-            catch
-            {
-                module.SetActive(false); Destroy(module); Map = 0; navigation = null;
-                doors = previousDoors; doorways.Clear(); doorways.AddRange(previousDoorways);
-                GiantRoute.Clear(); GiantRoute.AddRange(previousRoute);
-                if (campus != null) campus.SetActive(true); if (labs != null) labs.SetActive(true);
-                Physics.SyncTransforms(); throw;
-            }
+            foreach (WeatherSystem weather in FindObjectsByType<WeatherSystem>(FindObjectsSortMode.None)) weather.NightLightScale = .5f;
+            foreach (Light light in FindObjectsByType<Light>(FindObjectsSortMode.None))
+                if (light.type == LightType.Directional) light.intensity *= .45f;
+            RenderSettings.ambientIntensity *= .55f;
+            RenderSettings.fog = true; RenderSettings.fogColor = new Color(.018f, .028f, .025f);
         }
 
         private GameObject Box(string name, Transform parent, Vector3 position, Vector3 size, Material mat, bool collider = true)
@@ -686,14 +623,18 @@ namespace HorrorUtez.Remake
             Vector3[] sizes = { new Vector3(.66f,.43f,.46f), new Vector3(.61f,.27f,.5f), new Vector3(.45f,.85f,.39f),
                 new Vector3(.49f,.91f,.59f), new Vector3(.53f,.66f,.61f), new Vector3(.77f,.67f,.78f), new Vector3(1.4f,.53f,1.7f),
                 new Vector3(.44f,.26f,.4f), new Vector3(.46f,.08f,.34f) };
-            // The first haul sits in the plaza; the rest is hidden in CECADEC's wrecked compuaulas.
-            Vector3 Spot(string key, Vector3 fallback) => Dressing != null && Dressing.Spots.TryGetValue(key, out Vector3 p) ? p : fallback;
-            Vector3[] points = { new Vector3(4,.5f,-6), new Vector3(1,.5f,-5), Spot("process_bench", new Vector3(-4,.6f,-3)),
-                Spot("back_room", new Vector3(-7,.7f,-1)), Spot("electrical", new Vector3(-11,.55f,5)), Spot("nw1_floor", new Vector3(6,.6f,8)),
-                Spot("cc9_teacher", new Vector3(-3,.6f,-15)), Spot("se_lab", new Vector3(2,.6f,-22)), Spot("aula2_teacher", new Vector3(-9,.7f,16)),
-                Spot("aula1_floor", new Vector3(6,.6f,19)), new Vector3(8,.6f,-7), Spot("process_bench2", new Vector3(-6,.6f,-9)),
-                Spot("storage_shelf", new Vector3(3,.6f,12)) };
+            // First-day spots are RemakeLootSpot markers (Gameplay_Marcadores): the first haul sits in the plaza,
+            // the rest is hidden in CECADEC's wrecked compuaulas. Order and kinds are part of the network protocol.
+            string[] keys = { "plaza_a", "plaza_b", "process_bench", "back_room", "electrical", "nw1_floor", "cc9_teacher",
+                "se_lab", "aula2_teacher", "aula1_floor", "plaza_c", "process_bench2", "storage_shelf" };
+            Vector3 Spot(int index)
+            {
+                if (Markers.Spots.TryGetValue(keys[index], out Vector3 p)) return p;
+                Debug.LogWarning("[Remake] Missing loot spot marker '" + keys[index] + "'; placing it next to the truck.");
+                return TruckPosition + new Vector3(-4 - index * .8f, .6f, -6);
+            }
             int[] kinds = { 0,1,2,3,4,5,0,2,1,3,8,7,8 };
+            Vector3[] points = keys.Select((_, i) => Spot(i)).ToArray();
             for (int i = 0; i < points.Length; i++)
             {
                 int kind = kinds[i]; var go = new GameObject(names[kind]); go.layer = 10;
@@ -727,14 +668,6 @@ namespace HorrorUtez.Remake
                 var card = go.AddComponent<RemakeLoot>(); card.Setup(this, Loot.Count, RemakeLoot.CredentialKind, "Credencial", 0, .6f, new Vector3(.24f, .07f, .34f));
                 card.SetAuthority(false); Loot.Add(card); card.Hide();
             }
-        }
-        private void BuildStaging()
-        {
-            var staging = new GameObject("Remake · inventario nocturno");
-            WorldText("EQUIPO EN RESGUARDO\nENTREGA PENDIENTE", staging.transform, new Vector3(0, 1.7f, -7), 0.04f);
-            Box("Inventario", staging.transform, new Vector3(0, 1.7f, -6.95f), new Vector3(2.5f, 1, .09f), PropMaterial);
-            for (int i = 0; i < 5; i++)
-                Box("Barrera de obra", staging.transform, new Vector3(-16+i*1.3f,.15f,-8), new Vector3(.7f,.3f,.7f), SignalMaterial);
         }
     }
 

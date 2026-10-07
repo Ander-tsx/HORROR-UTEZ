@@ -13,6 +13,7 @@ using HorrorUtez.Rendering.Editor;
 
 namespace HorrorUtez.Remake.Editor
 {
+    // Import conventions for pieces dropped into Assets/_Project/Art/Remake (see Documentation/Remake/BLENDER.md).
     public sealed class RemakeModelImporter : AssetPostprocessor
     {
         private void OnPreprocessModel()
@@ -21,7 +22,6 @@ namespace HorrorUtez.Remake.Editor
             var model=(ModelImporter)assetImporter;model.globalScale=1;model.useFileScale=true;
             model.bakeAxisConversion=true;model.importAnimation=false;model.importCameras=false;model.importLights=false;
             model.addCollider=false;model.meshCompression=ModelImporterMeshCompression.Off;
-            // Lab dressing is static-batched at runtime, which needs CPU-readable meshes.
             model.isReadable=assetPath.Contains("/Resources/Lab/");
         }
         private void OnPreprocessTexture()
@@ -39,6 +39,7 @@ namespace HorrorUtez.Remake.Editor
             settings.compressionFormat=AudioCompressionFormat.Vorbis;settings.quality=music?.6f:.8f;
             audio.defaultSampleSettings=settings;audio.forceToMono=true;
         }
+        // A material slot named like a material in Art/Remake/Materials uses that material automatically.
         private void OnPostprocessModel(GameObject root)
         {
             if(!assetPath.StartsWith("Assets/_Project/Art/Remake/",StringComparison.Ordinal))return;
@@ -55,91 +56,26 @@ namespace HorrorUtez.Remake.Editor
             }
         }
     }
+
+    // Builds. The scenes are authored by hand in the editor and are never regenerated here.
     public static class RemakeBuild
     {
         public const string Scene="Assets/_Project/Scenes/remake.unity";
         public const string ShopScene="Assets/_Project/Scenes/remake_shop.unity";
         private const string Art="Assets/_Project/Art/Remake/";
-        [MenuItem("HORROR-UTEZ/Remake/Open playable scene")]
+
+        [MenuItem("HORROR-UTEZ/Abrir escena jugable",priority=0)]
         public static void OpenPlayable()
         {
             EditorSceneManager.OpenScene(Scene);
-            Debug.Log("[RemakeBuild] Opened remake.unity. Press Play for the new menu and game.");
+            Debug.Log("[RemakeBuild] Opened remake.unity. Press Play for the menu and game.");
         }
-        [MenuItem("HORROR-UTEZ/Remake/Prepare playable scene")]
-        public static void Prepare()
+
+        // Project-level settings the game depends on (layers, URP, shaders kept in builds, player settings, scene list).
+        // Safe to run any time: it does not open or modify scenes, prefabs or materials.
+        [MenuItem("HORROR-UTEZ/Reparar configuración del proyecto")]
+        public static void EnsureProjectSettings()
         {
-            Directory.CreateDirectory(Art+"Materials");AssetDatabase.Refresh();
-            string[] names={"Chalk","Ink","Steel","Oxblood","Amber","Screen","Glass","Skin","Eye","Wood"};
-            Color[] colors={new Color(.73f,.72f,.65f),new Color(.035f,.048f,.052f),new Color(.22f,.27f,.28f),
-                new Color(.38f,.045f,.035f),new Color(.92f,.51f,.08f),new Color(.08f,.7f,.56f),
-                new Color(.08f,.19f,.22f),new Color(.57f,.34f,.24f),new Color(1,.08f,.02f),new Color(.39f,.23f,.11f)};
-            for(int i=0;i<names.Length;i++)
-            {
-                string path=Art+"Materials/"+names[i]+".mat";
-                var mat=AssetDatabase.LoadAssetAtPath<Material>(path);
-                if(mat==null){mat=new Material(Shader.Find("Universal Render Pipeline/Lit"));AssetDatabase.CreateAsset(mat,path);}
-                mat.SetColor("_BaseColor",colors[i]);mat.SetFloat("_Smoothness",i==2?.5f:.2f);
-                if(names[i]=="Screen"||names[i]=="Eye"||names[i]=="Amber")
-                {mat.EnableKeyword("_EMISSION");mat.SetColor("_EmissionColor",colors[i]*1.5f);}
-                EditorUtility.SetDirty(mat);
-            }
-            // One PSX/Lit material per generated texture (Tools/blender/gen_remake_textures.py); names match the
-            // material slots in every remake FBX, which RemakeModelImporter remaps to these assets.
-            foreach(string png in Directory.GetFiles(Art+"Textures","*.png"))
-            {
-                string name=Path.GetFileNameWithoutExtension(png);
-                string texturePath=png.Replace(Path.DirectorySeparatorChar,'/');
-                AssetDatabase.ImportAsset(texturePath,ImportAssetOptions.ForceUpdate);
-                string path=Art+"Materials/"+name+".mat";
-                var mat=AssetDatabase.LoadAssetAtPath<Material>(path);
-                if(mat==null){mat=new Material(PsxMaterialDefaults.LitShader);AssetDatabase.CreateAsset(mat,path);}
-                if(mat.shader!=PsxMaterialDefaults.LitShader)mat.shader=PsxMaterialDefaults.LitShader;
-                mat.SetTexture(PsxShaderProperties.MainTex,AssetDatabase.LoadAssetAtPath<Texture2D>(texturePath));
-                PsxMaterialDefaults.Apply(mat,SurfaceKind(name),false);
-            }
-            // See-through glass for the automatic east entrance (RemakeDressing): the dirty glass texture, premultiplied.
-            {
-                string path=Art+"Materials/Door_Glass.mat";
-                var source=AssetDatabase.LoadAssetAtPath<Material>(Art+"Materials/Glass_Dirty.mat");
-                var mat=AssetDatabase.LoadAssetAtPath<Material>(path);
-                if(mat==null&&source!=null){mat=new Material(source);AssetDatabase.CreateAsset(mat,path);}
-                if(mat!=null&&source!=null)
-                {
-                    mat.CopyPropertiesFromMaterial(source);PsxMaterialDefaults.Apply(mat,PsxSurfaceKind.Glass,false);
-                    PsxMaterialDefaults.SetTransparent(mat,true);mat.SetFloat("_Alpha_Multiplier",.32f);
-                    mat.SetColor(PsxShaderProperties.BaseColor,new Color(.7f,.88f,1f,.32f));EditorUtility.SetDirty(mat);
-                }
-            }
-            AssetDatabase.SaveAssets();
-            foreach(string path in Directory.GetFiles(Art,"*.fbx",SearchOption.AllDirectories))AssetDatabase.ImportAsset(path.Replace(Path.DirectorySeparatorChar,'/'),ImportAssetOptions.ForceUpdate);
-            // Failed .blend imports produce empty assets. Repair them once Blender is available.
-            foreach(string path in Directory.GetFiles("Assets/_Project/Art/Environment","*.blend",SearchOption.AllDirectories))
-            {
-                string assetPath=path.Replace('\\','/');
-                if(!AssetDatabase.LoadAllAssetsAtPath(assetPath).OfType<Mesh>().Any())AssetDatabase.ImportAsset(assetPath,ImportAssetOptions.ForceUpdate);
-                if(!AssetDatabase.LoadAllAssetsAtPath(assetPath).OfType<Mesh>().Any())throw new Exception("Blender import failed: "+assetPath);
-            }
-            SyncPlayerPrefab();
-            var scene=EditorSceneManager.OpenScene("Assets/_Project/Scenes/utez.unity");
-            EditorSceneManager.SaveScene(scene,Scene,true);
-            scene=EditorSceneManager.OpenScene(Scene);
-            GameObject old=GameObject.Find("Player");if(old!=null)UnityEngine.Object.DestroyImmediate(old);
-            foreach(GameObject sceneRoot in scene.GetRootGameObjects())
-                foreach(Transform node in sceneRoot.GetComponentsInChildren<Transform>(true))
-                    GameObjectUtility.RemoveMonoBehavioursWithMissingScript(node.gameObject);
-            foreach(Camera camera in UnityEngine.Object.FindObjectsByType<Camera>(FindObjectsSortMode.None))camera.enabled=false;
-            foreach(AudioListener listener in UnityEngine.Object.FindObjectsByType<AudioListener>(FindObjectsSortMode.None))listener.enabled=false;
-            foreach(MonoBehaviour script in UnityEngine.Object.FindObjectsByType<MonoBehaviour>(FindObjectsSortMode.None))
-                if(script.GetType().Name=="PauseMenu"||script.GetType().Name=="PauseController")script.enabled=false;
-            var root=new GameObject("REMAKE · Turno nocturno");var game=root.AddComponent<RemakeGame>();
-            game.StudentModel=AssetDatabase.LoadAssetAtPath<GameObject>("Assets/_Project/Prefabs/Player/PlayerCharacter.prefab");
-            game.TruckModel=Model("Truck");game.EnemyModel=Model("Caretaker");game.GiantModel=Model("Giant");
-            game.LootModels=new[]{Model("Laptop"),Model("Projector"),Model("Microscope"),Model("Workstation"),Model("UPS"),Model("Printer"),null,Model("Oscilloscope"),Model("Router")};
-            game.DoorGlass=Mat("Door_Glass");game.DoorMetal=Mat("Metal_Brushed");
-            game.ScreenMaterials=new[]{"Screen_Dead","Screen_Cracked","Screen_BSOD","Screen_Terminal","Screen_Static"}.Select(n=>AssetDatabase.LoadAssetAtPath<Material>(Art+"Materials/"+n+".mat")).ToArray();
-            Material Mat(string n)=>AssetDatabase.LoadAssetAtPath<Material>(Art+"Materials/"+n+".mat");
-            game.PropMaterial=Mat("Steel");game.SkinMaterial=Mat("Skin");game.SleeveMaterial=Mat("Oxblood");game.SignalMaterial=Mat("Amber");
             var tagAsset=new SerializedObject(AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/TagManager.asset")[0]);
             var layers=tagAsset.FindProperty("layers");layers.GetArrayElementAtIndex(9).stringValue="RemakeStudent";
             layers.GetArrayElementAtIndex(10).stringValue="RemakeLoot";tagAsset.ApplyModifiedPropertiesWithoutUndo();
@@ -147,6 +83,7 @@ namespace HorrorUtez.Remake.Editor
             if(pipeline==null)throw new Exception("URP is required.");
             pipeline.renderScale=1;pipeline.shadowDistance=32;pipeline.mainLightShadowmapResolution=1024;
             EditorUtility.SetDirty(pipeline);
+            // Fog/screen shaders must be referenced by the renderer features or the player build strips them.
             var rendererData=AssetDatabase.LoadAssetAtPath<UniversalRendererData>("Assets/_Project/Settings/UTEZ_URP_Renderer.asset");
             foreach(ScriptableRendererFeature feature in rendererData.rendererFeatures)
             {
@@ -166,29 +103,35 @@ namespace HorrorUtez.Remake.Editor
             PlayerSettings.Android.targetArchitectures=AndroidArchitecture.ARM64;
             PlayerSettings.defaultInterfaceOrientation=UIOrientation.LandscapeLeft;
             PlayerSettings.SetScriptingBackend(NamedBuildTarget.Android,ScriptingImplementation.IL2CPP);
-            EditorSceneManager.MarkSceneDirty(scene);EditorSceneManager.SaveScene(scene);
-            var shopScene=EditorSceneManager.NewScene(NewSceneSetup.EmptyScene,NewSceneMode.Additive);
-            var shopRoot=new GameObject("Cooperativa UTEZ");shopRoot.AddComponent<RemakeShop>();
-            UnityEngine.SceneManagement.SceneManager.MoveGameObjectToScene(shopRoot,shopScene);
-            EditorSceneManager.SaveScene(shopScene,ShopScene);EditorSceneManager.CloseScene(shopScene,true);
             EditorBuildSettings.scenes=new[]{new EditorBuildSettingsScene(Scene,true),new EditorBuildSettingsScene(ShopScene,true)};
             AssetDatabase.SaveAssets();
-            Debug.Log("[RemakeBuild] Scene ready: "+Scene+". URP + Windows + Android controls.");
-            foreach(string name in new[]{"Truck","Laptop","Caretaker","Giant"})
-            {
-                var probe=UnityEngine.Object.Instantiate(Model(name));
-                var bounds=new Bounds(probe.transform.position,Vector3.zero);
-                foreach(Renderer renderer in probe.GetComponentsInChildren<Renderer>())bounds.Encapsulate(renderer.bounds);
-                Debug.Log("[RemakeBuild] Model "+name+" bounds "+bounds+" root rotation "+probe.transform.eulerAngles);
-                foreach(Transform child in probe.GetComponentsInChildren<Transform>())
-                    if(child.name=="Cab"||child.name=="CargoFloor"||child.name=="Windshield")Debug.Log("[RemakeBuild] "+child.name+" world "+child.position);
-                UnityEngine.Object.DestroyImmediate(probe);
-            }
+            Debug.Log("[RemakeBuild] Project settings OK.");
         }
+
+        // Creates a PSX/Lit material for every texture in Art/Remake/Textures that has none yet. Existing materials
+        // are left untouched, so hand-tuned materials survive. Name a model's material slot like the texture to use it.
+        [MenuItem("HORROR-UTEZ/Crear materiales PSX para texturas nuevas")]
+        public static void CreateMissingMaterials()
+        {
+            Directory.CreateDirectory(Art+"Materials");
+            int created=0;
+            foreach(string png in Directory.GetFiles(Art+"Textures","*.png"))
+            {
+                string name=Path.GetFileNameWithoutExtension(png);
+                string path=Art+"Materials/"+name+".mat";
+                if(AssetDatabase.LoadAssetAtPath<Material>(path)!=null)continue;
+                var mat=new Material(PsxMaterialDefaults.LitShader);
+                mat.SetTexture(PsxShaderProperties.MainTex,AssetDatabase.LoadAssetAtPath<Texture2D>(png.Replace(Path.DirectorySeparatorChar,'/')));
+                PsxMaterialDefaults.Apply(mat,SurfaceKind(name),false);
+                AssetDatabase.CreateAsset(mat,path);created++;
+            }
+            AssetDatabase.SaveAssets();
+            Debug.Log("[RemakeBuild] Created "+created+" materials.");
+        }
+
         // The player prefab is an unpacked copy of PlayerCharacter.fbx with its own SkinnedMeshRenderers. When the
-        // body mesh is regenerated (Tools/blender/gen_player_body_v3.py) its submesh and bone order can change, so
-        // copy materials, bones (matched by name) and bounds from the freshly imported FBX.
-        [MenuItem("HORROR-UTEZ/Remake/Sync player prefab with FBX")]
+        // body FBX is re-exported its submesh and bone order can change, so copy materials, bones (by name) and bounds.
+        [MenuItem("HORROR-UTEZ/Sincronizar prefab del estudiante con su FBX")]
         public static void SyncPlayerPrefab()
         {
             const string prefabPath="Assets/_Project/Prefabs/Player/PlayerCharacter.prefab";
@@ -226,15 +169,11 @@ namespace HorrorUtez.Remake.Editor
             if(name.StartsWith("Plastic")||name.StartsWith("Laminate")||name.StartsWith("Truck")||name=="Metal_Painted"||name=="Sneaker")return PsxSurfaceKind.Satin;
             return PsxSurfaceKind.Matte;
         }
-        private static GameObject Model(string name)
-        {
-            GameObject model=AssetDatabase.LoadAssetAtPath<GameObject>(Art+name+".fbx");
-            if(model==null)throw new Exception("Missing model "+name);return model;
-        }
-        [MenuItem("HORROR-UTEZ/Remake/Build Windows")]
+
+        [MenuItem("HORROR-UTEZ/Build/Windows")]
         public static void Windows()
         {
-            if(!File.Exists(Scene))Prepare();
+            EnsureProjectSettings();
             Directory.CreateDirectory("Builds/Remake/Windows");
             BuildReport report=BuildPipeline.BuildPlayer(new BuildPlayerOptions{scenes=new[]{Scene,ShopScene},
                 locationPathName="Builds/Remake/Windows/HORROR-UTEZ.exe",target=BuildTarget.StandaloneWindows64,options=BuildOptions.None});
@@ -243,10 +182,10 @@ namespace HorrorUtez.Remake.Editor
         }
         // macOS from Windows: Mono backend (IL2CPP cannot cross-compile to macOS), universal Intel + Apple Silicon.
         // The app is unsigned; on the Mac it must be allowed once (see Documentation/Remake/PLAY.md).
-        [MenuItem("HORROR-UTEZ/Remake/Build macOS")]
+        [MenuItem("HORROR-UTEZ/Build/macOS")]
         public static void Mac()
         {
-            if(!File.Exists(Scene))Prepare();
+            EnsureProjectSettings();
             if(!BuildPipeline.IsBuildTargetSupported(BuildTargetGroup.Standalone,BuildTarget.StandaloneOSX))
                 throw new Exception("Install Mac Build Support (Mono) for this Unity editor.");
             PlayerSettings.SetScriptingBackend(NamedBuildTarget.Standalone,ScriptingImplementation.Mono2x);
@@ -272,16 +211,16 @@ namespace HorrorUtez.Remake.Editor
             if(report.summary.result!=BuildResult.Succeeded)throw new Exception("macOS build: "+report.summary.result);
             Debug.Log("[RemakeBuild] macOS ready. "+report.summary.totalSize+" bytes.");
         }
-        public static void PrepareAndBuildAll(){Prepare();Windows();Mac();}
-        [MenuItem("HORROR-UTEZ/Remake/Build Android")]
+        [MenuItem("HORROR-UTEZ/Build/Android")]
         public static void Android()
         {
+            EnsureProjectSettings();
             if(!BuildPipeline.IsBuildTargetSupported(BuildTargetGroup.Android,BuildTarget.Android))throw new Exception("Install Android Build Support (SDK, NDK, OpenJDK) for this Unity editor.");
             Directory.CreateDirectory("Builds/Remake/Android");
             BuildReport report=BuildPipeline.BuildPlayer(new BuildPlayerOptions{scenes=new[]{Scene,ShopScene},
                 locationPathName="Builds/Remake/Android/HORROR-UTEZ.apk",target=BuildTarget.Android,options=BuildOptions.Development});
             if(report.summary.result!=BuildResult.Succeeded)throw new Exception("Android build: "+report.summary.result);
         }
-        public static void PrepareAndBuild(){Prepare();Windows();}
+        public static void WindowsAndMac(){Windows();Mac();}
     }
 }
