@@ -2,6 +2,39 @@
 
 The user communicates in Spanish. Read [AGENTS.md](../../AGENTS.md) and the [README](../../README.md) first.
 
+## 2026-10-12: underground shop art and revised product direction
+
+The user rejected the truck extraction loop and approved a fountain/sewer delivery point, individual
+entry into a preloaded additive store, physical loot transfer, ladder-button return, shared money,
+individual upgrades, team-money gambling and paid tools unlocking more valuable campus areas. No quota
+or time limit for now; an internal clock continues in the store and increases exterior difficulty.
+Death/rescue and expedition-end rules remain undecided. **The immediate task prioritised scene modelling.**
+
+Authored `remake_shop.unity` now contains El Sumidero: an 18 × 20 m main hall, separate open-ceiling
+access shaft/ladder, broad loot reception/ramp, sale scale/terminal, six existing upgrade displays,
+barred buyer counter/decorative hooded figure, tool bench and a 6 × 8 m side casino with curtains,
+roulette, stools and two slot machines. `Prefabs/Map/Tienda_Subterranea.prefab` holds nine named groups.
+236 authored objects / 210 renderers; six `RemakeAnchor` references prepare future interactions.
+No runtime/map geometry generator and no new Blender dependency. The campus scene was not edited.
+
+Two original ImageGen textures, seven shop materials, existing Creepster/VT323 OFL fonts and spatial
+fluorescent hum are used. `PsxLit` supports repeated atlas regions (full-region default for old
+materials). `RemakeShopAtlasBinder` binds only those shop surfaces explicitly; intermediate offscreen
+SRP captures showed grey atlas surfaces / incorrect initial-frame colours. Per-renderer binding and
+camera warm-up corrected the reviewed captures. Details, source prompts and editing instructions:
+[SHOP.md](SHOP.md). Editor menu: **HORROR-UTEZ / Tienda / Abrir escena subterranea**.
+
+**Scope boundary:** the runtime still uses the old truck, quota, countdown, individual credits and
+between-day shop. Fountain placement/triggers, sewer transport, preload/individual scene transition,
+shared accounting, selling, gambling, consumable tools/locks and difficulty ramp are not implemented.
+Display prices for tools are proposed, not balanced. Do not report the new loop as playable.
+
+Validation results and retained intermediate rendering failures are recorded in TESTING.md. Human
+interaction/audio review, mobile performance and the new loop still require future validation.
+Final isolated Windows build exit 0; existing-loop solo 54/54, host 54/54 and client 21/21 pass,
+all exit 0 (loopback TCP 27912). Scene collision/reference audit and seven URP captures pass;
+delivery capture explicitly records SRP batching enabled. User's `Amber.mat` edit remains uncommitted.
+
 ## Current state — 2026-10-06: migration to an editor-authored map (supersedes older notes below)
 
 External collaborators are joining, so the procedural workflow was replaced by a normal Unity workflow:

@@ -20,13 +20,13 @@ RenderSettings:
   m_FogDensity: 0.01
   m_LinearFogStart: 0
   m_LinearFogEnd: 300
-  m_AmbientSkyColor: {r: 0.212, g: 0.227, b: 0.259, a: 1}
+  m_AmbientSkyColor: {r: 0.07, g: 0.085, b: 0.095, a: 1}
   m_AmbientEquatorColor: {r: 0.114, g: 0.125, b: 0.133, a: 1}
   m_AmbientGroundColor: {r: 0.047, g: 0.043, b: 0.035, a: 1}
   m_AmbientIntensity: 1
-  m_AmbientMode: 0
+  m_AmbientMode: 3
   m_SubtractiveShadowColor: {r: 0.42, g: 0.478, b: 0.627, a: 1}
-  m_SkyboxMaterial: {fileID: 10304, guid: 0000000000000000f000000000000000, type: 0}
+  m_SkyboxMaterial: {fileID: 0}
   m_HaloStrength: 0.5
   m_FlareStrength: 1
   m_FlareFadeSpeed: 3
@@ -35,7 +35,7 @@ RenderSettings:
   m_DefaultReflectionMode: 0
   m_DefaultReflectionResolution: 128
   m_ReflectionBounces: 1
-  m_ReflectionIntensity: 1
+  m_ReflectionIntensity: 0.15
   m_CustomReflection: {fileID: 0}
   m_Sun: {fileID: 0}
   m_UseRadianceAmbientProbe: 0
@@ -259,8 +259,8 @@ Transform:
   m_GameObject: {fileID: 57042844}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 5, y: 1.3, z: 5.7}
-  m_LocalScale: {x: 2, y: 2.6, z: 0.65}
+  m_LocalPosition: {x: 5, y: 2.6, z: 9.7}
+  m_LocalScale: {x: 2, y: 0.08, z: 0.65}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1496800908}
@@ -1863,7 +1863,7 @@ Transform:
   m_GameObject: {fileID: 585877086}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -2.8, y: 0.5, z: 5.5}
+  m_LocalPosition: {x: -2.8, y: 0.5, z: 9.5}
   m_LocalScale: {x: 0.8, y: 1, z: 0.8}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -2096,7 +2096,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 356e4d8faac84be478a4ac7e476f9fd8, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: HorrorUtez.Remake::HorrorUtez.Remake.RemakeShopProduct
   Kind: 5
 --- !u!23 &610263167
@@ -2334,7 +2334,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 356e4d8faac84be478a4ac7e476f9fd8, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: HorrorUtez.Remake::HorrorUtez.Remake.RemakeShopProduct
   Kind: 4
 --- !u!23 &646023909
@@ -2654,7 +2654,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 356e4d8faac84be478a4ac7e476f9fd8, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: HorrorUtez.Remake::HorrorUtez.Remake.RemakeShopProduct
   Kind: 0
 --- !u!23 &700371898
@@ -2853,8 +2853,8 @@ Transform:
   m_GameObject: {fileID: 795893699}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 4.5, z: 0}
-  m_LocalScale: {x: 15, y: 0.2, z: 14}
+  m_LocalPosition: {x: 0, y: 4.5, z: 2.65}
+  m_LocalScale: {x: 18, y: 0.25, z: 16.7}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1496800908}
@@ -2884,7 +2884,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: e9b2d9939cb21744f8564290ddea6eae, type: 2}
+  - {fileID: 2100000, guid: 0ac12026101240018000000000000012, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -2965,7 +2965,7 @@ Transform:
   m_GameObject: {fileID: 796852240}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -4, y: 0.5, z: 5.5}
+  m_LocalPosition: {x: -4, y: 0.5, z: 9.5}
   m_LocalScale: {x: 0.8, y: 1, z: 0.8}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3151,9 +3151,7 @@ GameObject:
   - component: {fileID: 838650361}
   - component: {fileID: 838650360}
   m_Layer: 0
-  m_Name: 'E: comprar mirando un producto
-
-    Host: E en la salida para volver al campus'
+  m_Name: Cartel de mejoras
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -3168,7 +3166,7 @@ Transform:
   m_GameObject: {fileID: 838650358}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 2.2, z: 4}
+  m_LocalPosition: {x: 0, y: 0.48, z: 0.42}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -3182,9 +3180,7 @@ TextMesh:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 838650358}
-  m_Text: 'E: comprar mirando un producto
-
-    Host: E en la salida para volver al campus'
+  m_Text: MEJORAS
   m_OffsetZ: 0
   m_CharacterSize: 0.033
   m_LineSpacing: 1
@@ -3359,6 +3355,35 @@ MeshFilter:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 853517060}
   m_Mesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
+--- !u!1001 &900000000
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 1001, guid: 0ac12026101240018000000000000001, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 200
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 0ac12026101240018000000000000001, type: 3}
+--- !u!114 &900000100
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1496800906}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0ac12026101240018000000000000040, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: HorrorUtez.Remake::HorrorUtez.Remake.RemakeShopAtlasBinder
 --- !u!1 &993312545
 GameObject:
   m_ObjectHideFlags: 0
@@ -3910,8 +3935,8 @@ Light:
   serializedVersion: 13
   m_Type: 2
   m_Color: {r: 0.75, g: 0.88, b: 1, a: 1}
-  m_Intensity: 8
-  m_Range: 11
+  m_Intensity: 1.6
+  m_Range: 5.8
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
   m_CookieSize2D: {x: 0.5, y: 0.5}
@@ -3990,8 +4015,8 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1178583089}
   serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 2.1, z: -5.7}
+  m_LocalRotation: {x: 0, y: 1, z: 0, w: 0}
+  m_LocalPosition: {x: 0, y: 3.6, z: -6}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -4005,7 +4030,7 @@ TextMesh:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1178583089}
-  m_Text: VOLVER A UTEZ / E
+  m_Text: SALIDA / ESCALERA
   m_OffsetZ: 0
   m_CharacterSize: 0.04
   m_LineSpacing: 1
@@ -4208,8 +4233,8 @@ Transform:
   m_GameObject: {fileID: 1199708953}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 2.2, z: 6.8}
-  m_LocalScale: {x: 15, y: 4.4, z: 0.3}
+  m_LocalPosition: {x: 0, y: 2.2, z: 10.9}
+  m_LocalScale: {x: 18, y: 4.4, z: 0.3}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1496800908}
@@ -4239,7 +4264,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: e9b2d9939cb21744f8564290ddea6eae, type: 2}
+  - {fileID: 2100000, guid: 0ac12026101240018000000000000011, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -4619,8 +4644,8 @@ Light:
   serializedVersion: 13
   m_Type: 2
   m_Color: {r: 0.75, g: 0.88, b: 1, a: 1}
-  m_Intensity: 8
-  m_Range: 11
+  m_Intensity: 1.6
+  m_Range: 5.8
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
   m_CookieSize2D: {x: 0.5, y: 0.5}
@@ -5195,8 +5220,8 @@ Transform:
   m_GameObject: {fileID: 1473657988}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -7.4, y: 2.2, z: 0}
-  m_LocalScale: {x: 0.3, y: 4.4, z: 14}
+  m_LocalPosition: {x: -8.95, y: 2.2, z: 1}
+  m_LocalScale: {x: 0.3, y: 4.4, z: 20}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1496800908}
@@ -5226,7 +5251,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: e9b2d9939cb21744f8564290ddea6eae, type: 2}
+  - {fileID: 2100000, guid: 0ac12026101240018000000000000011, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -5469,8 +5494,9 @@ GameObject:
   m_Component:
   - component: {fileID: 1496800908}
   - component: {fileID: 1496800907}
+  - component: {fileID: 900000100}
   m_Layer: 0
-  m_Name: Cooperativa UTEZ
+  m_Name: El Sumidero - exhibidores de mejoras
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5486,7 +5512,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2a980102058f6454d9d04dfa4dcf3601, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: HorrorUtez.Remake::HorrorUtez.Remake.RemakeShop
 --- !u!4 &1496800908
 Transform:
@@ -5589,7 +5615,7 @@ GameObject:
   - component: {fileID: 1537117821}
   - component: {fileID: 1537117820}
   m_Layer: 0
-  m_Name: COOPERATIVA UTEZ / ENTRE TURNOS
+  m_Name: EL SUMIDERO - cartel principal
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -5604,7 +5630,7 @@ Transform:
   m_GameObject: {fileID: 1537117818}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 3.2, z: 6.5}
+  m_LocalPosition: {x: 0, y: 3.2, z: 8.7}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -5618,9 +5644,9 @@ TextMesh:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1537117818}
-  m_Text: COOPERATIVA UTEZ / ENTRE TURNOS
+  m_Text: EL SUMIDERO
   m_OffsetZ: 0
-  m_CharacterSize: 0.07
+  m_CharacterSize: 0.2
   m_LineSpacing: 1
   m_Anchor: 4
   m_Alignment: 1
@@ -5628,7 +5654,7 @@ TextMesh:
   m_FontSize: 48
   m_FontStyle: 0
   m_RichText: 1
-  m_Font: {fileID: 10102, guid: 0000000000000000e000000000000000, type: 0}
+  m_Font: {fileID: 12800000, guid: 766138225e86e0c4ca42ef5293f60145, type: 3}
   m_Color:
     serializedVersion: 2
     rgba: 4292476876
@@ -5657,7 +5683,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 10100, guid: 0000000000000000e000000000000000, type: 0}
+  - {fileID: 2100000, guid: 766138225e86e0c4ca42ef5293f60145, type: 3}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -5814,8 +5840,8 @@ Light:
   serializedVersion: 13
   m_Type: 2
   m_Color: {r: 0.75, g: 0.88, b: 1, a: 1}
-  m_Intensity: 8
-  m_Range: 11
+  m_Intensity: 1.6
+  m_Range: 5.8
   m_SpotAngle: 30
   m_InnerSpotAngle: 21.80208
   m_CookieSize2D: {x: 0.5, y: 0.5}
@@ -6008,7 +6034,7 @@ Transform:
   m_GameObject: {fileID: 1606847029}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -1.5999999, y: 0.5, z: 5.5}
+  m_LocalPosition: {x: -1.5999999, y: 0.5, z: 9.5}
   m_LocalScale: {x: 0.8, y: 1, z: 0.8}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -6137,7 +6163,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 356e4d8faac84be478a4ac7e476f9fd8, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: HorrorUtez.Remake::HorrorUtez.Remake.RemakeShopProduct
   Kind: 1
 --- !u!23 &1707223250
@@ -6448,8 +6474,8 @@ Transform:
   m_GameObject: {fileID: 1746584295}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -5, y: 0.4, z: -3}
-  m_LocalScale: {x: 2, y: 0.8, z: 0.65}
+  m_LocalPosition: {x: -5, y: 0.45, z: -3}
+  m_LocalScale: {x: 2, y: 0.12, z: 0.65}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1496800908}
@@ -6577,7 +6603,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 356e4d8faac84be478a4ac7e476f9fd8, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: HorrorUtez.Remake::HorrorUtez.Remake.RemakeShopProduct
   Kind: 2
 --- !u!23 &1750827819
@@ -6686,8 +6712,8 @@ Transform:
   m_GameObject: {fileID: 1780603501}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: -0.15, z: 0}
-  m_LocalScale: {x: 15, y: 0.3, z: 14}
+  m_LocalPosition: {x: 0, y: -0.15, z: 1}
+  m_LocalScale: {x: 18, y: 0.3, z: 20}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1496800908}
@@ -6717,7 +6743,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: e9b2d9939cb21744f8564290ddea6eae, type: 2}
+  - {fileID: 2100000, guid: 0ac12026101240018000000000000013, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -6798,7 +6824,7 @@ Transform:
   m_GameObject: {fileID: 1862825908}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.39999986, y: 0.5, z: 5.5}
+  m_LocalPosition: {x: -0.39999986, y: 0.5, z: 9.5}
   m_LocalScale: {x: 0.8, y: 1, z: 0.8}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -6927,7 +6953,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 356e4d8faac84be478a4ac7e476f9fd8, type: 3}
-  m_Name: 
+  m_Name:
   m_EditorClassIdentifier: HorrorUtez.Remake::HorrorUtez.Remake.RemakeShopProduct
   Kind: 3
 --- !u!23 &1874916120
@@ -7067,7 +7093,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: e9b2d9939cb21744f8564290ddea6eae, type: 2}
+  - {fileID: 2100000, guid: 0ac12026101240018000000000000012, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -7440,8 +7466,8 @@ Transform:
   m_GameObject: {fileID: 2014609570}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 7.4, y: 2.2, z: 0}
-  m_LocalScale: {x: 0.3, y: 4.4, z: 14}
+  m_LocalPosition: {x: 8.95, y: 2.2, z: -3}
+  m_LocalScale: {x: 0.3, y: 4.4, z: 12}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1496800908}
@@ -7471,7 +7497,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: e9b2d9939cb21744f8564290ddea6eae, type: 2}
+  - {fileID: 2100000, guid: 0ac12026101240018000000000000011, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -7807,7 +7833,7 @@ GameObject:
   - component: {fileID: 2093480714}
   - component: {fileID: 2093480713}
   m_Layer: 0
-  m_Name: Terminal siguiente turno
+  m_Name: Boton de salida - integracion pendiente
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -7822,8 +7848,8 @@ Transform:
   m_GameObject: {fileID: 2093480711}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 0, y: 0.9, z: -5.7}
-  m_LocalScale: {x: 0.45, y: 1.8, z: 0.25}
+  m_LocalPosition: {x: -1.3, y: 1.1, z: -5.7}
+  m_LocalScale: {x: 0.2, y: 0.36, z: 0.15}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 1496800908}
@@ -7911,3 +7937,4 @@ SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
   - {fileID: 1496800908}
+  - {fileID: 900000000}

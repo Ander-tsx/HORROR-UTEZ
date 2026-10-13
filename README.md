@@ -1,5 +1,11 @@
 # HORROR-UTEZ · Turno nocturno
 
+> **2026-10-12 — nueva dirección:** el destino será la alcantarilla de la fuente y una tienda
+> subterránea, con dinero compartido y dificultad creciente sin cuota ni límite de tiempo. Ya está
+> construido el escenario **El Sumidero**; abre **HORROR-UTEZ → Tienda → Abrir escena subterránea**.
+> [Guía de la tienda y capturas](Documentation/Remake/SHOP.md). Las mecánicas nuevas están pendientes:
+> el flujo jugable descrito abajo todavía corresponde a la implementación anterior de camioneta.
+
 Juego cooperativo de terror en primera persona ambientado en la UTEZ (Universidad
 Tecnológica Emiliano Zapata). De 1 a 5 estudiantes entran de noche al campus para
 recuperar equipo valioso (laptops, proyectores, microscopios…), lo cargan en un camión de
@@ -1087,6 +1093,8 @@ Al terminar, busca `[RemakeSmoke] ALL COMPLETE` en `smoke.log`. Si algo falla, a
 | Menú | Qué hace |
 |---|---|
 | Abrir escena jugable | Abre `remake.unity` |
+| Tienda → Abrir escena subterránea | Abre `remake_shop.unity`, con El Sumidero, vendimia, cerrajería y casino |
+| Tienda → Auditar escena subterránea | Comprueba referencias y circulación de un estudiante de pie |
 | Reparar configuración del proyecto | Restablece layers, URP y las escenas del build. No toca escenas ni prefabs. Úsalo solo si algo de configuración se rompió |
 | Crear materiales PSX para texturas nuevas | Crea materiales para texturas nuevas de `Art/Remake/Textures` |
 | Sincronizar prefab del estudiante con su FBX | Tras reexportar el personaje desde Blender |

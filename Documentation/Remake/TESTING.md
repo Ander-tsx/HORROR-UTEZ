@@ -1,5 +1,53 @@
 # Build and validation record
 
+## 2026-10-12: El Sumidero underground shop art
+
+Scope: authored scene/prefab, original textures/materials, signs, lighting, props and editor QA.
+The existing truck/day economy remains in the executable. These tests are regressions of that
+existing loop, not evidence that the new sewer/shared-money/gambling loop is implemented.
+
+- Isolated Windows build of the shop art and atlas shader/binder: Unity exit 0, no `error CS`
+  or shader errors, `[RemakeBuild] Windows ready`, 192,420,068 bytes reported. Interactive
+  Unity was not used. Log: `Library/remake-build.log`.
+- Solo strict smoke: **54 PASS / 0 FAIL**, ALL COMPLETE, process exit 0.
+  Log: `Library/shop-solo-smoke.log`.
+- Host/client loopback on TCP 27912: **host 54 PASS / 0 FAIL**, ALL COMPLETE;
+  **client 21 PASS / 0 FAIL**, CLIENT COMPLETE; both process exits 0.
+  Logs: `Library/shop-host-smoke.log`, `Library/shop-client-smoke.log`.
+  Physical upgrade purchase, proximity rejection, scene load/unload and next day still pass.
+- Editor scene audit: **236 objects / 210 renderers**, zero missing meshes/materials/scripts.
+  19 destinations reachable in one connected floor region using a standing-student capsule
+  (radius .25 m, height 1.5 m): all five spawns, six product approaches, access, ladder button,
+  receipt, scale, tool bench, buyer and casino. Grid: 2,344 connected sampled cells.
+- Seven offscreen URP captures of the authored scene, exit 0, **SRP batching enabled: True**.
+  Log: `Library/shop-capture-delivery.log`. Reviewed entrance, receipt, upgrade aisle, tool
+  bench, casino, ladder and buyer. Final images preserved in `Documentation/Remake/Shop/`.
+  Windows runtime `shop-smoke.png` also reviewed: physical product, new Creepster sign,
+  dark shop environment and PSX filter render correctly.
+- Assets normalized using Unity's serializer (`RemakeShopReview.Canonicalize`), not generated
+  from a layout script. All new Unity assets include metadata; the campus scene and the user's
+  pre-existing uncommitted `Amber.mat` change were preserved.
+
+Intermediate issues retained in this record:
+
+- Computer Use native pipe was unavailable after its prescribed recovery attempts; scene/prefab
+  assets were edited directly and inspected in isolated Unity instead of controlling the editor.
+- The first command hit this PC's PowerShell script execution policy; the existing build script
+  was invoked with a process-local `-ExecutionPolicy Bypass`, without changing system policy.
+- `shop-capture-first/second.log` ran successfully but visual review exposed incorrect initial
+  atlas colours and grey atlas surfaces. A diagnostic with batching disabled confirmed different
+  rendering. Per-renderer atlas-region property binding and offscreen camera warm-up fixed the
+  reviewed output with campus batching still enabled; see `shop-capture-diagnostic/final/delivery.log`.
+- The previous helper sign survived an initial newline-sensitive text replacement, the ladder
+  sign faced the wrong way, and slot screens were buried inside their angled housings. Corrected
+  during visual QA. Lamp emission was reduced and the buyer title enlarged for legibility.
+- Unity serialization emitted empty-name trailing spaces; cleaned before committing.
+
+Not tested: human input/feel, audio mix by ear, separate machines, 3–5 simultaneous humans,
+weak-PC/mobile performance, Android, macOS or legacy PlayMode tests. The five-spawn audit checks
+layout capacity, not five-player networking. The new economy, sewer transfer, exterior fountain,
+individual transitions, tools/locks and difficulty clock are pending implementation.
+
 ## Current procedure (2026-10-06, editor-authored map)
 
 Unity 6000.6.3f1. From the repository root (editor closed, or add `-Isolated` while it is open):

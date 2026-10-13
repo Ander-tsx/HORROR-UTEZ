@@ -1,4 +1,13 @@
 # Runtime architecture
+
+> **2026-10-12 shop art:** `remake_shop.unity` now contains the authored underground El Sumidero hall
+> and `Tienda_Subterranea.prefab`. Its six named anchors (`shop_entry`, `shop_exit`, `shop_loot_arrival`,
+> `shop_sale`, `shop_tools`, `shop_casino`) prepare future sewer interactions. The existing runtime still
+> has the historical truck/day/individual-credit loop. The approved replacement has no quota/time limit,
+> shared funds and an internal difficulty clock; none of those loop changes are implemented in this art
+> delivery. See [SHOP.md](SHOP.md) for the exact scope. `RemakeShopAtlasBinder` binds the texture atlas
+> region to shop renderers; `RemakeShopReview` is editor-only reference/collision/capture QA. Neither
+> generates architecture, furniture or lights.
 > **2026-10-06:** the map is authored in the editor (`remake.unity` + `Prefabs/Map/` zone prefabs). Sections
 > below that describe runtime dressing, `RemakeCampusExpansion`, R.E.P.O. maps/sectors, map selection or
 > `RemakeBuild.Prepare` copying `utez.unity` are historical: that content is now baked into the scene and the

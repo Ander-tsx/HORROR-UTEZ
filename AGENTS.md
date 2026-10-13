@@ -14,7 +14,10 @@ this repository, so keep everything understandable from the Unity editor alone.
   `Assets/_Project/Prefabs/Map/` (CECADEC, CDS, Auditorio, Techado, Terreno, Bosque, Props_Campus,
   Gameplay_Marcadores). Networked entities (students, enemies, loot, credentials, truck) and the HUD are
   still created by code when Play starts.
-- Shop: `Assets/_Project/Scenes/remake_shop.unity`, authored, loaded additively.
+- Shop: `Assets/_Project/Scenes/remake_shop.unity`, authored, loaded additively. Since 2026-10-12 its
+  underground art is "El Sumidero", with `Prefabs/Map/Tienda_Subterranea.prefab`; editor menu
+  **HORROR-UTEZ / Tienda / Abrir escena subterranea**. See `Documentation/Remake/SHOP.md` for authoring,
+  markers, texture provenance and the distinction between finished art and pending mechanics.
 - `Assets/_Project/Scenes/Legacy/utez.unity` is the old single-player scene. Not used by the game.
 
 ## Map authoring rules (since 2026-10-06)
@@ -35,14 +38,21 @@ this repository, so keep everything understandable from the Unity editor alone.
   now; the user explicitly deferred Android testing during this session.
 - Player-hosted cooperative sessions, maximum FIVE humans/students. Initial slice may
   use two players but network capacity must allow five.
-- ONE extraction: a moving-company truck. Physically arrange valuable university and
-  technology objects in its cargo bay; players board the same truck to leave.
+- **2026-10-12 supersedes the truck requirement:** carry loot on foot to the campus fountain, throw it
+  into a semi-deep sewer and jump in to enter the underground shop. Individual entry/return, ladder
+  button teleports students above, preloaded additive shop, same physical loot identity/value/damage,
+  explicit sale, shared funds, individual upgrades, intentional shared-money gambling risk. No quota
+  or time limit for now; an internal clock keeps running in the shop and increases exterior difficulty.
+  Paid tools unlock locks/secret routes and more valuable areas. The priority of this task is scene
+  modelling. Its art is authored; these new mechanics and exterior fountain are NOT implemented yet.
+  The executable still has the old truck/day/quota/individual-credit loop; do not claim otherwise.
 - Physical grabbing uses funny stretching arms, not R.E.P.O.'s floating aura.
 - Latest feedback: hold the grab button (release drops), shorter arm stretch, improved
   models and restore the previous PSX filter. Automated smoke (solo + loopback host/client)
   passes on current source; interactive feel and visuals still need user review.
-- With a paid quota and at least one survivor extracting, dead/stranded students revive
-  next day without upgrades. Students aboard keep their upgrades.
+- The old implementation revives dead/stranded students without upgrades after quota extraction;
+  aboard survivors keep theirs. Replacement death/rescue/expedition-end rules for the sewer loop
+  are still to be agreed; do not silently carry the truck rules into the new design.
 - Preserve the UTEZ campus layout; improve assets and fill missing details imaginatively.
 - Small pieces may be modelled in Blender and imported as FBX (Documentation/Remake/BLENDER.md).
 - Main menu must be original. A mixed modern low-poly/PSX aesthetic is desired.
@@ -72,3 +82,8 @@ this repository, so keep everything understandable from the Unity editor alone.
   tooling downloads, caches and decompiled study output out of Git.
 - Keep this guide and the handoff documentation current with actual test results and
   limitations. Do not erase unresolved failures from the history.
+- The shop uses an original four-region texture atlas and decorative roulette texture (ImageGen),
+  seven `Shop_*.mat` materials, existing OFL fonts and original-project audio. `RemakeShopAtlasBinder`
+  only binds surface properties for correct SRP atlas rendering; it does not generate scene objects.
+  `RemakeShopReview` is editor-only reference/collision/capture QA, not a map generator. Keep atlas
+  regions and shop anchors editable. Store geometry is still entirely in the authored scene/prefab.

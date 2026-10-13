@@ -15,6 +15,7 @@ Shader "HorrorUtez/PSX/Lit"
     {
         [MainTexture][NoScaleOffset] Texture2D_4450AB74 ("Albedo", 2D) = "white" {}
         Vector2_8044833E ("Tiling", Vector) = (1, 1, 0, 0)
+        _AtlasRect ("Atlas region (size XY, offset ZW)", Vector) = (1, 1, 0, 0)
         [MainColor] _BaseColor ("Tint", Color) = (1, 1, 1, 1)
 
         [Header(Lighting)]

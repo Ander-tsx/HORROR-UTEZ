@@ -12,6 +12,7 @@ TEXTURE2D(_EmissionMap);
 
 CBUFFER_START(UnityPerMaterial)
     float2 Vector2_8044833E;        // Tiling
+    float4 _AtlasRect;             // Optional repeated atlas tile; identity for existing materials.
     half4 _BaseColor;
     half4 _EmissionColor;
     half4 Color_2E5415DE;           // Specular colour, used when IsSpecular is on
@@ -139,17 +140,29 @@ float2 PsxResolveUv(float2 perspectiveUv, float3 affinePacked)
 half4 PsxSampleAlbedo(float2 uv)
 {
     half4 texel;
+    float2 atlasScale = _AtlasRect.xy;
+    bool atlas = all(atlasScale > 0.0) && any(atlasScale < 0.999);
+    float2 dx = ddx(uv);
+    float2 dy = ddy(uv);
     float texels = Vector1_21C41D02 * (_PsxTexelScale > 0.0 ? _PsxTexelScale : 1.0);
     if (Boolean_193028D2 > 0.5 && texels > 0.0)
     {
-        float2 dx = ddx(uv);
-        float2 dy = ddy(uv);
         float2 snapped = (floor(uv * texels) + 0.5) / texels;
+        if (atlas)
+        {
+            snapped = _AtlasRect.zw + clamp(frac(snapped), 0.004, 0.996) * atlasScale;
+            dx *= atlasScale;
+            dy *= atlasScale;
+        }
         texel = SAMPLE_TEXTURE2D_GRAD(Texture2D_4450AB74, sampler_PointRepeat, snapped, dx, dy);
     }
     else
     {
-        texel = SAMPLE_TEXTURE2D(Texture2D_4450AB74, samplerTexture2D_4450AB74, uv);
+        if (atlas)
+            texel = SAMPLE_TEXTURE2D_GRAD(Texture2D_4450AB74, sampler_PointRepeat,
+                _AtlasRect.zw + clamp(frac(uv), 0.004, 0.996) * atlasScale, dx * atlasScale, dy * atlasScale);
+        else
+            texel = SAMPLE_TEXTURE2D(Texture2D_4450AB74, samplerTexture2D_4450AB74, uv);
     }
 
     texel *= _BaseColor;
