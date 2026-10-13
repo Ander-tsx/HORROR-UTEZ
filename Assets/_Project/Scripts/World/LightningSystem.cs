@@ -22,6 +22,10 @@ namespace HorrorUtez.World
         [Tooltip("Directional light used only for the flash. Kept dark between strikes.")]
         [SerializeField] private Light flash;
         [SerializeField] private AudioSource thunder;
+        [Tooltip("Recorded thunder claps. Empty falls back to the synthesised ones.")]
+        [SerializeField] private AudioClip[] thunderRecordings;
+        [Tooltip("Muffles the thunder while the player is under a roof.")]
+        [SerializeField] private AudioLowPassFilter thunderMuffle;
 
         [Header("Trigger")]
         [Tooltip("Rain intensity below which no lightning happens at all.")]
@@ -40,13 +44,17 @@ namespace HorrorUtez.World
         private AudioClip[] _thunderClips;
         private float _nextStrikeTime;
         private float _flashLevel;
+        private static readonly int SkyFlashId = Shader.PropertyToID("_StormFlash");
+        private static readonly int SkyFlashDirId = Shader.PropertyToID("_StormFlashDir");
+
+        private void OnDisable() => Shader.SetGlobalFloat(SkyFlashId, 0f);
 
         private void Awake()
         {
             if (thunder == null)
                 thunder = GetComponent<AudioSource>();
 
-            _thunderClips = new[]
+            _thunderClips = thunderRecordings != null && thunderRecordings.Length > 0 ? thunderRecordings : new[]
             {
                 ProceduralAudio.CreateThunder(401),
                 ProceduralAudio.CreateThunder(402, 5.5f),
@@ -67,6 +75,14 @@ namespace HorrorUtez.World
         private void Update()
         {
             DecayFlash();
+
+            // Indoors the thunder is a dull rumble through the walls; it follows the player live, so a
+            // clap that started outside dulls as they walk in. The weather's AudioScale mutes it on menus.
+            float shelter = weather != null ? weather.Shelter : 0f;
+            if (thunderMuffle != null)
+                thunderMuffle.cutoffFrequency = Mathf.Lerp(22000f, 500f, Mathf.Sqrt(shelter));
+            if (thunder != null)
+                thunder.volume = Mathf.Lerp(1f, 0.6f, shelter) * (weather != null ? weather.AudioScale : 1f);
 
             if (weather == null || weather.RainIntensity < minimumRain)
                 return;
@@ -135,7 +151,12 @@ namespace HorrorUtez.World
 
             // Fast falloff so the afterglow never lingers into normal lighting.
             _flashLevel = Mathf.MoveTowards(_flashLevel, 0f, flashIntensity * 6f * Time.deltaTime);
-            flash.intensity = _flashLevel;
+            // A flash seen from inside only spills in through the windows.
+            float shelter = weather != null ? weather.Shelter : 0f;
+            flash.intensity = _flashLevel * Mathf.Lerp(1f, 0.3f, shelter);
+            // The storm sky lights its clouds from the strike's side; seen through a window it flashes fully.
+            Shader.SetGlobalFloat(SkyFlashId, _flashLevel / Mathf.Max(flashIntensity, 0.01f));
+            Shader.SetGlobalVector(SkyFlashDirId, -flash.transform.forward);
             flash.enabled = _flashLevel > 0.01f;
         }
     }

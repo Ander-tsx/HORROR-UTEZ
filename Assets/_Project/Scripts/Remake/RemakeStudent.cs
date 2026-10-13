@@ -57,17 +57,18 @@ namespace HorrorUtez.Remake
         private int airJumps, spectateIndex;
         public string Spectating { get; private set; }
         private float vertical, sprintLerp, sprintedTimer, rechargeDelay, crouchTimer, slideTimer, groundBuffer, jumpBuffer, jumpCooldown;
-        private float fallSpeed, nextRemoteStep, scanAt, nextScare, pullTimer;
+        private float fallSpeed, scanAt, nextScare, pullTimer;
         private bool wasGrounded = true, previousGrip;
         private int lastHealth = 100;
         private float nextGrabAttempt;
         private readonly Dictionary<RemakeEnemy, float> enemyDistance = new Dictionary<RemakeEnemy, float>();
+        private readonly HashSet<RemakeEnemy> huntingMe = new HashSet<RemakeEnemy>();
         private StudentState remote;
         private GameObject visual;
         private Transform[,] arms = new Transform[2, 3];
         private readonly RemakeHandRig[] hands=new RemakeHandRig[2];
-        private AudioSource footsteps;
-        private AudioClip step, scare;
+        private AudioSource footsteps, gait;
+        private AudioClip step;
         private TextMesh nameplate;
         public RemakeLoot AimedLoot { get; private set; }
         public HingedDoor AimedDoor { get; private set; }
@@ -82,13 +83,12 @@ namespace HorrorUtez.Remake
                 controller = gameObject.AddComponent<CharacterController>(); controller.height = StandHeight;
                 controller.radius = .25f; controller.center = Vector3.up*(StandHeight*.5f); controller.stepOffset = .3f; controller.slopeLimit = 48;
                 eyes = new GameObject("Eyes").transform; eyes.SetParent(transform, false); eyes.localPosition = Vector3.up*StandEye;
-                rig = new RemakeCameraRig(eyes); rig.Step = Footstep;
+                rig = new RemakeCameraRig(eyes);
                 View.nearClipPlane=.04f; View.farClipPlane=180; View.fieldOfView=rig.BaseFov;
                 View.tag="MainCamera"; View.allowHDR=true; View.backgroundColor=new Color(.015f,.035f,.035f);
-                View.clearFlags=CameraClearFlags.SolidColor;
+                View.clearFlags=CameraClearFlags.Skybox;
                 var data = View.GetUniversalAdditionalCameraData(); data.renderPostProcessing = true;
                 View.gameObject.AddComponent<AudioListener>();
-                scare = RemakeSound.Tone("scare sting", 52, .9f, .55f);
             }
             else if(game.StudentModel != null)
             {
@@ -123,6 +123,8 @@ namespace HorrorUtez.Remake
             footsteps = gameObject.AddComponent<AudioSource>(); footsteps.spatialBlend = 1; footsteps.volume=.14f;
             footsteps.rolloffMode=AudioRolloffMode.Linear; footsteps.maxDistance=18;
             step=ProceduralAudio.CreateFootstep(id+106,false);
+            gait = gameObject.AddComponent<AudioSource>(); gait.loop=true; gait.playOnAwake=false; gait.volume=0; gait.dopplerLevel=0;
+            gait.spatialBlend=local ? 0 : 1; gait.rolloffMode=AudioRolloffMode.Linear; gait.maxDistance=18;
             for(int side=0;side<2;side++)
             {
                 for(int segment=0;segment<2;segment++)
@@ -168,6 +170,23 @@ namespace HorrorUtez.Remake
         {
             footsteps.pitch=Random.Range(.9f,1.1f); footsteps.PlayOneShot(step,loudness);
         }
+        // Walking/running are looping recordings, chosen indoors (a ceiling overhead) or outdoors, faded in while moving.
+        // Landings, slides and tumbles keep the one-shot Footstep thump.
+        private void Gait(bool moving,bool running,bool crouching,float dt)
+        {
+            float target=0;
+            if(moving)
+            {
+                bool indoors=Physics.Raycast(transform.position+Vector3.up*2,Vector3.up,12,game.WorldMask,QueryTriggerInteraction.Ignore);
+                string name=running ? (indoors ? "correr_adentro" : "corriendo_afuera") : indoors ? "caminar_adentro" : "caminar_afuera";
+                AudioClip clip=game.Audio.Clip("Player/"+name);
+                if(gait.clip!=clip){gait.clip=clip;gait.Stop();}
+                if(!gait.isPlaying){gait.time=Random.Range(0,clip.length*.9f);gait.Play();}
+                target=crouching && !running ? .35f : 1;
+            }
+            gait.volume=Mathf.MoveTowards(gait.volume,target,dt*(target>gait.volume ? 5 : 3));
+            if(gait.volume<=0 && gait.isPlaying)gait.Stop();
+        }
         private void Update()
         {
             if(game == null || !game.Started)return;
@@ -198,7 +217,7 @@ namespace HorrorUtez.Remake
                     animator.SetFloat("Crouch",remote.eye<1.2f?1:0,.18f,Time.deltaTime);
                     animator.SetFloat("VerticalSpeed",velocity.y,.15f,Time.deltaTime);
                 }
-                if(remote.alive && Speed>1 && Time.time>nextRemoteStep){Footstep(Speed>4?1:.6f);nextRemoteStep=Time.time+(Speed>4?.38f:.55f);}
+                Gait(remote.alive && Speed>1,Speed>4,remote.eye<1.2f,Time.deltaTime);
                 previous=transform.position;return;
             }
             if(game.Local == null)return;
@@ -209,6 +228,7 @@ namespace HorrorUtez.Remake
                 if(game.Local.held>=0)game.Request("drop");
                 previousGrip=false; Rotating=false; Running=false; Speed=0;
                 if(Tumbling)transform.position=tumbleBody.position-Vector3.up*.6f;
+                Gait(false,false,false,dt);
                 rig.Tick(Yaw,Pitch,true,0,false,0,Crouching,0,dt);
                 return;
             }
@@ -264,6 +284,7 @@ namespace HorrorUtez.Remake
                 if(game.Local.health<lastHealth)
                 {
                     rig.Hit(Mathf.Clamp01((lastHealth-game.Local.health)/30f));
+                    game.Audio.Play2D("Player/golpeado");
                     // Enemy blows carry a launch velocity from the host and knock the student over (R.E.P.O.-style tumble).
                     Vector3 knock=game.Local.knock;
                     if(knock.sqrMagnitude>.01f)
@@ -332,6 +353,7 @@ namespace HorrorUtez.Remake
                 else { EyeHeight=Mathf.Lerp(EyeHeight,.38f,dt*4); eyes.localPosition=Vector3.up*EyeHeight; }
             }
             lastHealth=game.Local.health;
+            Gait(grounded && !Sliding && Speed>.4f,Running,Crouching,dt);
             rig.Tick(Yaw,Pitch,grounded,Speed,Running,sprintLerp,Crouching,move.x,dt);
         }
         // Tumble (R.E.P.O.-style ragdoll): the student becomes a rolling physics capsule that keeps its momentum.
@@ -475,7 +497,9 @@ namespace HorrorUtez.Remake
             Speed=planar.magnitude;
             return grounded;
         }
-        // Like R.E.P.O.'s aim targets: a caretaker charging into view yanks the camera towards it.
+        // Like R.E.P.O.'s aim targets: the camera snaps to an enemy only when the student truly sees it charging
+        // (on screen, unobstructed) or the moment it starts hunting them with a clear line of sight. Its "seen"
+        // sound comes from the enemy itself.
         private void ScanEnemies(float dt)
         {
             if(pullTimer>0)
@@ -496,10 +520,15 @@ namespace HorrorUtez.Remake
                 float distance=Vector3.Distance(from,head);
                 float before=enemyDistance.TryGetValue(enemy,out float d) ? d : distance;
                 enemyDistance[enemy]=distance;
-                if(distance>13 || (before-distance)/.25f<1.6f || Time.time<nextScare || !game.Local.alive)continue;
-                if(Physics.Raycast(from,(head-from).normalized,distance-.4f,game.WorldMask,QueryTriggerInteraction.Ignore))continue;
+                bool hunting=enemy.Hunts(game.LocalId), startedHunt=hunting && huntingMe.Add(enemy);
+                if(!hunting)huntingMe.Remove(enemy);
+                if(distance>13 || Time.time<nextScare || !game.Local.alive)continue;
+                bool onScreen=Vector3.Angle(View.transform.forward,head-from)<View.fieldOfView*.6f;
+                bool charging=onScreen && (before-distance)/.25f>=1.6f;
+                if(!charging && !startedHunt)continue;
+                if(!game.ClearLine(from,head,enemy.transform))continue;
                 pullPoint=head; pullTimer=.55f; nextScare=Time.time+14;
-                rig.Shake(2.2f,.45f); rig.Zoom(-14,.9f); footsteps.PlayOneShot(scare,.9f);
+                rig.Shake(2.2f,.45f); rig.Zoom(-14,.9f);
             }
         }
         private void Probe()

@@ -45,6 +45,9 @@ Shader "HorrorUtez/PSX/Fog"
             float _NoiseScale;
             float _NoiseStrength;
             float _NoiseSpeed;
+            // Global, 0 unless a scene sets it: how much of a skybox shows through the fog. The storm sky
+            // paints its own horizon in the fog colour, so it can stay partly clear without a seam.
+            float _PsxSkyClear;
 
             float Hash21(float2 p)
             {
@@ -82,6 +85,12 @@ Shader "HorrorUtez/PSX/Fog"
 
                 float distance = max(0.0, eyeDepth - _FogStart);
                 float fog = 1.0 - exp2(-_FogDensity * distance);
+                #if UNITY_REVERSED_Z
+                bool sky = rawDepth <= 1e-6;
+                #else
+                bool sky = rawDepth >= 1.0 - 1e-6;
+                #endif
+                if (sky) fog *= 1.0 - _PsxSkyClear;
 
                 float2 noiseUv = uv * _ScreenParams.xy / max(_NoiseScale, 1.0);
                 noiseUv += _Time.y * _NoiseSpeed;

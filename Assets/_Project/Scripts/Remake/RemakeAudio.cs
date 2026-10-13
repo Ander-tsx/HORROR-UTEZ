@@ -4,29 +4,36 @@ using UnityEngine;
 namespace HorrorUtez.Remake
 {
     // Music, ambience and one-shots. Clips are synthesized offline by Tools/audio/gen_remake_audio.py
-    // into Resources/Audio. Music crossfades between exploration and chase from the danger around
+    // into Resources/Audio; recorded player clips (steps, panting) live in Resources/Audio/Player as
+    // loudness-matched, seamless WAV loops made from the MP3 sources in Art/Remake/Audio/Player. Music crossfades between exploration and chase from the danger around
     // the local student; a heartbeat rises as enemies close in; random distant scares keep the
     // campus restless. Every peer runs this locally from replicated state.
     public sealed class RemakeAudio : MonoBehaviour
     {
         private RemakeGame game;
         private readonly Dictionary<string, AudioClip> clips = new Dictionary<string, AudioClip>();
-        private AudioSource explore, chase, wind, heart, breath, sting;
+        private AudioSource menu, explore, chase, wind, heart, breath, sting;
         private readonly List<AudioSource> pool = new List<AudioSource>();
         private float danger, nextScare, nextBeat;
         private int lastPhase = -1;
+        private bool winded;
+        private float world;
+        private readonly List<(AudioSource source, float volume)> ambience = new List<(AudioSource, float)>();
+        private HorrorUtez.World.WeatherSystem[] weathers;
 
         public void Setup(RemakeGame owner)
         {
             game = owner;
+            menu = Source2D("musica_main_menu", true, .6f);
             explore = Source2D("music_explore", true, 0);
             chase = Source2D("music_chase", true, 0);
             wind = Source2D("amb_wind", true, .18f);
             heart = Source2D(null, false, .8f);
-            breath = Source2D("breath_tired", true, 0);
+            breath = Source2D("Player/sonido_respiracion_cansado", true, 0);
             sting = Source2D(null, false, .9f);
-            explore.Play(); chase.Play(); wind.Play(); breath.Play();
+            menu.Play(); explore.Play(); chase.Play(); wind.Play(); breath.Play();
             nextScare = Time.time + Random.Range(30f, 50f);
+            weathers = FindObjectsByType<HorrorUtez.World.WeatherSystem>();
         }
 
         public AudioClip Clip(string name)
@@ -75,6 +82,7 @@ namespace HorrorUtez.Remake
             var source = go.AddComponent<AudioSource>(); source.clip = Clip(name); source.loop = true; source.volume = volume;
             source.spatialBlend = 1; source.rolloffMode = AudioRolloffMode.Linear; source.maxDistance = maxDistance; source.minDistance = 1;
             source.time = Random.Range(0, Mathf.Max(.01f, source.clip.length - .01f)); source.Play();
+            ambience.Add((source, volume)); source.volume = volume * world;
             return source;
         }
 
@@ -116,12 +124,21 @@ namespace HorrorUtez.Remake
                 }
             }
             danger = Mathf.MoveTowards(danger, threat, Time.deltaTime * (threat > danger ? 1.2f : .25f));
-            float master = playing ? 1 : (game.Started ? .35f : .55f);
+            // The main menu (before joining a game) has its own track; in-game music takes over once the game starts.
+            menu.volume = Mathf.MoveTowards(menu.volume, game.Started ? 0 : .6f, Time.deltaTime * .6f);
+            float master = playing ? 1 : (game.Started ? .35f : 0);
+            // Wind, rain and lamp hum are synthetic noise that sounds like static under the menu track: silent until the game starts.
+            world = Mathf.MoveTowards(world, game.Started ? 1 : 0, Time.deltaTime * .5f);
+            foreach (var loop in ambience) if (loop.source != null) loop.source.volume = loop.volume * world;
+            foreach (var weather in weathers) if (weather != null) weather.AudioScale = world;
             explore.volume = Mathf.Lerp(explore.volume, master * .55f * (1 - danger), Time.deltaTime * 2);
             chase.volume = Mathf.Lerp(chase.volume, master * .7f * danger, Time.deltaTime * 3);
-            wind.volume = playing ? .16f : .08f;
+            wind.volume = (playing ? .16f : .08f) * world;
             float stamina = game.Player != null ? game.Player.Stamina : 100;
-            breath.volume = Mathf.Lerp(breath.volume, playing && stamina < 30 ? (30 - stamina) / 30 * .6f : 0, Time.deltaTime * 3);
+            // Running dry leaves the student panting hard until energy is back above 60%; a light breath creeps in below 30%.
+            if (stamina <= 1) winded = true; else if (stamina > 60) winded = false;
+            float pant = !playing ? 0 : winded ? Mathf.Lerp(.9f, .4f, stamina / 60) : stamina < 30 ? (30 - stamina) / 30 * .3f : 0;
+            breath.volume = Mathf.Lerp(breath.volume, pant,Time.deltaTime * (pant > breath.volume ? 6 : 1.5f));
             if (playing && nearest < 16 && Time.time > nextBeat)
             {
                 heart.PlayOneShot(Clip("heartbeat"), Mathf.Lerp(.9f, .2f, nearest / 16));
