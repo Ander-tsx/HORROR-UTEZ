@@ -1,5 +1,36 @@
 # Build and validation record
 
+## 2026-10-12: combined entrance + latest player audio/weather feature
+
+The latest fetched `origin/feature/player-footsteps-breath` is **ff1284e**. It was merged with
+the authored entrance and existing underground shop without textual conflicts. Both branches'
+scene additions and menu framing/skybox changes are present; no branch was replaced wholesale.
+
+- Final isolated Windows build: Unity exit **0**, `[RemakeBuild] Windows ready`, no compiler
+  or shader errors. `Library/remake-build.log`.
+- Combined solo: **54 PASS / 0 FAIL**, ALL COMPLETE, exit **0**. `Library/combined-solo.log`.
+- Combined loopback host/client, TCP **27916**: **54 / 21 PASS**, zero failures; ALL COMPLETE /
+  CLIENT COMPLETE, both exit **0**. `Library/combined-host.log`, `Library/combined-client.log`.
+- `RemakeEntranceReview.AuditCombined`: exit **0**, no missing scripts/meshes/materials in
+  `remake.unity` or `remake_shop.unity`; entrance dimensions/approaches pass. Storm sky material
+  and all eight runtime audio resources (seven player clips + menu music) load successfully.
+  `Library/combined-scene-audit.log`.
+- Final menu capture: exit **0**, visually inspected complete HORROR/UTEZ title, all controls,
+  entrance, lit guardhouse and storm sky. [Capture](Entrance/05-menu-windows.png).
+  `Library/combined-menu-final.log`. This is an offscreen URP capture with a temporary matching
+  overlay camera, not a screenshot of the hidden OS window. Diagnostic UI gets the screen
+  filter in the stacked capture; normal play keeps its existing screen-space overlay canvas.
+- The original synchronous hidden-window capture issue is resolved for the menu using a
+  perspective camera with the same viewpoint and an isolated UI layer/depth buffer. The first
+  isolated base-camera attempt cleared the campus colour buffer; the delivered helper uses a
+  camera stack and restores temporary layers, camera/canvas settings and assets after capture.
+
+Remaining validation: human control/audio mix review, Android/mobile performance, separate
+machines and five simultaneous players. MP3/WAV audio provenance is inherited from ff1284e;
+this integration verified the resources, not their source licences or the mix by ear.
+The four pre-existing local edits (Amber material, two shop texture importers, ProBuilder
+editor settings) remain uncommitted and were not incorporated into the merge commit.
+
 ## 2026-10-12: authored UTEZ entrance and menu framing
 
 Scope: entrance art in the playable scene, original atlas/alpha-frond textures, reference-driven
@@ -33,7 +64,7 @@ Retained intermediate findings:
   Diagnostics found the HORROR/UTEZ vertices present and not culled, but still on the previous
   **100 m** canvas plane despite requesting 0.5 m. Waiting another frame did not resolve the
   hidden-window diagnostic conversion. Normal play retains its original overlay canvas;
-  the menu capture is being rechecked against the combined feature branch before delivery.
+  that failed experiment was removed. The combined delivery above records the corrected capture.
 - An intermediate diagnostic build failed with CS0200 because URP's `clearDepth` property is
   read-only. That overlay-camera code was removed; it is absent from the delivered source.
 - PowerShell initially refused to execute the build script under the machine's policy. Running

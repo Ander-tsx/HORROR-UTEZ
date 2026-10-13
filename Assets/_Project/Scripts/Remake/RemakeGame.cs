@@ -34,6 +34,23 @@ namespace HorrorUtez.Remake
         public string ConnectionStatus { get; private set; } = "";
         public readonly Vector3 TruckPosition = new Vector3(12, 0.06f, -2);
         public int WorldMask => ~((1 << 9) | (1 << 10));
+        private readonly RaycastHit[] sightHits = new RaycastHit[16];
+
+        // Line of sight, checked both ways: single-sided mesh walls only stop rays that hit their front face, so a
+        // one-way ray sees straight through them from behind. Colliders under `ignore` (the looker's own body) don't count.
+        public bool ClearLine(Vector3 a, Vector3 b, Transform ignore = null)
+        {
+            Vector3 d = b - a; float length = d.magnitude;
+            if (length < .01f) return true;
+            d /= length;
+            return !SightBlocked(a, d, length, ignore) && !SightBlocked(b, -d, length, ignore);
+        }
+        private bool SightBlocked(Vector3 from, Vector3 direction, float length, Transform ignore)
+        {
+            int count = Physics.RaycastNonAlloc(from, direction, sightHits, length, WorldMask, QueryTriggerInteraction.Ignore);
+            for (int i = 0; i < count; i++) if (ignore == null || !sightHits[i].transform.IsChildOf(ignore)) return true;
+            return false;
+        }
         public StudentState Local => Students.TryGetValue(LocalId, out StudentState state) ? state : null;
         public RemakeStudent Player { get; private set; }
         public RemakeHud Hud { get; private set; }
@@ -83,7 +100,7 @@ namespace HorrorUtez.Remake
             menuEntrance = FindAnyObjectByType<RemakeEntrance>();
             menuEntrance?.Frame(menuCamera,0);
             menuCamera.backgroundColor = new Color(0.02f, 0.04f, 0.04f);
-            menuCamera.clearFlags = CameraClearFlags.SolidColor;
+            menuCamera.clearFlags = CameraClearFlags.Skybox;
             UnityEngine.Rendering.Universal.UniversalAdditionalCameraData cameraData = menuCamera.gameObject.AddComponent<UnityEngine.Rendering.Universal.UniversalAdditionalCameraData>();
             cameraData.renderPostProcessing = true;
             Voice = gameObject.AddComponent<RemakeVoice>(); Voice.Setup(this);
@@ -417,7 +434,8 @@ namespace HorrorUtez.Remake
         {
             if (!Authority || Phase != 1 || !Students.TryGetValue(id, out StudentState state) || !state.alive) return;
             state.health = Mathf.Max(0, state.health - damage); state.knock = knock; state.hurtCount++;
-            Audio?.Play("hit_player", state.position, .9f);
+            // The victim hears their own hit in 2D (RemakeStudent); everyone else hears it where it lands.
+            if (id != LocalId) Audio?.Play("Player/golpeado", state.position, .9f);
             if (state.health == 0)
             {
                 state.alive = false; state.held = -1;

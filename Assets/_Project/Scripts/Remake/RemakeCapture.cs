@@ -53,7 +53,8 @@ namespace HorrorUtez.Remake
         {
             yield return new WaitForSeconds(3);
             string directory=Path.GetFullPath(Path.Combine(Application.dataPath,".."));
-            Save(game.CaptureView,Path.Combine(directory,game.Started?"remake-gameplay.png":"remake-menu.png"));
+            string path = Path.Combine(directory,game.Started?"remake-gameplay.png":"remake-menu.png");
+            if (game.Started) Save(game.CaptureView,path); else SaveMenu(game.CaptureView,game.Hud,path);
             if(!game.Started)Application.Quit();
         }
         // Diagnostic tour (-remakeSolo -remakeTour): fixed shots of the dressed labs, the enemies, the truck
@@ -180,6 +181,56 @@ namespace HorrorUtez.Remake
             Debug.Log("[RemakeCapture] Tour complete: "+shots.Count+" shots");
             Application.Quit(0);
         }
+        // Hidden windows do not have a readable framebuffer. Render the menu UI on a
+        // matching, isolated overlay camera so its native 100 m canvas cannot hit campus depth.
+        private static void SaveMenu(Camera camera, RemakeHud hud, string path)
+        {
+            if (SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null) return;
+            var canvas = hud.GetComponentInChildren<Canvas>();
+            var oldMode = canvas.renderMode; var oldCamera = canvas.worldCamera;
+            float oldDistance = canvas.planeDistance;
+            bool oldEnabled = canvas.enabled;
+            int oldMask = camera.cullingMask;
+            var cameraData = camera.GetUniversalAdditionalCameraData();
+            var transforms = canvas.GetComponentsInChildren<Transform>(true);
+            var layers = new int[transforms.Length];
+            for (int i = 0; i < transforms.Length; i++) layers[i] = transforms[i].gameObject.layer;
+            var cameraObject = new GameObject("Temporary menu capture UI");
+            var ui = cameraObject.AddComponent<Camera>(); ui.CopyFrom(camera);
+            ui.transform.SetPositionAndRotation(camera.transform.position,camera.transform.rotation);
+            ui.enabled = true; ui.cullingMask = 1 << 5;
+            ui.clearFlags = CameraClearFlags.Depth; ui.cameraType = CameraType.Preview;
+            var uiData = ui.GetUniversalAdditionalCameraData();
+            uiData.renderType = CameraRenderType.Overlay; uiData.renderPostProcessing = false;
+            var target = new RenderTexture(1600,900,24,RenderTextureFormat.ARGB32); target.Create();
+            var request = new RenderPipeline.StandardRequest { destination = target };
+            try
+            {
+                for (int i = 0; i < transforms.Length; i++)
+                    transforms[i].gameObject.layer = 5;
+                canvas.enabled = true; canvas.renderMode = RenderMode.ScreenSpaceCamera;
+                canvas.worldCamera = ui; canvas.planeDistance = 100;
+                camera.cullingMask &= ~(1 << 5); cameraData.cameraStack.Add(ui);
+                Canvas.ForceUpdateCanvases();
+                RenderPipeline.SubmitRenderRequest(camera,request);
+                RenderPipeline.SubmitRenderRequest(camera,request);
+                var previous = RenderTexture.active; RenderTexture.active = target;
+                var image = new Texture2D(1600,900,TextureFormat.RGB24,false);
+                image.ReadPixels(new Rect(0,0,1600,900),0,0); image.Apply();
+                File.WriteAllBytes(path,image.EncodeToPNG()); Destroy(image);
+                RenderTexture.active = previous;
+                Debug.Log("[RemakeCapture] Menu with isolated UI: " + path);
+            }
+            finally
+            {
+                for (int i = 0; i < transforms.Length; i++) transforms[i].gameObject.layer = layers[i];
+                canvas.renderMode = oldMode; canvas.worldCamera = oldCamera;
+                canvas.planeDistance = oldDistance; canvas.enabled = oldEnabled;
+                camera.cullingMask = oldMask; cameraData.cameraStack.Remove(ui);
+                target.Release(); Destroy(target); Destroy(cameraObject);
+            }
+        }
+
         // Render requests work even when the executable's window is hidden during QA.
         public static void Save(Camera camera,string path)
         {

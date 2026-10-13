@@ -77,7 +77,14 @@ Prompt de la fronda:
 Las capturas finales se guardan en [Entrance](Entrance/). Las vistas de fachada, caseta y conjunto
 usan iluminación temporal de inspección en una copia aislada; no cambian la luz guardada en la escena.
 El encuadre nocturno usa posprocesamiento; la captura del menú procede del ejecutable de Windows.
+El menú final incorpora el cielo de tormenta y la música de `feature/player-footsteps-breath`
+(ff1284e), conservando el encuadre de esta entrada. Su captura URP usa una cámara temporal
+para mostrar la interfaz completa en pruebas con la ventana oculta.
 Consulta [TESTING.md](TESTING.md) para resultados, fallos intermedios y limitaciones.
+
+![Menú con la entrada UTEZ](Entrance/05-menu-windows.png)
+
+![Caseta, pórtico y acabados](Entrance/02-caseta-y-acabados.png)
 
 Este trabajo termina el escenario de entrada y su uso en el menú. El nuevo flujo de alcantarilla,
 venta, economía compartida y casino sigue pendiente, como detalla [SHOP.md](SHOP.md).

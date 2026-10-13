@@ -62,6 +62,32 @@ namespace HorrorUtez.Remake.Editor
             Debug.Log("[EntranceReview] Menu view " + entrance.MenuView.position + "; focus " + entrance.MenuFocus.position);
         }
 
+        // Integration inspection: the merged rain/sky/audio assets must coexist with both authored scenes.
+        public static void AuditCombined()
+        {
+            Audit();
+            if (RenderSettings.skybox == null || RenderSettings.skybox.shader.name != "HorrorUtez/StormSky")
+                throw new Exception("Merged storm sky missing");
+            var main = UnityEngine.SceneManagement.SceneManager.GetActiveScene();
+            var shop = EditorSceneManager.OpenScene(RemakeBuild.ShopScene,OpenSceneMode.Additive);
+            foreach (var scene in new[] { main,shop })
+            {
+                var objects = scene.GetRootGameObjects().SelectMany(r => r.GetComponentsInChildren<Transform>(true)).ToArray();
+                int missing = objects.Sum(t => GameObjectUtility.GetMonoBehavioursWithMissingScriptCount(t.gameObject));
+                missing += objects.SelectMany(t => t.GetComponents<MeshFilter>()).Count(f => f.sharedMesh == null);
+                missing += objects.SelectMany(t => t.GetComponents<MeshRenderer>()).Count(r => r.sharedMaterials.Any(m => m == null));
+                if (missing != 0) throw new Exception("Merged scene has missing references: " + scene.path + " / " + missing);
+                Debug.Log("[EntranceReview] PASS combined scene references: " + scene.path);
+            }
+            foreach (string name in new[] { "caminar_adentro", "caminar_afuera", "correr_adentro", "corriendo_afuera",
+                "golpeado", "sonido_respiracion_cansado", "visto" })
+                if (Resources.Load<AudioClip>("Audio/Player/" + name) == null)
+                    throw new Exception("Merged player audio missing: " + name);
+            if (Resources.Load<AudioClip>("Audio/musica_main_menu") == null)
+                throw new Exception("Merged menu music missing");
+            Debug.Log("[EntranceReview] PASS merged storm sky and all eight runtime audio resources.");
+        }
+
         public static void Canonicalize()
         {
             Audit();

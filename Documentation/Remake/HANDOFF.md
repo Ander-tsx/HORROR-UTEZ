@@ -2,6 +2,24 @@
 
 The user communicates in Spanish. Read [AGENTS.md](../../AGENTS.md) and the [README](../../README.md) first.
 
+## 2026-10-12: latest feature integration requested by the user
+
+Fetched and integrated **ff1284e**, `origin/feature/player-footsteps-breath`, with the underground
+shop and new entrance. The merge preserved the collaborator's audio resources, indoor/outdoor
+walk/run loops, panting, hit/seen recordings, menu music, authored rain emitter, recorded rain and
+thunder, storm sky/material, sky-visible fog and two-way upper-body enemy visibility checks.
+The menu camera still follows the movable entrance marker and now retains the collaborator's
+skybox clear mode. No textual conflicts occurred in the scene or RemakeGame.
+
+Combined validation passes: isolated Windows build; solo 54/54, host 54/54 and client 21/21,
+all exit 0 (TCP 27916); both authored scenes have no missing references; storm sky and eight
+runtime audio resources load. Final menu screenshot is in `Entrance/05-menu-windows.png`.
+An opt-in capture helper uses a temporary matching overlay camera to avoid campus occlusion of
+camera-space UI; it restores settings/layers and does not affect normal overlay UI or generate
+map geometry. Earlier unsuccessful capture experiments remain recorded in TESTING.md.
+Human audio/input review and Android remain deferred. Four pre-existing local material/importer/
+ProBuilder edits were preserved, excluded from the merge commit. See TESTING.md for exact logs.
+
 ## 2026-10-12: UTEZ entrance and menu background
 
 The user additionally requested an entrance based on the newest reference photos in Downloads,

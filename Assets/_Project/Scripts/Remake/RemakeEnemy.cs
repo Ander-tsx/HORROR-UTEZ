@@ -17,6 +17,8 @@ namespace HorrorUtez.Remake
         public string DisplayName => RemakeBestiary.Names[(int)Kind];
         public bool Recovering => Kind == EnemyKind.Derick && Chasing && (Time.time - burstStarted) % 5f >= 2f;
         public bool Chasing => mode == Mode.Chase && prey != null;
+        // Whether this enemy is hunting that student. Clients don't know the prey, only that it hunts someone.
+        public bool Hunts(int id) => prey != null ? prey.id == id : (Flags & 1) != 0;
         public bool Stunned => Time.time < stunnedUntil || (!game.Authority && (flags & 2) != 0);
         public int Flags => (Chasing ? 1 : 0) | (Time.time < stunnedUntil ? 2 : 0) | (Time.time < attackUntil ? 4 : 0);
         public float Crawl => crawl;
@@ -124,12 +126,21 @@ namespace HorrorUtez.Remake
         {
             targetPosition = position; body.enabled = false;
             if ((state & 4) != 0 && (flags & 4) == 0) { visual?.Attack(1.05f); game.Audio?.Play(Giant ? "giant_swipe" : "caretaker_swing", transform.position, .8f); }
-            if ((state & 1) != 0 && (flags & 1) == 0 && game.Audio != null) game.Audio.Play(Giant ? "giant_scream" : "caretaker_alert", transform.position + Vector3.up * 2, 1);
+            // Clients don't know the prey: assume it's them when the enemy starts hunting close by.
+            if ((state & 1) != 0 && (flags & 1) == 0) Alert(game.Player != null && Vector3.Distance(game.Player.transform.position, transform.position) < 14);
             flags = state;
         }
         // Diagnostics (capture tour, smoke): place and wake an enemy immediately.
         public void DebugPlace(Vector3 position) { body.enabled = false; transform.position = position; targetPosition = position; body.enabled = game.Authority; route.Clear(); routeGoal = new Vector3(9999, 0, 0); }
         public void Wake() { activeAt = 0; nextThink = 0; }
+        // The "seen" sting: full volume in the ears of the student it spotted, positional for everyone else.
+        private void Alert(bool spottedMe)
+        {
+            if (game.Audio == null) return;
+            if (Giant) game.Audio.Play("giant_scream", transform.position + Vector3.up * 2, 1);
+            else if (spottedMe) game.Audio.Play2D("Player/visto", 1);
+            else game.Audio.Play("Player/visto", transform.position + Vector3.up * 2, 1, 45);
+        }
         public void Rest(float seconds) { activeAt = Time.time + seconds; mode = Mode.Patrol; prey = null; route.Clear(); exposure.Clear(); pendingHitAt = -1; }
         public void Stun(float seconds)
         {
@@ -194,8 +205,7 @@ namespace HorrorUtez.Remake
                 if (mode != Mode.Chase || prey != seen)
                 {
                     burstStarted = Time.time;
-                    if (mode != Mode.Chase && game.Audio != null)
-                        game.Audio.Play(Giant ? "giant_scream" : "caretaker_alert", transform.position + Vector3.up * 2, 1);
+                    if (mode != Mode.Chase) Alert(seen.id == game.LocalId);
                     Debug.Log("[Remake] " + name + " persigue a " + seen.name);
                 }
                 mode = Mode.Chase; prey = seen; lastSeen = Time.time; lastKnown = seen.position;
@@ -263,10 +273,12 @@ namespace HorrorUtez.Remake
         }
         private bool Visible(Vector3 from, StudentState s)
         {
-            foreach (float h in new[] { Mathf.Min(1.15f, s.eye), Mathf.Min(.45f, s.eye * .6f) })
+            // Upper body only (eyes and chest): a ray at knee height slipped under desks and tables and spotted
+            // students hiding behind them.
+            foreach (float h in new[] { s.eye * .92f, s.eye * .7f })
             {
-                Vector3 to = s.position + Vector3.up * h, d = to - from;
-                if (!Physics.Raycast(from, d.normalized, d.magnitude, game.WorldMask, QueryTriggerInteraction.Ignore)) return true;
+                Vector3 to = s.position + Vector3.up * h;
+                if (game.ClearLine(from, to, transform)) return true;
             }
             return false;
         }

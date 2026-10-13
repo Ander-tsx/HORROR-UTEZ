@@ -8,6 +8,12 @@
 > panels, palms and seven lights are authored assets, never generated at runtime. The editor-only
 > `RemakeEntranceReview` audits references/approach clearance and renders review shots.
 > See [ENTRANCE.md](ENTRANCE.md) for placement and scope boundaries.
+>
+> The same-day integration of `feature/player-footsteps-breath` (ff1284e) adds recorded player
+> loops/menu music, authored rain/thunder references, `StormSky`, roof-aware rain and two-way
+> enemy sight. The entrance menu retains skybox clearing. `RemakeCapture`'s opt-in menu check
+> isolates UI in a temporary matching overlay camera, with full state restoration; normal play
+> still uses the original overlay canvas. See TESTING.md for combined regression results.
 
 > **2026-10-12 shop art:** `remake_shop.unity` now contains the authored underground El Sumidero hall
 > and `Tienda_Subterranea.prefab`. Its six named anchors (`shop_entry`, `shop_exit`, `shop_loot_arrival`,
