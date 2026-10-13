@@ -46,6 +46,7 @@ namespace HorrorUtez.Remake
         private float finishAt, deadline, nextSnapshot, nextCargoCheck, nextPose, nextStepNoise;
         private int pendingDay;
         private Camera menuCamera;
+        private RemakeEntrance menuEntrance;
         private AudioClip impact, success, alarm;
         private NavigationGrid navigation;
         private TextMesh truckDisplay;
@@ -79,6 +80,8 @@ namespace HorrorUtez.Remake
             view.AddComponent<AudioListener>();
             view.transform.SetPositionAndRotation(TruckPosition + new Vector3(-6, 2.5f, -9), Quaternion.Euler(8, 36, 0));
             menuCamera.fieldOfView = 62; menuCamera.nearClipPlane = 0.05f;
+            menuEntrance = FindAnyObjectByType<RemakeEntrance>();
+            menuEntrance?.Frame(menuCamera,0);
             menuCamera.backgroundColor = new Color(0.02f, 0.04f, 0.04f);
             menuCamera.clearFlags = CameraClearFlags.SolidColor;
             UnityEngine.Rendering.Universal.UniversalAdditionalCameraData cameraData = menuCamera.gameObject.AddComponent<UnityEngine.Rendering.Universal.UniversalAdditionalCameraData>();
@@ -172,6 +175,7 @@ namespace HorrorUtez.Remake
 
         private void Update()
         {
+            if (!Started && menuEntrance != null) menuEntrance.Frame(menuCamera,Time.unscaledTime);
             PumpNetwork();
             if (!Started) return;
             TickCycle();

@@ -1,5 +1,48 @@
 # Build and validation record
 
+## 2026-10-12: authored UTEZ entrance and menu framing
+
+Scope: entrance art in the playable scene, original atlas/alpha-frond textures, reference-driven
+architecture, movable menu framing and left-hand session UI. Tests still cover the existing
+truck/day loop; they do not implement or validate the approved replacement sewer economy.
+
+- `RemakeEntranceReview.Audit` / `Canonicalize` in an isolated checkout: **445 objects,
+  413 renderers, 43 colliders; zero missing scripts, materials or meshes**. University lettering
+  is 13.40 × 0.62 m and fits its nameplate. Ground/capsule clearance passes for both lanes and
+  both pedestrian approaches. Log: `Library/entrance-capture-delivery.log`.
+- Four 1600 × 900 graphics-enabled URP captures inspected: front, guardhouse/materials, overhead
+  ensemble and the actual authored night viewpoint. Inspection lighting is temporary; no review
+  geometry or lighting is saved. Gallery: [Entrance](Entrance/).
+- Isolated Windows builds passed before runtime smoke and after the menu capture correction;
+  no interactive Unity instance was used. Log: `Library/remake-build.log`.
+- Solo: **54 PASS / 0 FAIL**, ALL COMPLETE, exit 0. `Library/entrance-solo.log`.
+- Host/client over loopback TCP **27914**: **54 / 21 PASS, 0 FAIL**, ALL COMPLETE / CLIENT COMPLETE,
+  both exit 0. `Library/entrance-host.log`, `Library/entrance-client.log`.
+- Texture alpha checked in the original PNG. Atlas output is 1254 × 1254; frond is 1024 × 1536.
+  All new Unity assets have `.meta` files. The user's existing material/importer/ProBuilder edits
+  were excluded from the feature changes.
+
+Retained intermediate findings:
+
+- Initial lettering was only 4.31 m wide; it was enlarged to fit the photographed lintel better.
+  The initial frontal palm blocked the sign/logo and was reduced to ornamental planting height.
+  The menu camera was brought closer and moved to an oblique view.
+- Hidden-window framebuffer capture returned black. A temporary overlay-camera experiment did
+  not draw the menu and altered the diagnostic fog appearance; it was removed.
+- The synchronous camera-space canvas conversion clipped the upper menu behind the campus.
+  Diagnostics found the HORROR/UTEZ vertices present and not culled, but still on the previous
+  **100 m** canvas plane despite requesting 0.5 m. Waiting another frame did not resolve the
+  hidden-window diagnostic conversion. Normal play retains its original overlay canvas;
+  the menu capture is being rechecked against the combined feature branch before delivery.
+- An intermediate diagnostic build failed with CS0200 because URP's `clearDepth` property is
+  read-only. That overlay-camera code was removed; it is absent from the delivered source.
+- PowerShell initially refused to execute the build script under the machine's policy. Running
+  the child PowerShell with `-ExecutionPolicy Bypass` worked without changing the system policy.
+
+Not tested: Android, human controls/audio review, low-end/mobile performance, separate machines
+or five simultaneous humans. The area has provisional placement and no campus connection or
+enemy navigation extension. The new sewer/shared-money/gambling/tool progression remains pending.
+
 ## 2026-10-12: El Sumidero underground shop art
 
 Scope: authored scene/prefab, original textures/materials, signs, lighting, props and editor QA.

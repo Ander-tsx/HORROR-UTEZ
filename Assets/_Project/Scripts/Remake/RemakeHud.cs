@@ -48,12 +48,12 @@ namespace HorrorUtez.Remake
             canvasGo.AddComponent<GraphicRaycaster>(); root = canvasGo.GetComponent<RectTransform>();
 
             // ---------------------------------------------------------------- main menu
-            menu = Panel("Menu principal", root, new Vector4(0, 0, 1, 1), new Color(0, 0, 0, .35f));
-            Overlay(menu.transform, Vignette(), new Color(0, 0, 0, .9f));
-            Label(menu.transform, "HORROR", new Vector4(.05f, .74f, .6f, .95f), 120, Blood, TextAnchor.LowerLeft, title);
-            Label(menu.transform, "UTEZ", new Vector4(.06f, .6f, .6f, .79f), 104, Bone, TextAnchor.UpperLeft, title);
-            Label(menu.transform, "TURNO NOCTURNO  //  RECUPERACIÓN DE EQUIPO", new Vector4(.065f, .55f, .7f, .61f), 30, Toxic);
-            RectTransform pane = Panel("Hoja de turno", menu.transform, new Vector4(.06f, .07f, .44f, .53f), Ink).GetComponent<RectTransform>();
+            menu = Panel("Menu principal", root, new Vector4(0, 0, 1, 1), new Color(0, 0, 0, .06f));
+            Overlay(menu.transform, Vignette(), new Color(0, 0, 0, .65f));
+            Label(menu.transform, "HORROR", new Vector4(.045f, .78f, .35f, .95f), 98, Blood, TextAnchor.LowerLeft, title);
+            Label(menu.transform, "UTEZ", new Vector4(.05f, .65f, .35f, .81f), 82, Bone, TextAnchor.UpperLeft, title);
+            Label(menu.transform, "TURNO NOCTURNO", new Vector4(.055f, .625f, .35f, .67f), 25, Toxic);
+            RectTransform pane = Panel("Hoja de turno", menu.transform, new Vector4(.045f, .205f, .35f, .615f), Ink).GetComponent<RectTransform>();
             Border(pane, Blood);
             Label(pane, "> NOMBRE DEL ESTUDIANTE", new Vector4(.06f, .87f, .94f, .96f), 22, Dim);
             nameField = Field(pane, "Estudiante", new Vector4(.06f, .76f, .94f, .87f));
@@ -66,18 +66,18 @@ namespace HorrorUtez.Remake
             Button(pane, "SALIR", new Vector4(.51f, .21f, .94f, .32f), () => Application.Quit());
             connection = Label(pane, "VERSIÓN EXPERIMENTAL / REMAKE", new Vector4(.06f, .03f, .94f, .18f), 22, Toxic);
             game.SelectedSkin=RemakeSkins.Clamp(PlayerPrefs.GetInt("RemakeSkin",1));
-            var skinButton=Button(menu.transform,"ESTUDIANTE: "+RemakeSkins.Names[game.SelectedSkin].ToUpper(),new Vector4(.55f,.34f,.95f,.42f),()=>{});
-            var skinInfo=Label(menu.transform,RemakeSkins.Descriptions[game.SelectedSkin],new Vector4(.55f,.42f,.95f,.47f),22,Toxic);
+            var skinButton=Button(menu.transform,"ESTUDIANTE: "+RemakeSkins.Names[game.SelectedSkin].ToUpper(),new Vector4(.045f,.135f,.35f,.195f),()=>{});
+            var skinInfo=Label(menu.transform,RemakeSkins.Descriptions[game.SelectedSkin],new Vector4(.05f,.085f,.35f,.13f),18,Toxic);
             skinButton.onClick.AddListener(()=>{
                 game.SelectedSkin=(game.SelectedSkin+1)%RemakeSkins.Names.Length;PlayerPrefs.SetInt("RemakeSkin",game.SelectedSkin);
                 skinButton.GetComponentInChildren<Text>().text="ESTUDIANTE: "+RemakeSkins.Names[game.SelectedSkin].ToUpper();
                 skinInfo.text=RemakeSkins.Descriptions[game.SelectedSkin];
             });
-            Label(menu.transform, "EL CAMIÓN DE MUDANZA ES\nLA ÚNICA SALIDA.\n\nNO ROMPAS EL EQUIPO.\nNO TE QUEDES ATRÁS.\nCUIDADO CON HUGO.",
-                new Vector4(.6f, .50f, .95f, .9f), 34, Bone, TextAnchor.UpperRight);
-            Label(menu.transform, "1-5 ESTUDIANTES · BRAZOS ELÁSTICOS · CAMPUS UTEZ", new Vector4(.55f, .05f, .95f, .1f), 22, Dim, TextAnchor.LowerRight);
+            Label(menu.transform, "EL CAMPUS CIERRA. EL TURNO EMPIEZA.",
+                new Vector4(.47f, .085f, .96f, .135f), 26, Bone, TextAnchor.LowerRight);
+            Label(menu.transform, "1-5 ESTUDIANTES · CAMPUS UTEZ", new Vector4(.55f, .035f, .96f, .075f), 22, Dim, TextAnchor.LowerRight);
 
-            Button(menu.transform,"MANUAL DE AMENAZAS",new Vector4(.55f,.25f,.95f,.33f),()=>manual.SetActive(true));
+            Button(menu.transform,"MANUAL DE AMENAZAS",new Vector4(.045f,.025f,.35f,.08f),()=>manual.SetActive(true));
             manual=Panel("Manual",root,new Vector4(.08f,.05f,.92f,.95f),Ink);
             Border(manual.GetComponent<RectTransform>(),Blood);
             Label(manual.transform,"MANUAL DEL TURNO",new Vector4(.04f,.84f,.96f,.98f),60,Blood,TextAnchor.MiddleLeft,title);

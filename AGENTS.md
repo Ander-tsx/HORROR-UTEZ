@@ -19,6 +19,12 @@ this repository, so keep everything understandable from the Unity editor alone.
   **HORROR-UTEZ / Tienda / Abrir escena subterranea**. See `Documentation/Remake/SHOP.md` for authoring,
   markers, texture provenance and the distinction between finished art and pending mechanics.
 - `Assets/_Project/Scenes/Legacy/utez.unity` is the old single-player scene. Not used by the game.
+- Entrance/menu (2026-10-12): `Prefabs/Map/Entrada_UTEZ.prefab` is in `remake.unity` at (120,0,-80).
+  Editor menu **HORROR-UTEZ / Entrada UTEZ / Abrir y enfocar entrada**. Move its entire root to relocate
+  architecture and menu framing together; `RemakeEntrance` reads its child view/focus markers and
+  binds the entrance atlas only. Reusable `Entrada_Reja` and `Entrada_Palmera` prefabs are authored.
+  See `Documentation/Remake/ENTRANCE.md`. Connecting roads, gate interactions and extending enemy
+  navigation to this provisional area are outside this art task.
 
 ## Map authoring rules (since 2026-10-06)
 

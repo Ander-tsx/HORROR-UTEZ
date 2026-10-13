@@ -6,6 +6,10 @@
 > [Guía de la tienda y capturas](Documentation/Remake/SHOP.md). Las mecánicas nuevas están pendientes:
 > el flujo jugable descrito abajo todavía corresponde a la implementación anterior de camioneta.
 
+> **Entrada UTEZ y menú:** la entrada modelada a partir de las fotos del usuario vive en la misma
+> `remake.unity`, en una ubicación provisional alejada de los edificios. Abre **HORROR-UTEZ → Entrada UTEZ
+> → Abrir y enfocar entrada**. [Guía de edición y capturas](Documentation/Remake/ENTRANCE.md).
+
 Juego cooperativo de terror en primera persona ambientado en la UTEZ (Universidad
 Tecnológica Emiliano Zapata). De 1 a 5 estudiantes entran de noche al campus para
 recuperar equipo valioso (laptops, proyectores, microscopios…), lo cargan en un camión de

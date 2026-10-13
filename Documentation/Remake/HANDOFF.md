@@ -2,6 +2,30 @@
 
 The user communicates in Spanish. Read [AGENTS.md](../../AGENTS.md) and the [README](../../README.md) first.
 
+## 2026-10-12: UTEZ entrance and menu background
+
+The user additionally requested an entrance based on the newest reference photos in Downloads,
+in the same playable scene but away from the buildings for later relocation, primarily for the menu.
+`Entrada_UTEZ.prefab` is now authored in `remake.unity` at (120,0,-80), with eight named groups:
+elliptic red columns/cream lintels/roof fins, glazed curved-canopy guardhouse, roads/sidewalks/islands,
+six tubular gate panels, seven local lamps, eight palm instances/gardening, urban/security details,
+and child menu view/focus transforms. 445 objects / 413 renderers (one old continuous road renderer
+disabled in favour of six authored road surfaces) / 43 colliders. Reusable gate and palm prefabs,
+six entrance materials and two original ImageGen textures are included with source prompts.
+
+Open **HORROR-UTEZ / Entrada UTEZ / Abrir y enfocar entrada**. Move the whole root to relocate
+the architecture and framing together. `RemakeEntrance` never generates geometry; it frames the
+existing menu camera and binds the entrance atlas. `RemakeHud` now keeps session controls on the
+left. Existing gameplay markers, truck/day loop, loot and enemies were not redesigned by this task.
+The provisional entrance is outside the enemy navigation grid and has no connecting campus road
+or new interactive gates. Architectural dimensions and logo lettering are visual approximations.
+Editing instructions, reference filenames, texture provenance and captures: [ENTRANCE.md](ENTRANCE.md).
+
+Windows reference/capsule/sign-fit audit passes; four graphics-enabled URP review captures were
+inspected. Existing-loop regression: solo 54/54, host 54/54, client 21/21, all exit 0, TCP 27914.
+The final menu capture check and retained diagnostic failures are described in TESTING.md.
+Android and human input/feel are still untested; the user explicitly deferred Android testing.
+
 ## 2026-10-12: underground shop art and revised product direction
 
 The user rejected the truck extraction loop and approved a fountain/sewer delivery point, individual

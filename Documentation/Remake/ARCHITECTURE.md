@@ -1,5 +1,14 @@
 # Runtime architecture
 
+> **2026-10-12 entrance/menu:** `Entrada_UTEZ.prefab` is an authored root in the playable scene,
+> provisionally away from the campus buildings. `RemakeEntrance` references child `MenuView` and
+> `MenuFocus` transforms, frames the existing menu camera before play and binds entrance atlas regions.
+> `RemakeGame` uses this marker when present; its historical fallback camera remains available.
+> `RemakeHud` places existing session controls on the left so the entrance is visible. Geometry,
+> panels, palms and seven lights are authored assets, never generated at runtime. The editor-only
+> `RemakeEntranceReview` audits references/approach clearance and renders review shots.
+> See [ENTRANCE.md](ENTRANCE.md) for placement and scope boundaries.
+
 > **2026-10-12 shop art:** `remake_shop.unity` now contains the authored underground El Sumidero hall
 > and `Tienda_Subterranea.prefab`. Its six named anchors (`shop_entry`, `shop_exit`, `shop_loot_arrival`,
 > `shop_sale`, `shop_tools`, `shop_casino`) prepare future sewer interactions. The existing runtime still
