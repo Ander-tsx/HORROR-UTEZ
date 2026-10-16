@@ -2096,7 +2096,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 356e4d8faac84be478a4ac7e476f9fd8, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: HorrorUtez.Remake::HorrorUtez.Remake.RemakeShopProduct
   Kind: 5
 --- !u!23 &610263167
@@ -2334,7 +2334,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 356e4d8faac84be478a4ac7e476f9fd8, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: HorrorUtez.Remake::HorrorUtez.Remake.RemakeShopProduct
   Kind: 4
 --- !u!23 &646023909
@@ -2654,7 +2654,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 356e4d8faac84be478a4ac7e476f9fd8, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: HorrorUtez.Remake::HorrorUtez.Remake.RemakeShopProduct
   Kind: 0
 --- !u!23 &700371898
@@ -3382,7 +3382,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0ac12026101240018000000000000040, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: HorrorUtez.Remake::HorrorUtez.Remake.RemakeShopAtlasBinder
 --- !u!1 &993312545
 GameObject:
@@ -3902,6 +3902,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1125637516}
   - component: {fileID: 1125637517}
+  - component: {fileID: 1125637518}
   m_Layer: 0
   m_Name: Fluorescente cooperativa
   m_TagString: Untagged
@@ -3989,6 +3990,35 @@ Light:
   m_LightUnit: 1
   m_LuxAtDistance: 1
   m_EnableSpotReflector: 1
+--- !u!114 &1125637518
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1125637515}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalLightData
+  m_UsePipelineSettings: 1
+  m_AdditionalLightsShadowResolutionTier: 2
+  m_CustomShadowLayers: 0
+  m_LightCookieSize: {x: 1, y: 1}
+  m_LightCookieOffset: {x: 0, y: 0}
+  m_SoftShadowQuality: 0
+  m_RenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_ShadowRenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_Version: 4
+  m_LightLayerMask: 1
+  m_ShadowLayerMask: 1
+  m_RenderingLayers: 1
+  m_ShadowRenderingLayers: 1
 --- !u!1 &1178583089
 GameObject:
   m_ObjectHideFlags: 0
@@ -4611,6 +4641,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1297015185}
   - component: {fileID: 1297015186}
+  - component: {fileID: 1297015187}
   m_Layer: 0
   m_Name: Fluorescente cooperativa
   m_TagString: Untagged
@@ -4698,6 +4729,35 @@ Light:
   m_LightUnit: 1
   m_LuxAtDistance: 1
   m_EnableSpotReflector: 1
+--- !u!114 &1297015187
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1297015184}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalLightData
+  m_UsePipelineSettings: 1
+  m_AdditionalLightsShadowResolutionTier: 2
+  m_CustomShadowLayers: 0
+  m_LightCookieSize: {x: 1, y: 1}
+  m_LightCookieOffset: {x: 0, y: 0}
+  m_SoftShadowQuality: 0
+  m_RenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_ShadowRenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_Version: 4
+  m_LightLayerMask: 1
+  m_ShadowLayerMask: 1
+  m_RenderingLayers: 1
+  m_ShadowRenderingLayers: 1
 --- !u!1 &1320759821
 GameObject:
   m_ObjectHideFlags: 0
@@ -5512,7 +5572,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2a980102058f6454d9d04dfa4dcf3601, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: HorrorUtez.Remake::HorrorUtez.Remake.RemakeShop
 --- !u!4 &1496800908
 Transform:
@@ -5807,6 +5867,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1570667001}
   - component: {fileID: 1570667002}
+  - component: {fileID: 1570667003}
   m_Layer: 0
   m_Name: Fluorescente cooperativa
   m_TagString: Untagged
@@ -5894,6 +5955,35 @@ Light:
   m_LightUnit: 1
   m_LuxAtDistance: 1
   m_EnableSpotReflector: 1
+--- !u!114 &1570667003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1570667000}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalLightData
+  m_UsePipelineSettings: 1
+  m_AdditionalLightsShadowResolutionTier: 2
+  m_CustomShadowLayers: 0
+  m_LightCookieSize: {x: 1, y: 1}
+  m_LightCookieOffset: {x: 0, y: 0}
+  m_SoftShadowQuality: 0
+  m_RenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_ShadowRenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_Version: 4
+  m_LightLayerMask: 1
+  m_ShadowLayerMask: 1
+  m_RenderingLayers: 1
+  m_ShadowRenderingLayers: 1
 --- !u!1 &1603137150
 GameObject:
   m_ObjectHideFlags: 0
@@ -6163,7 +6253,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 356e4d8faac84be478a4ac7e476f9fd8, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: HorrorUtez.Remake::HorrorUtez.Remake.RemakeShopProduct
   Kind: 1
 --- !u!23 &1707223250
@@ -6603,7 +6693,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 356e4d8faac84be478a4ac7e476f9fd8, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: HorrorUtez.Remake::HorrorUtez.Remake.RemakeShopProduct
   Kind: 2
 --- !u!23 &1750827819
@@ -6953,7 +7043,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 356e4d8faac84be478a4ac7e476f9fd8, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: HorrorUtez.Remake::HorrorUtez.Remake.RemakeShopProduct
   Kind: 3
 --- !u!23 &1874916120
