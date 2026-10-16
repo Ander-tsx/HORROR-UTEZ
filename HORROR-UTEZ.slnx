@@ -1,0 +1,12 @@
+﻿<Solution>
+  <Project Path="HorrorUtez.Remake.csproj" />
+  <Project Path="HorrorUtez.World.csproj" />
+  <Project Path="HorrorUtez.Rendering.Editor.csproj" />
+  <Project Path="HorrorUtez.Rendering.csproj" />
+  <Project Path="HorrorUtez.Player.csproj" />
+  <Project Path="HorrorUtez.Remake.Editor.csproj" />
+  <Project Path="HorrorUtez.Core.Editor.csproj" />
+  <Project Path="HorrorUtez.Core.csproj" />
+  <Project Path="HorrorUtez.Tests.PlayMode.csproj" />
+  <Project Path="HorrorUtez.UI.csproj" />
+</Solution>
