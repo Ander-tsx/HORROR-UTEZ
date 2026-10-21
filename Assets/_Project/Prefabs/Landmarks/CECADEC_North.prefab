@@ -7685,6 +7685,7 @@ GameObject:
   - component: {fileID: 4412734675969781435}
   - component: {fileID: 7332172909228088678}
   - component: {fileID: 204722739454995240}
+  - component: {fileID: 7085454531132095502}
   m_Layer: 0
   m_Name: Lamp_East_Light
   m_TagString: Untagged
@@ -7789,6 +7790,35 @@ MonoBehaviour:
   humSpeed: 7
   dropoutsPerSecond: 0.25
   dropoutSeconds: {x: 0.04, y: 0.35}
+--- !u!114 &7085454531132095502
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1725566558849497024}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 474bcb49853aa07438625e644c072ee6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.RenderPipelines.Universal.Runtime::UnityEngine.Rendering.Universal.UniversalAdditionalLightData
+  m_UsePipelineSettings: 1
+  m_AdditionalLightsShadowResolutionTier: 2
+  m_CustomShadowLayers: 0
+  m_LightCookieSize: {x: 1, y: 1}
+  m_LightCookieOffset: {x: 0, y: 0}
+  m_SoftShadowQuality: 0
+  m_RenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_ShadowRenderingLayersMask:
+    serializedVersion: 0
+    m_Bits: 1
+  m_Version: 4
+  m_LightLayerMask: 1
+  m_ShadowLayerMask: 1
+  m_RenderingLayers: 1
+  m_ShadowRenderingLayers: 1
 --- !u!1 &1733050268718623894
 GameObject:
   m_ObjectHideFlags: 0
