@@ -1,4 +1,5 @@
 ﻿<Solution>
+  <Project Path="Assembly-CSharp-Editor.csproj" />
   <Project Path="HorrorUtez.Remake.csproj" />
   <Project Path="HorrorUtez.World.csproj" />
   <Project Path="HorrorUtez.Rendering.Editor.csproj" />

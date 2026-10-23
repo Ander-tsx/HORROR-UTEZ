@@ -725,7 +725,8 @@ En la escena hay ejemplos en `UTEZ_LookTest` (charcos con reflejo: componente
   `Lab_Locker`, `Lab_Whiteboard`, `Lab_Poster`, `Lab_ProjectorMount`, `Lab_AC`,
   `Lab_FluoroHanging`, `Lab_CeilingTile`, `Lab_CableMess`, `Lab_Papers`, `Lab_Trash`,
   `Lab_Tape`, `Lab_Blood`, `Lab_ExitSign`.
-- **Props** — `Assets/_Project/Prefabs/Props/`: bancas, extintores…
+- **Props** — `Assets/_Project/Prefabs/Props/`: bancas, extintores y postes de luz reutilizables
+  (`Poste_Luz_Globo` y `Poste_Luz_Globo_Alto`, con luz Point Light y colliders).
 - **Arquitectura modular** — `Assets/_Project/Art/Environment/Kit/`: `Kit_Wall_4m`,
   `Kit_Window`, `Kit_Pillar`, `Kit_Pilaster`, `Kit_Floor_4m`, `Kit_Roof`, `Kit_Pad`, `Kit_Kerb`.
 - **Vegetación** — dentro del prefab `Bosque` (árboles `PSX_Tree*`, palmeras, pasto, rocas,
